@@ -78,7 +78,18 @@ export type ProjectUpdate = Partial<
   Omit<ProjectRow, 'id' | 'user_id' | 'created_at'>
 >
 
+// ------- Supabase Relationship type (used in Database generic) -------
+
+export type GenericRelationship = {
+  foreignKeyName: string
+  columns: string[]
+  isOneToOne: boolean
+  referencedRelation: string
+  referencedColumns: string[]
+}
+
 // ------- Supabase Database type (used as generic parameter for createClient) -------
+// Format follows the supabase-js v2 generated types convention for PostgREST v12
 
 export type Database = {
   public: {
@@ -87,22 +98,24 @@ export type Database = {
         Row: UserSettingsRow
         Insert: UserSettingsInsert
         Update: UserSettingsUpdate
-        Relationships: []
+        Relationships: GenericRelationship[]
       }
       user_model_preferences: {
         Row: UserModelPreferenceRow
         Insert: UserModelPreferenceInsert
         Update: UserModelPreferenceUpdate
-        Relationships: []
+        Relationships: GenericRelationship[]
       }
       projects: {
         Row: ProjectRow
         Insert: ProjectInsert
         Update: ProjectUpdate
-        Relationships: []
+        Relationships: GenericRelationship[]
       }
     }
-    Views: Record<string, never>
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       upsert_user_api_key: {
         Args: { p_user_id: string; p_api_key: string }
@@ -113,8 +126,12 @@ export type Database = {
         Returns: string | null
       }
     }
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
 

@@ -1,12 +1,19 @@
-// Login page — full implementation in Plan 02
-// This placeholder satisfies middleware redirects for unauthenticated users.
-export default function LoginPage() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-center">Sign in</h1>
-      <p className="text-muted-foreground text-center">
-        Authentication UI coming in Plan 02.
-      </p>
-    </div>
-  )
+import { AuthForm } from '@/components/auth/auth-form'
+
+export const metadata = {
+  title: 'Sign In — StoryWriter',
+}
+
+interface LoginPageProps {
+  searchParams: Promise<{ error?: string }>
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams
+  const error =
+    params.error === 'invalid_token'
+      ? 'The verification link is invalid or has expired. Please try again.'
+      : undefined
+
+  return <AuthForm initialError={error} />
 }
