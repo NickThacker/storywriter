@@ -32,10 +32,12 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // Redirect unauthenticated users to /login for protected routes
+  // Public routes: /login, /auth/confirm, /api/health (health check endpoint)
   if (
     !user &&
     !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth/confirm')
+    !request.nextUrl.pathname.startsWith('/auth/confirm') &&
+    !request.nextUrl.pathname.startsWith('/api/health')
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
