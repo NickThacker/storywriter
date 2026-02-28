@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-02-28T20:50:02.466Z"
+progress:
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 6
+  completed_plans: 3
+---
+
 # Project State
 
 ## Project Reference
@@ -52,6 +65,9 @@ Recent decisions affecting current work:
 - [01-01]: signOut server action is placeholder in src/actions/auth.ts — full implementation in Plan 02
 - [01-03]: X-Webhook-Secret header pattern established for n8n — all future n8n calls go through triggerN8nWorkflow
 - [01-03]: isN8nConfigured() guard enables graceful degradation when n8n not running in local dev
+- [Phase 01-02]: user_settings row created in signUp server action (not DB trigger) for debuggability and simplicity
+- [Phase 01-02]: redirect() placed outside try/catch blocks in server actions — Next.js redirect throws NEXT_REDIRECT internally
+- [Phase 01-02]: as any cast for Supabase insert in signUp — postgrest-js v12 resolves hand-written Insert type to never; pragmatic workaround
 
 ### Pending Todos
 
@@ -69,5 +85,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-03-PLAN.md — n8n webhook client, test endpoint, health check
+Stopped at: Completed 01-02-PLAN.md — Auth implementation with email verification, password reset, sign-in/sign-up tabs
 Resume file: None
