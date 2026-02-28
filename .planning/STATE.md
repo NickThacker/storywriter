@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T20:54:56.963Z"
+last_updated: "2026-02-28T20:56:03.357Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 4 of 6 in current phase
+Plan: 5 of 6 in current phase
 Status: In progress
-Last activity: 2026-02-28 — Completed 01-04 (project dashboard with card grid, empty state, CRUD dialogs, auto-save server action)
+Last activity: 2026-02-28 — Completed 01-05 (settings page with BYOK API key management and per-task model preferences)
 
-Progress: [████░░░░░░] 15%
+Progress: [█████░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 5 min
 - Total execution time: 0.4 hours
 
@@ -40,10 +40,10 @@ Progress: [████░░░░░░] 15%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation | 4 | 20 min | 5 min |
+| 01-foundation | 5 | 23 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 6 min, 6 min, 3 min
+- Last 5 plans: 5 min, 6 min, 6 min, 3 min, 3 min
 - Trend: Stable
 
 ## Accumulated Context
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 01-04]: supabase as any cast used in dashboard page and projects actions — PostgREST v12 type incompatibility with hand-written Database type (consistent with Plan 02 pattern)
 - [Phase 01-04]: Delete menu uses three-dot button inside card Link — stopPropagation() prevents card navigation when opening delete dialog
 - [Phase 01-04]: updateProject server action exported for auto-save use by future project editor components (debounced client callers)
+- [Phase 01-05]: deleteApiKey clears vault reference in user_settings only — vault.secrets is a separate Postgres schema not in Database type; orphaned secrets handled by cleanup job in production
+- [Phase 01-05]: testApiKey validates OpenRouter /api/v1/models server-side only — raw API key never enters browser network tab; BYOK pattern enforced across all settings server actions
+- [Phase 01-05]: Model selector auto-saves via useDebouncedCallback (600ms) per task — aligns with PROJ-05 auto-save pattern, eliminates explicit Save Preferences button
 
 ### Pending Todos
 
@@ -86,5 +89,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-04-PLAN.md — Project dashboard with card grid, empty state, CRUD dialogs, auto-save server action
+Stopped at: Completed 01-05-PLAN.md — Settings page with BYOK API key management and per-task model preferences
 Resume file: None
