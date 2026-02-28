@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 1 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-28 — Completed 01-01 (scaffold, Supabase clients, DB schema)
+Last activity: 2026-02-28 — Completed 01-03 (n8n webhook client, test endpoint, health check)
 
-Progress: [█░░░░░░░░░] 5%
+Progress: [██░░░░░░░░] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 5 min
-- Total execution time: 0.1 hours
+- Total plans completed: 3
+- Average duration: 6 min
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation | 1 | 5 min | 5 min |
+| 01-foundation | 3 | 17 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min
-- Trend: -
+- Last 5 plans: 5 min, 6 min, 6 min
+- Trend: Stable
 
 *Updated after each plan completion*
 
@@ -50,11 +50,15 @@ Recent decisions affecting current work:
 - [01-01]: Placeholder dashboard and login pages added in Phase 1 — full UI ships in Plan 02 (auth)
 - [01-01]: story_bible seeded as jsonb column in projects table — Phase 2 planning decides whether to normalize into relational tables
 - [01-01]: signOut server action is placeholder in src/actions/auth.ts — full implementation in Plan 02
+- [01-03]: X-Webhook-Secret header pattern established for n8n — all future n8n calls go through triggerN8nWorkflow
+- [01-03]: isN8nConfigured() guard enables graceful degradation when n8n not running in local dev
 
 ### Pending Todos
 
 - User must set up Supabase project, enable Vault extension, and populate .env.local before running app against real DB
 - Run supabase/migrations/00001_initial_schema.sql in Supabase SQL editor to create tables
+- Set N8N_BASE_URL and N8N_WEBHOOK_SECRET in .env.local to test n8n pipeline
+- Create n8n test workflow (POST /webhook/test with IF node secret validation) to exercise /api/n8n/test
 
 ### Blockers/Concerns
 
@@ -65,5 +69,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 01-01-PLAN.md — Next.js scaffold, Supabase clients, DB migration all done
+Stopped at: Completed 01-03-PLAN.md — n8n webhook client, test endpoint, health check
 Resume file: None

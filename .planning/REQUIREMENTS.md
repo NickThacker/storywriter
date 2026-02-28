@@ -71,7 +71,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **LLM-01**: User can connect their own OpenRouter API key (BYOK)
 - [ ] **LLM-02**: User can select specific LLMs for different tasks (outline generation, prose writing, editing)
 - [ ] **LLM-03**: Platform provides hosted API access via subscription for users without their own key
-- [ ] **LLM-04**: User's API key is never exposed to the browser (server-side only)
+- [x] **LLM-04**: User's API key is never exposed to the browser (server-side only)
 
 ### Export
 
@@ -133,7 +133,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LLM-01 | Phase 1 | Pending |
 | LLM-02 | Phase 1 | Pending |
 | LLM-03 | Phase 1 | Pending |
-| LLM-04 | Phase 1 | Pending |
+| LLM-04 | Phase 1 | Complete |
 | INTK-01 | Phase 2 | Pending |
 | INTK-02 | Phase 2 | Pending |
 | INTK-03 | Phase 2 | Pending |
