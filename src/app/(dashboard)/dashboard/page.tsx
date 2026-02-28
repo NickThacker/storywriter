@@ -1,10 +1,44 @@
-// Dashboard page — full implementation in Plan 02
-// This placeholder satisfies the root redirect and middleware guard.
-export default function DashboardPage() {
+import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabase/server'
+import { ProjectGrid } from '@/components/dashboard/project-grid'
+import { EmptyState } from '@/components/dashboard/empty-state'
+import type { Project } from '@/types/database'
+
+export const metadata: Metadata = {
+  title: 'Dashboard — StoryWriter',
+}
+
+export default async function DashboardPage() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: projects } = await (supabase as any)
+    .from('projects')
+    .select('id, title, status, genre, word_count, chapter_count, chapters_done, updated_at')
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+
+  const typedProjects = (projects ?? []) as Pick<
+    Project,
+    'id' | 'title' | 'status' | 'genre' | 'word_count' | 'chapter_count' | 'chapters_done' | 'updated_at'
+  >[]
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="text-muted-foreground">Your novel projects will appear here.</p>
+      {typedProjects.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <ProjectGrid projects={typedProjects as Project[]} />
+      )}
     </div>
   )
 }
