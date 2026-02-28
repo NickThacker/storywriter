@@ -30,7 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can create, resume, and delete novel projects; novel state auto-saves after every generation or edit
   4. User can connect their own OpenRouter API key (BYOK) and select LLMs per task; key is never visible in the browser
   5. Users without an API key can access generation via a hosted subscription option
-**Plans**: TBD
+**Plans:** 6 plans in 4 waves
+- [ ] 01-01-PLAN.md — Scaffold Next.js, Supabase clients, middleware, DB schema with RLS (Wave 1)
+- [ ] 01-02-PLAN.md — Auth flow: sign up, sign in, sign out, password reset, email verification (Wave 2)
+- [ ] 01-03-PLAN.md — n8n security perimeter, webhook client, test pipeline endpoint (Wave 2)
+- [ ] 01-04-PLAN.md — Project dashboard: card grid, empty state, create/delete/resume CRUD (Wave 3)
+- [ ] 01-05-PLAN.md — Settings: BYOK API key with Vault, model selection per task (Wave 3)
+- [ ] 01-06-PLAN.md — End-to-end verification checkpoint (Wave 4)
 
 ### Phase 2: Guided Intake and Outline
 **Goal**: Users can go from a blank idea to an approved novel outline with a populated story bible, ready for chapter generation
@@ -84,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/6 | Not started | - |
 | 2. Guided Intake and Outline | 0/TBD | Not started | - |
 | 3. Chapter Generation | 0/TBD | Not started | - |
 | 4. Creative Checkpoints | 0/TBD | Not started | - |
