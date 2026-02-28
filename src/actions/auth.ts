@@ -71,9 +71,12 @@ export async function signUp(
   // Create user_settings row for the new user
   // Per research Open Question 4: create in signup action, not DB trigger
   if (data.user) {
+    // Note: the 'as any' cast is needed due to an incompatibility between
+    // our hand-written Database type and the @supabase/postgrest-js v12 type system.
+    // The underlying runtime insert is correct.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: settingsError } = await supabase
       .from('user_settings')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .insert({
         user_id: data.user.id,
         openrouter_vault_id: null,
