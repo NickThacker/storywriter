@@ -16,10 +16,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Project Management
 
-- [ ] **PROJ-01**: User can create a new novel project from the dashboard
-- [ ] **PROJ-02**: User can view all their novel projects in a dashboard (title, status, word count, last modified)
-- [ ] **PROJ-03**: User can resume any in-progress novel project
-- [ ] **PROJ-04**: User can delete a novel project
+- [x] **PROJ-01**: User can create a new novel project from the dashboard
+- [x] **PROJ-02**: User can view all their novel projects in a dashboard (title, status, word count, last modified)
+- [x] **PROJ-03**: User can resume any in-progress novel project
+- [x] **PROJ-04**: User can delete a novel project
 - [x] **PROJ-05**: Novel state auto-saves after every generation or user edit
 
 ### Guided Intake
@@ -125,10 +125,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
-| PROJ-01 | Phase 1 | Pending |
-| PROJ-02 | Phase 1 | Pending |
-| PROJ-03 | Phase 1 | Pending |
-| PROJ-04 | Phase 1 | Pending |
+| PROJ-01 | Phase 1 | Complete |
+| PROJ-02 | Phase 1 | Complete |
+| PROJ-03 | Phase 1 | Complete |
+| PROJ-04 | Phase 1 | Complete |
 | PROJ-05 | Phase 1 | Complete |
 | LLM-01 | Phase 1 | Pending |
 | LLM-02 | Phase 1 | Pending |
