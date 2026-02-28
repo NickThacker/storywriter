@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 1 of 5 (Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-28 — Roadmap created, all 5 phases derived from 46 v1 requirements
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-28 — Completed 01-01 (scaffold, Supabase clients, DB schema)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 5%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 5 min
+- Total execution time: 0.1 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-foundation | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: -
+- Last 5 plans: 5 min
 - Trend: -
 
 *Updated after each plan completion*
@@ -46,10 +46,15 @@ Recent decisions affecting current work:
 - [Roadmap]: Story bible schema must be designed in Phase 1 DB schema before any generation code ships (context amnesia pitfall)
 - [Roadmap]: n8n instance must be network-isolated (never public internet) before any user data or API keys touch it (4 critical CVEs, CVSS 9.4-10.0)
 - [Roadmap]: BYOK key storage pattern (server-side only, never in browser) established in Phase 1 before generation features exist
+- [01-01]: sonner used instead of deprecated shadcn toast component — all notifications via sonner going forward
+- [01-01]: Placeholder dashboard and login pages added in Phase 1 — full UI ships in Plan 02 (auth)
+- [01-01]: story_bible seeded as jsonb column in projects table — Phase 2 planning decides whether to normalize into relational tables
+- [01-01]: signOut server action is placeholder in src/actions/auth.ts — full implementation in Plan 02
 
 ### Pending Todos
 
-None yet.
+- User must set up Supabase project, enable Vault extension, and populate .env.local before running app against real DB
+- Run supabase/migrations/00001_initial_schema.sql in Supabase SQL editor to create tables
 
 ### Blockers/Concerns
 
@@ -60,5 +65,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Roadmap creation complete — ROADMAP.md, STATE.md written, REQUIREMENTS.md traceability updated
+Stopped at: Completed 01-01-PLAN.md — Next.js scaffold, Supabase clients, DB migration all done
 Resume file: None

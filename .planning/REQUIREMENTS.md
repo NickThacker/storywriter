@@ -10,7 +10,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Authentication & Accounts
 
 - [ ] **AUTH-01**: User can create an account with email and password
-- [ ] **AUTH-02**: User can log in and stay logged in across browser sessions
+- [x] **AUTH-02**: User can log in and stay logged in across browser sessions
 - [ ] **AUTH-03**: User can log out from any page
 - [ ] **AUTH-04**: User can reset password via email link
 
@@ -20,7 +20,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PROJ-02**: User can view all their novel projects in a dashboard (title, status, word count, last modified)
 - [ ] **PROJ-03**: User can resume any in-progress novel project
 - [ ] **PROJ-04**: User can delete a novel project
-- [ ] **PROJ-05**: Novel state auto-saves after every generation or user edit
+- [x] **PROJ-05**: Novel state auto-saves after every generation or user edit
 
 ### Guided Intake
 
@@ -122,14 +122,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Pending |
 | AUTH-04 | Phase 1 | Pending |
 | PROJ-01 | Phase 1 | Pending |
 | PROJ-02 | Phase 1 | Pending |
 | PROJ-03 | Phase 1 | Pending |
 | PROJ-04 | Phase 1 | Pending |
-| PROJ-05 | Phase 1 | Pending |
+| PROJ-05 | Phase 1 | Complete |
 | LLM-01 | Phase 1 | Pending |
 | LLM-02 | Phase 1 | Pending |
 | LLM-03 | Phase 1 | Pending |
