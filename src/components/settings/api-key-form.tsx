@@ -113,7 +113,7 @@ export function ApiKeyForm({ initialKeyStatus }: ApiKeyFormProps) {
           )}
         </CardTitle>
         <CardDescription>
-          Your API key is stored encrypted and is never exposed in browser requests.
+          Your API key is stored securely and is never exposed in browser requests.
         </CardDescription>
       </CardHeader>
 
