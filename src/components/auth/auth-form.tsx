@@ -1,17 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { signIn, signUp, resetPassword } from '@/actions/auth'
-import {
-  loginSchema,
-  signUpSchema,
-  resetPasswordSchema,
-  type LoginInput,
-  type SignUpInput,
-  type ResetPasswordInput,
-} from '@/lib/validations/auth'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,20 +18,8 @@ function SignInForm({ initialError }: { initialError?: string }) {
     initialError ? { error: initialError } : null
   )
 
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
-
   return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        handleSubmit(() => {})(e)
-      }}
-      className="space-y-4"
-    >
+    <form action={formAction} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signin-email">Email</Label>
         <Input
@@ -49,12 +27,9 @@ function SignInForm({ initialError }: { initialError?: string }) {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          {...register('email')}
           name="email"
+          required
         />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
       </div>
 
       <div className="space-y-2">
@@ -64,12 +39,10 @@ function SignInForm({ initialError }: { initialError?: string }) {
           type="password"
           autoComplete="current-password"
           placeholder="Min. 8 characters"
-          {...register('password')}
           name="password"
+          required
+          minLength={8}
         />
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
-        )}
       </div>
 
       {state && 'error' in state && state.error && (
@@ -90,20 +63,8 @@ function SignUpForm() {
     null
   )
 
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm<SignUpInput>({ resolver: zodResolver(signUpSchema) })
-
   return (
-    <form
-      action={formAction}
-      onSubmit={(e) => {
-        handleSubmit(() => {})(e)
-      }}
-      className="space-y-4"
-    >
+    <form action={formAction} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="signup-email">Email</Label>
         <Input
@@ -111,12 +72,9 @@ function SignUpForm() {
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
-          {...register('email')}
           name="email"
+          required
         />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
       </div>
 
       <div className="space-y-2">
@@ -126,12 +84,11 @@ function SignUpForm() {
           type="password"
           autoComplete="new-password"
           placeholder="Min. 8 characters"
-          {...register('password')}
           name="password"
+          required
+          minLength={8}
+          maxLength={72}
         />
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
-        )}
       </div>
 
       <div className="space-y-2">
@@ -141,12 +98,10 @@ function SignUpForm() {
           type="password"
           autoComplete="new-password"
           placeholder="Confirm your password"
-          {...register('confirmPassword')}
           name="confirmPassword"
+          required
+          minLength={8}
         />
-        {errors.confirmPassword && (
-          <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>
-        )}
       </div>
 
       {state && 'error' in state && state.error && (
@@ -173,12 +128,6 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
     null
   )
 
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm<ResetPasswordInput>({ resolver: zodResolver(resetPasswordSchema) })
-
   return (
     <div className="space-y-4">
       <div>
@@ -188,13 +137,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
         </p>
       </div>
 
-      <form
-        action={formAction}
-        onSubmit={(e) => {
-          handleSubmit(() => {})(e)
-        }}
-        className="space-y-4"
-      >
+      <form action={formAction} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="reset-email">Email</Label>
           <Input
@@ -202,12 +145,9 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
-            {...register('email')}
             name="email"
+            required
           />
-          {errors.email && (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          )}
         </div>
 
         {state && 'error' in state && state.error && (

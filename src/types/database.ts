@@ -10,7 +10,7 @@ export type TaskType = 'outline' | 'prose' | 'editing'
 export interface UserSettingsRow {
   id: string
   user_id: string
-  openrouter_vault_id: string | null
+  openrouter_api_key: string | null
   subscription_tier: SubscriptionTier
   created_at: string
   updated_at: string
@@ -117,14 +117,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      upsert_user_api_key: {
-        Args: { p_user_id: string; p_api_key: string }
-        Returns: string
-      }
-      get_decrypted_api_key: {
-        Args: { p_vault_id: string }
-        Returns: string | null
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

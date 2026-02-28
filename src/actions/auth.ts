@@ -79,7 +79,7 @@ export async function signUp(
       .from('user_settings')
       .insert({
         user_id: data.user.id,
-        openrouter_vault_id: null,
+        openrouter_api_key: null,
         subscription_tier: 'none',
       } as any)
 

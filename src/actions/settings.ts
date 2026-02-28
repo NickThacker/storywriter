@@ -10,8 +10,9 @@ import type { TaskType } from '@/types/database'
 // ──────────────────────────────────────────────────────────────────────────────
 
 /**
- * Save the user's OpenRouter API key to Supabase Vault.
+ * Save the user's OpenRouter API key directly in user_settings.
  * The raw key is NEVER returned to the client after this call.
+ * Protected by RLS — only the owning user can read/write their row.
  */
 export async function saveApiKey(
   prevState: { error?: string; success?: boolean } | null,
@@ -37,17 +38,15 @@ export async function saveApiKey(
     return { error: 'You must be logged in to save an API key' }
   }
 
-  // Store key in Supabase Vault via SECURITY DEFINER RPC function.
-  // The raw key is handled entirely server-side — never returned to the browser.
-  // Note: 'as any' needed due to PostgREST v12 / hand-written Database type incompatibility.
+  // Store key directly in user_settings. RLS ensures only the owner can access.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: rpcError } = await (supabase.rpc as any)('upsert_user_api_key', {
-    p_user_id: user.id,
-    p_api_key: parsed.data.apiKey,
-  })
+  const { error: updateError } = await (supabase as any)
+    .from('user_settings')
+    .update({ openrouter_api_key: parsed.data.apiKey })
+    .eq('user_id', user.id)
 
-  if (rpcError) {
-    return { error: `Failed to save API key: ${rpcError.message}` }
+  if (updateError) {
+    return { error: `Failed to save API key: ${updateError.message}` }
   }
 
   return { success: true }
@@ -96,8 +95,7 @@ export async function testApiKey(
 }
 
 /**
- * Delete the user's API key from Supabase Vault and clear the reference
- * in user_settings.
+ * Delete the user's API key from user_settings.
  */
 export async function deleteApiKey(): Promise<{ success: boolean } | { error: string }> {
   const supabase = await createClient()
@@ -110,40 +108,14 @@ export async function deleteApiKey(): Promise<{ success: boolean } | { error: st
     return { error: 'You must be logged in to delete an API key' }
   }
 
-  // Look up current vault ID
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_vault_id')
-    .eq('user_id', user.id)
-    .single()
-
-  if (settingsError) {
-    return { error: `Failed to load settings: ${settingsError.message}` }
-  }
-
-  const vaultId = settings?.openrouter_vault_id as string | null
-
-  if (!vaultId) {
-    // No key stored — treat as success
-    return { success: true }
-  }
-
-  // Delete from vault.secrets — access via RPC or direct (vault is a separate schema).
-  // We use a raw query via the service role if available; otherwise just clear the reference.
-  // Since vault.secrets is not in our public schema Database type, we skip direct delete
-  // and rely on clearing the reference (Vault will orphan the secret, which is acceptable).
-  // A cleanup job or DB trigger can handle orphaned secrets in production.
-
-  // Clear the vault reference in user_settings
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updateError } = await (supabase as any)
     .from('user_settings')
-    .update({ openrouter_vault_id: null })
+    .update({ openrouter_api_key: null })
     .eq('user_id', user.id)
 
   if (updateError) {
-    return { error: `Failed to clear API key reference: ${updateError.message}` }
+    return { error: `Failed to delete API key: ${updateError.message}` }
   }
 
   return { success: true }
@@ -171,7 +143,7 @@ export async function getApiKeyStatus(): Promise<{
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: settings, error: settingsError } = await (supabase as any)
     .from('user_settings')
-    .select('openrouter_vault_id, subscription_tier')
+    .select('openrouter_api_key, subscription_tier')
     .eq('user_id', user.id)
     .single()
 
@@ -179,40 +151,24 @@ export async function getApiKeyStatus(): Promise<{
     return { hasKey: false, keyHint: null, subscriptionTier: 'none' }
   }
 
-  const vaultIdForGet = settings?.openrouter_vault_id as string | null
-  const subscriptionTierForGet = settings?.subscription_tier as string ?? 'none'
+  const apiKey = settings?.openrouter_api_key as string | null
+  const subscriptionTier = settings?.subscription_tier as string ?? 'none'
 
-  if (!vaultIdForGet) {
+  if (!apiKey) {
     return {
       hasKey: false,
       keyHint: null,
-      subscriptionTier: subscriptionTierForGet,
-    }
-  }
-
-  // Retrieve decrypted key only to extract last 4 chars — never expose full key
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: decryptedKey, error: decryptError } = await (supabase as any).rpc(
-    'get_decrypted_api_key',
-    { p_vault_id: vaultIdForGet }
-  )
-
-  if (decryptError || !decryptedKey) {
-    // Vault read failed; treat as no key to avoid misleading UI
-    return {
-      hasKey: false,
-      keyHint: null,
-      subscriptionTier: subscriptionTierForGet,
+      subscriptionTier,
     }
   }
 
   // Extract ONLY last 4 characters — the full key is never returned
-  const keyHint = (decryptedKey as string).slice(-4)
+  const keyHint = apiKey.slice(-4)
 
   return {
     hasKey: true,
     keyHint,
-    subscriptionTier: subscriptionTierForGet,
+    subscriptionTier,
   }
 }
 

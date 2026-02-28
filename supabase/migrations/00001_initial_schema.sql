@@ -21,7 +21,7 @@ create extension if not exists "uuid-ossp";
 create table if not exists user_settings (
   id                   uuid primary key default gen_random_uuid(),
   user_id              uuid references auth.users(id) on delete cascade not null unique,
-  openrouter_vault_id  uuid,             -- Vault UUID for encrypted OpenRouter API key (null = no BYOK key)
+  openrouter_api_key   text,             -- OpenRouter API key (null = no BYOK key). Server-side only via RLS.
   subscription_tier    text not null default 'none',
   created_at           timestamptz default now(),
   updated_at           timestamptz default now(),
@@ -171,75 +171,11 @@ create trigger projects_updated_at
   for each row execute function update_updated_at();
 
 -- ---------------------------------------------------------------------------
--- Vault Functions (SECURITY DEFINER)
+-- Note: Vault functions removed — Supabase Vault requires a paid plan.
+-- API keys are stored directly in user_settings.openrouter_api_key, protected
+-- by RLS (only the owning user can read/write) and accessed only via server
+-- actions (never exposed to the browser).
 -- ---------------------------------------------------------------------------
--- These functions run with elevated permissions (as function owner = postgres)
--- so they can access the vault schema. The caller's RLS context does NOT apply
--- inside SECURITY DEFINER functions — access is controlled by the function logic.
-
--- upsert_user_api_key: Store or replace an OpenRouter API key in Supabase Vault.
--- Returns the Vault UUID for the stored secret.
-create or replace function upsert_user_api_key(p_user_id uuid, p_api_key text)
-returns uuid
-language plpgsql
-security definer
-set search_path = public, vault
-as $$
-declare
-  v_vault_id          uuid;
-  v_existing_vault_id uuid;
-begin
-  -- Check if this user already has a stored key
-  select openrouter_vault_id into v_existing_vault_id
-  from user_settings
-  where user_id = p_user_id;
-
-  if v_existing_vault_id is not null then
-    -- Update the existing secret in Vault (direct table update — vault.update_secret
-    -- is not in official docs; direct update is the confirmed approach)
-    update vault.secrets
-    set secret = p_api_key
-    where id = v_existing_vault_id;
-
-    return v_existing_vault_id;
-  else
-    -- Create a new secret in Vault and store the UUID in user_settings
-    v_vault_id := vault.create_secret(
-      p_api_key,
-      'openrouter_' || p_user_id::text  -- human-readable name for the secret
-    );
-
-    -- Store the Vault UUID in user_settings (upsert handles race conditions)
-    insert into user_settings (user_id, openrouter_vault_id)
-    values (p_user_id, v_vault_id)
-    on conflict (user_id)
-    do update set openrouter_vault_id = v_vault_id;
-
-    return v_vault_id;
-  end if;
-end;
-$$;
-
--- get_decrypted_api_key: Retrieve and decrypt an API key by its Vault UUID.
--- Returns null if the secret does not exist (key was never set or was deleted).
--- IMPORTANT: Call this ONLY from server-side code (Server Actions, Route Handlers).
--- The browser must never receive a decrypted key value.
-create or replace function get_decrypted_api_key(p_vault_id uuid)
-returns text
-language plpgsql
-security definer
-set search_path = public, vault
-as $$
-declare
-  v_decrypted_secret text;
-begin
-  select decrypted_secret into v_decrypted_secret
-  from vault.decrypted_secrets
-  where id = p_vault_id;
-
-  return v_decrypted_secret;
-end;
-$$;
 
 -- ---------------------------------------------------------------------------
 -- Indexes

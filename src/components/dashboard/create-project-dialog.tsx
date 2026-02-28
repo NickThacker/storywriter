@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useActionState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,15 +11,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -30,7 +21,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { createProject } from '@/actions/projects'
-import { createProjectSchema, type CreateProjectInput } from '@/lib/validations/project'
 
 const GENRES = [
   'Fantasy',
@@ -51,28 +41,15 @@ interface CreateProjectDialogProps {
 export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [state, formAction, isPending] = useActionState(createProject, null)
-
-  const form = useForm<CreateProjectInput>({
-    resolver: zodResolver(createProjectSchema),
-    defaultValues: {
-      title: '',
-      genre: undefined,
-    },
-  })
+  const [genre, setGenre] = useState('')
 
   // Close dialog on success
   useEffect(() => {
     if (state && 'projectId' in state) {
       setOpen(false)
-      form.reset()
+      setGenre('')
     }
-  }, [state, form])
-
-  const formRef = useRef<HTMLFormElement>(null)
-
-  const handleSubmit = form.handleSubmit(() => {
-    formRef.current?.requestSubmit()
-  })
+  }, [state])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -83,59 +60,43 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
         <DialogHeader>
           <DialogTitle>Create a New Project</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form ref={formRef} action={formAction} onSubmit={handleSubmit} className="space-y-4">
-            <FormField
-              control={form.control}
+        <form action={formAction} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="create-title">Title</Label>
+            <Input
+              id="create-title"
               name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="My Novel" {...field} name="title" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              placeholder="My Novel"
+              required
+              minLength={1}
+              maxLength={200}
             />
-            <FormField
-              control={form.control}
-              name="genre"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Genre (optional)</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    name="genre"
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a genre" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {GENRES.map((genre) => (
-                        <SelectItem key={genre} value={genre}>
-                          {genre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {state && 'error' in state && (
-              <p className="text-sm text-destructive">{state.error}</p>
-            )}
-            <DialogFooter>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? 'Creating...' : 'Create Project'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          <div className="space-y-2">
+            <Label>Genre (optional)</Label>
+            <input type="hidden" name="genre" value={genre} />
+            <Select value={genre} onValueChange={setGenre}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a genre" />
+              </SelectTrigger>
+              <SelectContent>
+                {GENRES.map((g) => (
+                  <SelectItem key={g} value={g}>
+                    {g}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {state && 'error' in state && (
+            <p className="text-sm text-destructive">{state.error}</p>
+          )}
+          <DialogFooter>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'Creating...' : 'Create Project'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )
