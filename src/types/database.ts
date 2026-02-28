@@ -87,16 +87,19 @@ export type Database = {
         Row: UserSettingsRow
         Insert: UserSettingsInsert
         Update: UserSettingsUpdate
+        Relationships: []
       }
       user_model_preferences: {
         Row: UserModelPreferenceRow
         Insert: UserModelPreferenceInsert
         Update: UserModelPreferenceUpdate
+        Relationships: []
       }
       projects: {
         Row: ProjectRow
         Insert: ProjectInsert
         Update: ProjectUpdate
+        Relationships: []
       }
     }
     Views: Record<string, never>
@@ -111,6 +114,7 @@ export type Database = {
       }
     }
     Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }
 
