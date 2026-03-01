@@ -31,16 +31,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Outline Generation
 
-- [ ] **OUTL-01**: AI generates a full novel outline (chapters, plot beats, character arcs) from intake data
-- [ ] **OUTL-02**: User can review the generated outline before writing begins
-- [ ] **OUTL-03**: User can edit the outline — adjust chapter structure, plot beats, and pacing
+- [x] **OUTL-01**: AI generates a full novel outline (chapters, plot beats, character arcs) from intake data
+- [x] **OUTL-02**: User can review the generated outline before writing begins
+- [x] **OUTL-03**: User can edit the outline — adjust chapter structure, plot beats, and pacing
 - [x] **OUTL-04**: User sets target novel length and chapter count
 - [ ] **OUTL-05**: Approved outline populates the story bible with characters, locations, and plot beats
 
 ### Characters & Story Bible
 
-- [ ] **CHAR-01**: User can create character profiles with structured fields (name, appearance, backstory, voice, role)
-- [ ] **CHAR-02**: User can edit character profiles at any time during the writing process
+- [x] **CHAR-01**: User can create character profiles with structured fields (name, appearance, backstory, voice, role)
+- [x] **CHAR-02**: User can edit character profiles at any time during the writing process
 - [x] **CHAR-03**: Story bible tracks characters, locations, timeline, and established world facts
 - [x] **CHAR-04**: Story bible context is automatically injected into every chapter generation prompt
 
@@ -138,13 +138,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTK-02 | Phase 2 | Complete |
 | INTK-03 | Phase 2 | Complete |
 | INTK-04 | Phase 2 | Complete |
-| OUTL-01 | Phase 2 | Pending |
-| OUTL-02 | Phase 2 | Pending |
-| OUTL-03 | Phase 2 | Pending |
+| OUTL-01 | Phase 2 | Complete |
+| OUTL-02 | Phase 2 | Complete |
+| OUTL-03 | Phase 2 | Complete |
 | OUTL-04 | Phase 2 | Complete |
 | OUTL-05 | Phase 2 | Pending |
-| CHAR-01 | Phase 2 | Pending |
-| CHAR-02 | Phase 2 | Pending |
+| CHAR-01 | Phase 2 | Complete |
+| CHAR-02 | Phase 2 | Complete |
 | CHAR-03 | Phase 2 | Complete |
 | CHAR-04 | Phase 2 | Complete |
 | CHAP-01 | Phase 3 | Pending |
