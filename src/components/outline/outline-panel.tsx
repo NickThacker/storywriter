@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useOutlineStream } from '@/hooks/use-outline-stream'
 import { saveOutline, updateOutlineChapter } from '@/actions/outline'
 import { StreamingView } from '@/components/outline/streaming-view'
@@ -8,10 +9,14 @@ import { ChapterList } from '@/components/outline/chapter-list'
 import { ChapterDetail } from '@/components/outline/chapter-detail'
 import { OutlineTimeline } from '@/components/outline/outline-timeline'
 import { BeatSheetOverlay } from '@/components/outline/beat-sheet-overlay'
+import { RegenerateDialog } from '@/components/outline/regenerate-dialog'
+import { ApproveDialog } from '@/components/outline/approve-dialog'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { getBeatSheetById } from '@/lib/data/beat-sheets'
 import type { OutlineRow, OutlineChapter, BeatSheetId } from '@/types/database'
 import type { IntakeData } from '@/lib/validations/intake'
+import type { GeneratedOutline } from '@/lib/outline/schema'
 import { toast } from 'sonner'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -28,12 +33,18 @@ export function OutlinePanel({
   initialOutline,
   intakeData,
 }: OutlinePanelProps) {
+  const router = useRouter()
   const [outline, setOutline] = useState<OutlineRow | null>(initialOutline)
   const [selectedChapterIndex, setSelectedChapterIndex] = useState(0)
   const [timelineCollapsed, setTimelineCollapsed] = useState(false)
   const [beatSheetId, setBeatSheetId] = useState<BeatSheetId>(
     initialOutline?.beat_sheet_id ?? (intakeData?.beatSheet as BeatSheetId | null) ?? 'three-act'
   )
+  const [regenerateOpen, setRegenerateOpen] = useState(false)
+  const [approveOpen, setApproveOpen] = useState(false)
+  // Stores the full GeneratedOutline (with characters + locations) from the most
+  // recent stream — required for outline approval so characters/locations are seeded.
+  const [approveOutlineData, setApproveOutlineData] = useState<GeneratedOutline | null>(null)
 
   const { streamedContent, parsedOutline, isStreaming, error, startStream } =
     useOutlineStream(projectId)
@@ -46,6 +57,8 @@ export function OutlinePanel({
       toast.error(`Failed to save outline: ${result.error}`)
       return
     }
+    // Store the full generated outline for approval (has characters + locations)
+    setApproveOutlineData(parsedOutline)
     // Update local state with saved data
     setOutline({
       id: result.outlineId,
@@ -97,6 +110,33 @@ export function OutlinePanel({
       void startStream(intakeData)
     }
   }, [intakeData, startStream])
+
+  // Handle regeneration from RegenerateDialog
+  const handleRegenerate = useCallback(
+    (level: 'full' | 'directed' | 'chapter', direction?: string) => {
+      if (!intakeData) {
+        toast.error('Intake data not available for regeneration')
+        return
+      }
+      if (level === 'full') {
+        void startStream(intakeData)
+      } else if (level === 'directed') {
+        void startStream(intakeData, direction)
+      } else if (level === 'chapter') {
+        // Per-chapter regeneration: pass direction with chapter context
+        const chapterHint = selectedChapterIndex !== undefined
+          ? `[Regenerate chapter ${selectedChapterIndex + 1} only] ${direction ?? ''}`
+          : direction
+        void startStream(intakeData, chapterHint?.trim() || undefined)
+      }
+    },
+    [intakeData, startStream, selectedChapterIndex]
+  )
+
+  // Navigate to story bible after outline approval
+  const handleApproved = useCallback(() => {
+    router.push(`/projects/${projectId}/story-bible`)
+  }, [router, projectId])
 
   const beatSheet = getBeatSheetById(beatSheetId)
 
@@ -175,14 +215,26 @@ export function OutlinePanel({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Approve Outline button — leads to Plan 07 */}
-          <button
-            disabled
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
-            title="Coming in Plan 07"
-          >
-            Approve Outline
-          </button>
+          {outline.status !== 'approved' && intakeData && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRegenerateOpen(true)}
+              disabled={isStreaming}
+            >
+              Regenerate
+            </Button>
+          )}
+          {outline.status !== 'approved' && (
+            <Button
+              size="sm"
+              onClick={() => setApproveOpen(true)}
+              disabled={isStreaming || !approveOutlineData}
+              title={!approveOutlineData ? 'Generate or regenerate the outline first to enable approval' : undefined}
+            >
+              Approve Outline
+            </Button>
+          )}
         </div>
       </div>
 
@@ -245,6 +297,30 @@ export function OutlinePanel({
           )}
         </div>
       </div>
+
+      {/* Regeneration dialog */}
+      {intakeData && (
+        <RegenerateDialog
+          projectId={projectId}
+          intakeData={intakeData}
+          selectedChapterIndex={selectedChapterIndex}
+          open={regenerateOpen}
+          onOpenChange={setRegenerateOpen}
+          onRegenerate={handleRegenerate}
+        />
+      )}
+
+      {/* Approval dialog — only renders when we have the full GeneratedOutline from this session */}
+      {outline.status !== 'approved' && approveOutlineData && (
+        <ApproveDialog
+          projectId={projectId}
+          outlineId={outline.id}
+          outlineData={approveOutlineData}
+          open={approveOpen}
+          onOpenChange={setApproveOpen}
+          onApproved={handleApproved}
+        />
+      )}
     </div>
   )
 }

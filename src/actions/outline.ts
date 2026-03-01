@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { OutlineChapter, OutlineRow, BeatSheetId, NovelLength } from '@/types/database'
 import type { IntakeData } from '@/lib/validations/intake'
 import type { GeneratedOutline } from '@/lib/outline/schema'
+import { seedStoryBibleFromOutline } from '@/actions/story-bible'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -272,6 +273,88 @@ export async function updateOutlineChapter(
   }
 
   revalidatePath(`/projects/${projectId}/outline`)
+
+  return { success: true }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// approveOutline
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Approve the outline for a project.
+ *
+ * 1. Marks the outline status as 'approved' with an approved_at timestamp.
+ * 2. Seeds the story bible (characters and locations) from the outline data.
+ * 3. Transitions the project status from 'draft' to 'writing'.
+ * 4. Updates the project title from the outline title.
+ * 5. Revalidates affected paths.
+ *
+ * This is the critical state transition: draft → approved (outline), draft → writing (project).
+ */
+export async function approveOutline(
+  projectId: string,
+  outlineId: string,
+  outlineData: GeneratedOutline
+): Promise<{ success: true } | { error: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Verify project ownership
+  const isOwner = await verifyProjectOwnership(supabase, projectId, user.id)
+  if (!isOwner) {
+    return { error: 'Project not found or access denied' }
+  }
+
+  // 1. Mark outline as approved
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: approveError } = await (supabase as any)
+    .from('outlines')
+    .update({
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', outlineId)
+    .eq('project_id', projectId)
+
+  if (approveError) {
+    return { error: (approveError as { message?: string }).message ?? 'Failed to approve outline' }
+  }
+
+  // 2. Seed story bible from outline data (OUTL-05)
+  const seedResult = await seedStoryBibleFromOutline(projectId, outlineData)
+  if ('error' in seedResult) {
+    return { error: `Failed to populate story bible: ${seedResult.error}` }
+  }
+
+  // 3. Transition project status to 'writing' and update title from outline
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: projectUpdateError } = await (supabase as any)
+    .from('projects')
+    .update({
+      status: 'writing',
+      title: outlineData.title,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', projectId)
+
+  if (projectUpdateError) {
+    // Log but don't fail — outline approval and story bible seeding already succeeded
+    console.error('Failed to update project status to writing:', projectUpdateError)
+  }
+
+  // 4. Revalidate all affected paths
+  revalidatePath(`/projects/${projectId}/outline`)
+  revalidatePath(`/projects/${projectId}/story-bible`)
+  revalidatePath('/dashboard')
 
   return { success: true }
 }
