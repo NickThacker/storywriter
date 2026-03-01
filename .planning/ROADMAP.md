@@ -53,11 +53,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] 02-02-PLAN.md — Static data files, Zustand intake store, CardPicker component (Wave 1)
 - [ ] 02-03-PLAN.md — Intake wizard UI: 5 creative steps, premise input, review screen (Wave 2)
 - [ ] 02-04-PLAN.md — Intake server actions, premise prefill API, project page router (Wave 2)
+- [ ] 02-08-PLAN.md — Story bible page: tabbed view, character/location CRUD, world facts (Wave 2)
 - [ ] 02-05-PLAN.md — Outline generation SSE route, streaming hook, outline CRUD actions (Wave 3)
-- [ ] 02-06-PLAN.md — Outline viewer/editor: two-panel layout, inline edit, beat sheet overlay (Wave 3)
-- [ ] 02-07-PLAN.md — Outline regeneration, approval flow, story bible seeding (Wave 4)
-- [ ] 02-08-PLAN.md — Story bible page: tabbed view, character/location CRUD, world facts (Wave 4)
-- [ ] 02-09-PLAN.md — End-to-end verification checkpoint (Wave 5)
+- [ ] 02-06-PLAN.md — Outline viewer/editor: two-panel layout, inline edit, beat sheet overlay (Wave 4)
+- [ ] 02-07-PLAN.md — Outline regeneration, approval flow, story bible seeding (Wave 5)
+- [ ] 02-09-PLAN.md — End-to-end verification checkpoint (Wave 6)
 
 ### Phase 3: Chapter Generation
 **Goal**: Users can generate chapters one at a time and watch prose stream in real time, with full chapter management and visible progress through the novel
