@@ -5,6 +5,15 @@ export type ProjectStatus = 'draft' | 'writing' | 'complete'
 export type SubscriptionTier = 'none' | 'hosted'
 export type TaskType = 'outline' | 'prose' | 'editing'
 
+// ------- Phase 2 story bible enum types -------
+
+export type CharacterRole = 'protagonist' | 'antagonist' | 'supporting' | 'minor'
+export type CharacterSource = 'ai' | 'manual'
+export type WorldFactCategory = 'timeline' | 'rule' | 'lore' | 'relationship'
+export type OutlineStatus = 'draft' | 'approved'
+export type BeatSheetId = 'save-the-cat' | 'three-act' | 'heros-journey' | 'romancing-the-beat'
+export type NovelLength = 'short' | 'standard' | 'epic'
+
 // ------- Row types (what you get back from SELECT) -------
 
 export interface UserSettingsRow {
@@ -34,6 +43,69 @@ export interface ProjectRow {
   chapter_count: number
   chapters_done: number
   story_bible: Record<string, unknown>
+  intake_data: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
+}
+
+// ------- Phase 2 story bible row types -------
+
+export interface OutlineChapter {
+  number: number
+  title: string
+  summary: string
+  beats: string[]
+  characters_featured: string[]
+  beat_sheet_mapping: string
+  act: number
+}
+
+export interface CharacterRow {
+  id: string
+  project_id: string
+  name: string
+  role: CharacterRole
+  one_line: string | null
+  appearance: string | null
+  backstory: string | null
+  personality: string | null
+  voice: string | null
+  motivations: string | null
+  arc: string | null
+  source: CharacterSource
+  created_at: string
+  updated_at: string
+}
+
+export interface LocationRow {
+  id: string
+  project_id: string
+  name: string
+  description: string | null
+  significance: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WorldFactRow {
+  id: string
+  project_id: string
+  category: WorldFactCategory
+  fact: string
+  created_at: string
+  updated_at: string
+}
+
+export interface OutlineRow {
+  id: string
+  project_id: string
+  beat_sheet_id: BeatSheetId
+  target_length: NovelLength
+  chapter_count: number
+  chapters: OutlineChapter[]
+  previous_chapters: OutlineChapter[] | null
+  status: OutlineStatus
+  approved_at: string | null
   created_at: string
   updated_at: string
 }
@@ -60,6 +132,47 @@ export type ProjectInsert = Omit<ProjectRow, 'id' | 'created_at' | 'updated_at'>
   chapter_count?: number
   chapters_done?: number
   story_bible?: Record<string, unknown>
+  intake_data?: Record<string, unknown> | null
+  created_at?: string
+  updated_at?: string
+}
+
+// ------- Phase 2 insert types -------
+
+export type CharacterInsert = Omit<CharacterRow, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  one_line?: string | null
+  appearance?: string | null
+  backstory?: string | null
+  personality?: string | null
+  voice?: string | null
+  motivations?: string | null
+  arc?: string | null
+  source?: CharacterSource
+  created_at?: string
+  updated_at?: string
+}
+
+export type LocationInsert = Omit<LocationRow, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  description?: string | null
+  significance?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type WorldFactInsert = Omit<WorldFactRow, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type OutlineInsert = Omit<OutlineRow, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  chapters?: OutlineChapter[]
+  previous_chapters?: OutlineChapter[] | null
+  status?: OutlineStatus
+  approved_at?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -76,6 +189,24 @@ export type UserModelPreferenceUpdate = Partial<
 
 export type ProjectUpdate = Partial<
   Omit<ProjectRow, 'id' | 'user_id' | 'created_at'>
+>
+
+// ------- Phase 2 update types -------
+
+export type CharacterUpdate = Partial<
+  Omit<CharacterRow, 'id' | 'project_id' | 'created_at'>
+>
+
+export type LocationUpdate = Partial<
+  Omit<LocationRow, 'id' | 'project_id' | 'created_at'>
+>
+
+export type WorldFactUpdate = Partial<
+  Omit<WorldFactRow, 'id' | 'project_id' | 'created_at'>
+>
+
+export type OutlineUpdate = Partial<
+  Omit<OutlineRow, 'id' | 'project_id' | 'created_at'>
 >
 
 // ------- Supabase Relationship type (used in Database generic) -------
@@ -112,6 +243,30 @@ export type Database = {
         Update: ProjectUpdate
         Relationships: GenericRelationship[]
       }
+      characters: {
+        Row: CharacterRow
+        Insert: CharacterInsert
+        Update: CharacterUpdate
+        Relationships: GenericRelationship[]
+      }
+      locations: {
+        Row: LocationRow
+        Insert: LocationInsert
+        Update: LocationUpdate
+        Relationships: GenericRelationship[]
+      }
+      world_facts: {
+        Row: WorldFactRow
+        Insert: WorldFactInsert
+        Update: WorldFactUpdate
+        Relationships: GenericRelationship[]
+      }
+      outlines: {
+        Row: OutlineRow
+        Insert: OutlineInsert
+        Update: OutlineUpdate
+        Relationships: GenericRelationship[]
+      }
     }
     Views: {
       [_ in never]: never
@@ -133,3 +288,10 @@ export type Database = {
 export type UserSettings = UserSettingsRow
 export type UserModelPreference = UserModelPreferenceRow
 export type Project = ProjectRow
+
+// ------- Phase 2 convenience aliases -------
+
+export type Character = CharacterRow
+export type Location = LocationRow
+export type WorldFact = WorldFactRow
+export type Outline = OutlineRow
