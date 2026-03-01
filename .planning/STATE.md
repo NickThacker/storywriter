@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T18:55:55.203Z"
+last_updated: "2026-03-01T19:09:34Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 16
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 01.1 of 5 (Remove n8n — complete)
-Plan: 1 of 1 in current phase (complete)
-Status: Ready for Phase 2
-Last activity: 2026-03-01 — Completed 01.1-01 (n8n removal — delete webhook client, clean env, update downstream planning docs)
+Phase: 02-guided-intake-and-outline (active)
+Plan: 1 of 8 complete in current phase
+Status: In progress — Plan 02-01 complete, continuing to 02-02
+Last activity: 2026-03-01 — Completed 02-01 (story bible schema migration, TypeScript types, Zustand verified)
 
-Progress: [██████░░░░] 22%
+Progress: [██████░░░░] 25%
 
 ## Performance Metrics
 
@@ -42,10 +42,11 @@ Progress: [██████░░░░] 22%
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 23 min | 5 min |
 | 01.1-remove-n8n | 1 | 2 min | 2 min |
+| 02-guided-intake-and-outline | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 6 min, 6 min, 3 min, 3 min, 2 min
-- Trend: Stable
+- Last 5 plans: 6 min, 6 min, 3 min, 2 min, 2 min
+- Trend: Stable (fast)
 
 ## Accumulated Context
 
@@ -74,11 +75,16 @@ Recent decisions affecting current work:
 - [Phase 01-05]: testApiKey validates OpenRouter /api/v1/models server-side only — raw API key never enters browser network tab; BYOK pattern enforced across all settings server actions
 - [Phase 01-05]: Model selector auto-saves via useDebouncedCallback (600ms) per task — aligns with PROJ-05 auto-save pattern, eliminates explicit Save Preferences button
 - [Phase 01.1]: n8n removed from codebase — all AI orchestration goes through Next.js Route Handlers + Server Actions calling OpenRouter directly
+- [Phase 02-01]: Normalized tables (characters, locations, world_facts, outlines) chosen over JSONB for story bible — enables selective context injection in Phase 3
+- [Phase 02-01]: characters.source ('ai'|'manual') tracks edit origin — prevents outline regeneration from overwriting manual user edits
+- [Phase 02-01]: One outline per project enforced via unique constraint on outlines.project_id — simplifies all outline queries
+- [Phase 02-01]: intake_data added to projects table (not separate table) — wizard answers naturally scoped to project, no join needed
 
 ### Pending Todos
 
 - User must set up Supabase project, enable Vault extension, and populate .env.local before running app against real DB
-- Run supabase/migrations/00001_initial_schema.sql in Supabase SQL editor to create tables
+- Run supabase/migrations/00001_initial_schema.sql in Supabase SQL editor to create initial tables
+- Run supabase/migrations/00002_story_bible_tables.sql in Supabase SQL editor to create story bible tables (characters, locations, world_facts, outlines)
 
 ### Roadmap Evolution
 
@@ -87,11 +93,11 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - [Pre-Phase 3]: Vercel Fluid Compute vs. self-host deployment decision must be made before Phase 3 begins (streaming chapters take 60-300s; hits Vercel 60s function limit on standard plans)
-- [Phase 2 planning]: Optimal story bible schema for context injection not yet defined — needs definition during Phase 2 planning to avoid the "full context in every prompt" performance trap after chapter 10+
+- [Phase 2 planning]: Optimal story bible schema for context injection — RESOLVED in 02-01: normalized tables with project_id indexes enable selective injection per chapter
 - [Phase 5 planning]: DOCX generation library not yet selected (docx.js pure-JS vs. pandoc headless); needs brief research during Phase 5 planning for serverless compatibility
 
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 01.1-01-PLAN.md — n8n removal (webhook client deleted, health route simplified, env cleaned, 02-04 plan updated for direct OpenRouter)
+Stopped at: Completed 02-01-PLAN.md — story bible schema migration, TypeScript types for 4 new tables, Zustand verified (2 min)
 Resume file: None

@@ -41,8 +41,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **CHAR-01**: User can create character profiles with structured fields (name, appearance, backstory, voice, role)
 - [ ] **CHAR-02**: User can edit character profiles at any time during the writing process
-- [ ] **CHAR-03**: Story bible tracks characters, locations, timeline, and established world facts
-- [ ] **CHAR-04**: Story bible context is automatically injected into every chapter generation prompt
+- [x] **CHAR-03**: Story bible tracks characters, locations, timeline, and established world facts
+- [x] **CHAR-04**: Story bible context is automatically injected into every chapter generation prompt
 
 ### Chapter Generation
 
@@ -145,8 +145,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUTL-05 | Phase 2 | Pending |
 | CHAR-01 | Phase 2 | Pending |
 | CHAR-02 | Phase 2 | Pending |
-| CHAR-03 | Phase 2 | Pending |
-| CHAR-04 | Phase 2 | Pending |
+| CHAR-03 | Phase 2 | Complete |
+| CHAR-04 | Phase 2 | Complete |
 | CHAP-01 | Phase 3 | Pending |
 | CHAP-02 | Phase 3 | Pending |
 | CHAP-03 | Phase 3 | Pending |
