@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T19:38:40.354Z"
+last_updated: "2026-03-01T19:46:17.031Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 02-guided-intake-and-outline (active)
-Plan: 6 of 9 complete in current phase
-Status: In progress — Plan 06 (Outline viewer/editor UI) complete
-Last activity: 2026-03-01 — Completed 02-06 (two-panel outline UI, inline editing, beat sheet overlay, timeline)
+Plan: 7 of 9 complete in current phase
+Status: In progress — Plan 07 (Outline regeneration dialog, approval flow, story bible seeding) complete
+Last activity: 2026-03-01 — Completed 02-07 (regeneration dialog, approveOutline action, seedStoryBibleFromOutline)
 
-Progress: [████████████] 81%
+Progress: [█████████████] 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 4 min
 - Total execution time: ~0.5 hours
 
@@ -49,6 +49,7 @@ Progress: [████████████] 81%
 - Trend: Stable (fast)
 | Phase 02-guided-intake-and-outline P05 | 2 | 3 tasks | 5 files |
 | Phase 02-guided-intake-and-outline P06 | 8 | 3 tasks | 8 files |
+| Phase 02-guided-intake-and-outline P07 | 5 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 02-06]: Optimistic chapter edits: setOutline locally then server action — no revalidatePath per research pitfall 6 (avoids selection state reset)
 - [Phase 02-06]: InlineEditable uses reveal-on-click input (not contentEditable) — avoids React cursor/paste/re-render conflicts per research recommendation
 - [Phase 02-06]: BeatSheetOverlay beat sheet switching is comparison-only (view-only) — does not regenerate outline
+- [Phase 02-guided-intake-and-outline]: Approve button is session-gated — enabled only after stream completes in current session (parsedOutline available)
+- [Phase 02-guided-intake-and-outline]: Location seeding is delete-all-then-insert — locations table has no source column so AI/manual distinction is not possible
+- [Phase 02-guided-intake-and-outline]: seedStoryBibleFromOutline: source-aware character merge (manual=fill-nulls-only, ai=full-update, new=insert-with-source-ai)
 
 ### Pending Todos
 
@@ -122,5 +126,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-06-PLAN.md — Outline viewer/editor UI: two-panel layout, inline editing, beat sheet overlay, timeline visualization
+Stopped at: Completed 02-07-PLAN.md — Outline regeneration controls (three levels), approval flow, seedStoryBibleFromOutline (OUTL-05)
 Resume file: None

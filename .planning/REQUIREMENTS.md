@@ -35,7 +35,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **OUTL-02**: User can review the generated outline before writing begins
 - [x] **OUTL-03**: User can edit the outline — adjust chapter structure, plot beats, and pacing
 - [x] **OUTL-04**: User sets target novel length and chapter count
-- [ ] **OUTL-05**: Approved outline populates the story bible with characters, locations, and plot beats
+- [x] **OUTL-05**: Approved outline populates the story bible with characters, locations, and plot beats
 
 ### Characters & Story Bible
 
@@ -142,7 +142,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OUTL-02 | Phase 2 | Complete |
 | OUTL-03 | Phase 2 | Complete |
 | OUTL-04 | Phase 2 | Complete |
-| OUTL-05 | Phase 2 | Pending |
+| OUTL-05 | Phase 2 | Complete |
 | CHAR-01 | Phase 2 | Complete |
 | CHAR-02 | Phase 2 | Complete |
 | CHAR-03 | Phase 2 | Complete |
