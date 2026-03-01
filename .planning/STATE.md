@@ -72,13 +72,16 @@ Recent decisions affecting current work:
 - [Phase 01-05]: deleteApiKey clears vault reference in user_settings only — vault.secrets is a separate Postgres schema not in Database type; orphaned secrets handled by cleanup job in production
 - [Phase 01-05]: testApiKey validates OpenRouter /api/v1/models server-side only — raw API key never enters browser network tab; BYOK pattern enforced across all settings server actions
 - [Phase 01-05]: Model selector auto-saves via useDebouncedCallback (600ms) per task — aligns with PROJ-05 auto-save pattern, eliminates explicit Save Preferences button
+- [Phase 01.1]: n8n removed from codebase — all AI orchestration goes through Next.js Route Handlers + Server Actions calling OpenRouter directly
 
 ### Pending Todos
 
 - User must set up Supabase project, enable Vault extension, and populate .env.local before running app against real DB
 - Run supabase/migrations/00001_initial_schema.sql in Supabase SQL editor to create tables
-- Set N8N_BASE_URL and N8N_WEBHOOK_SECRET in .env.local to test n8n pipeline
-- Create n8n test workflow (POST /webhook/test with IF node secret validation) to exercise /api/n8n/test
+
+### Roadmap Evolution
+
+- Phase 01.1 inserted after Phase 1: Remove n8n (URGENT) — n8n adds complexity the project systematically works around. 30s webhook timeout blocks all heavy AI tasks (outline 60-120s, chapters 60-300s). Streaming can't relay through webhooks. All generation already routes directly through Next.js → OpenRouter. Removing n8n simplifies to Next.js + Supabase + OpenRouter only.
 
 ### Blockers/Concerns
 
