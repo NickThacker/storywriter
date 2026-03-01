@@ -25,8 +25,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Guided Intake
 
 - [x] **INTK-01**: User is guided through a multi-step interview (genre, themes, characters, setting, tone) when starting a new novel
-- [ ] **INTK-02**: User can paste an existing premise/logline instead of using the interview
-- [ ] **INTK-03**: User can review and adjust interview answers before outline generation begins
+- [x] **INTK-02**: User can paste an existing premise/logline instead of using the interview
+- [x] **INTK-03**: User can review and adjust interview answers before outline generation begins
 - [x] **INTK-04**: Interview uses decision-driven UI (structured options, not open-ended text boxes)
 
 ### Outline Generation
@@ -135,8 +135,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LLM-03 | Phase 1 | Complete |
 | LLM-04 | Phase 1 | Complete |
 | INTK-01 | Phase 2 | Complete |
-| INTK-02 | Phase 2 | Pending |
-| INTK-03 | Phase 2 | Pending |
+| INTK-02 | Phase 2 | Complete |
+| INTK-03 | Phase 2 | Complete |
 | INTK-04 | Phase 2 | Complete |
 | OUTL-01 | Phase 2 | Pending |
 | OUTL-02 | Phase 2 | Pending |
