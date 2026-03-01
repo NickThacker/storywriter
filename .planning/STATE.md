@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T19:22:01.625Z"
+last_updated: "2026-03-01T19:27:27.989Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 16
-  completed_plans: 12
+  completed_plans: 13
 ---
 
 # Project State
@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 02-guided-intake-and-outline (active)
-Plan: 8 of 8 complete in current phase
-Status: Phase complete — all 8 plans executed, Phase 2 done
-Last activity: 2026-03-01 — Completed 02-08 (story bible page, tabbed layout, character/location/world-fact CRUD)
+Plan: 5 of 9 complete in current phase
+Status: In progress — Plan 05 (AI outline generation pipeline) complete
+Last activity: 2026-03-01 — Completed 02-05 (SSE streaming route handler, useOutlineStream hook, outline server actions)
 
 Progress: [██████████] 75%
 
@@ -47,6 +47,7 @@ Progress: [██████████] 75%
 **Recent Trend:**
 - Last 5 plans: 3 min, 2 min, 8 min, 6 min, 7 min
 - Trend: Stable (fast)
+| Phase 02-guided-intake-and-outline P05 | 2 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,9 @@ Recent decisions affecting current work:
 - [Phase 02-08]: Dialog (not AlertDialog/Sheet) used for all confirmations — Sheet/AlertDialog not installed in this project
 - [Phase 02-08]: CharacterCard expands inline within card grid — Sheet component unavailable, keeps editing in-context
 - [Phase 02-08]: Auto-save via useDebouncedCallback (600ms) for character and location editors — consistent with model-selector.tsx pattern established in Phase 1
+- [Phase 02-05]: force-dynamic directive on outline route handler prevents Vercel from caching SSE response
+- [Phase 02-05]: Default outline model set to anthropic/claude-sonnet-4-5 from user_model_preferences
+- [Phase 02-05]: previous_chapters snapshot captured on every saveOutline regeneration to preserve outline history
 
 ### Pending Todos
 
@@ -114,5 +118,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-08-PLAN.md — story bible page with tabbed layout, CRUD server actions, character/location/world-fact components
+Stopped at: Completed 02-05-PLAN.md — AI outline generation pipeline: SSE route handler, useOutlineStream hook, outline server actions
 Resume file: None

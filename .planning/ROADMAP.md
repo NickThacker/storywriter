@@ -58,7 +58,7 @@ Plans:
   3. AI generates a full novel outline (chapters, plot beats, character arcs) from the intake data for user review; user can set target length and chapter count
   4. User can edit the generated outline — adjusting chapter structure, plot beats, and pacing — before approving it
   5. After approving the outline, user sees a populated story bible with characters, locations, and plot beats stored and ready to inject into chapter generation
-**Plans:** 3/9 plans executed
+**Plans:** 6/9 plans executed
 - [ ] 02-01-PLAN.md — Story bible DB schema, TypeScript types, Zustand install (Wave 1)
 - [ ] 02-02-PLAN.md — Static data files, Zustand intake store, CardPicker component (Wave 1)
 - [ ] 02-03-PLAN.md — Intake wizard UI: 5 creative steps, premise input, review screen (Wave 2)
@@ -111,7 +111,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/6 | In Progress|  |
 | 01.1 Remove n8n | 1/1 | Complete    | 2026-03-01 |
-| 2. Guided Intake and Outline | 3/9 | In Progress|  |
+| 2. Guided Intake and Outline | 6/9 | In Progress|  |
 | 3. Chapter Generation | 0/TBD | Not started | - |
 | 4. Creative Checkpoints | 0/TBD | Not started | - |
 | 5. Export and Billing | 0/TBD | Not started | - |
