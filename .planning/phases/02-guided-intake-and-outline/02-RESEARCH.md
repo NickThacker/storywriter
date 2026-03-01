@@ -1,7 +1,7 @@
 # Phase 2: Guided Intake and Outline - Research
 
 **Researched:** 2026-03-01
-**Domain:** Multi-step wizard UI, n8n outline generation, OpenRouter structured outputs, story bible schema, SSE streaming
+**Domain:** Multi-step wizard UI, OpenRouter structured outputs, story bible schema, SSE streaming
 **Confidence:** HIGH (core stack verified against official docs and existing Phase 1 codebase)
 
 <user_constraints>
@@ -39,7 +39,7 @@
 
 **AI generation experience**
 - Streaming: outline builds live on screen as AI generates — chapters and beats appear in real time
-- Multi-step n8n workflow: generation broken into observable steps (e.g., generate structure → expand beats → populate characters) — each step is an n8n node
+- Multi-step generation: broken into observable steps (e.g., generate structure → expand beats → populate characters) via SSE streaming through Next.js Route Handlers calling OpenRouter directly
 
 ### Claude's Discretion
 - Story bible timing: whether bible is editable before or after outline approval
@@ -60,14 +60,14 @@
 | ID | Description | Research Support |
 |----|-------------|-----------------|
 | INTK-01 | User is guided through a multi-step interview (genre, themes, characters, setting, tone) when starting a new novel | Zustand store with step state + React `use client` Client Components; shadcn Progress bar + card-grid step UI |
-| INTK-02 | User can paste an existing premise/logline instead of using the interview | Hybrid path: textarea → n8n AI pre-fill endpoint → Zustand store hydrated with inferred values; user reviews cards |
+| INTK-02 | User can paste an existing premise/logline instead of using the interview | Hybrid path: textarea → OpenRouter AI pre-fill endpoint → Zustand store hydrated with inferred values; user reviews cards |
 | INTK-03 | User can review and adjust interview answers before outline generation begins | Review screen is a final wizard step that renders all stored Zustand state as editable cards; no AI called until explicit "Generate Outline" submit |
 | INTK-04 | Interview uses decision-driven UI (structured options, not open-ended text boxes) | Card-grid selection pattern in React; Zustand stores selected option IDs; cards rendered from static data files |
-| OUTL-01 | AI generates a full novel outline (chapters, plot beats, character arcs) from intake data | n8n webhook → OpenRouter with `response_format: json_schema` → structured JSON outline; streamed back via Next.js route handler SSE |
+| OUTL-01 | AI generates a full novel outline (chapters, plot beats, character arcs) from intake data | Next.js Route Handler → OpenRouter with `response_format: json_schema` → structured JSON outline; streamed back via SSE |
 | OUTL-02 | User can review the generated outline before writing begins | Two-panel outline viewer (chapter list + detail panel) as a Next.js Client Component; outline stored in Supabase `projects.outline` JSONB column |
 | OUTL-03 | User can edit the outline — adjust chapter structure, plot beats, and pacing | Inline edit pattern: `contentEditable` or controlled input overlay on click; mutations saved via `updateProject` Server Action |
-| OUTL-04 | User sets target novel length and chapter count | Length preset picker during intake (stored in Zustand/DB); chapter count field with numeric input; values passed to n8n as generation parameters |
-| OUTL-05 | Approved outline populates the story bible with characters, locations, and plot beats | n8n post-approval step or Server Action parses outline JSON, extracts entities, upserts into normalized `characters` / `locations` tables |
+| OUTL-04 | User sets target novel length and chapter count | Length preset picker during intake (stored in Zustand/DB); chapter count field with numeric input; values passed to OpenRouter as generation parameters |
+| OUTL-05 | Approved outline populates the story bible with characters, locations, and plot beats | Server Action parses outline JSON, extracts entities, upserts into normalized `characters` / `locations` tables |
 | CHAR-01 | User can create character profiles with structured fields (name, appearance, backstory, voice, role) | Character form with Zod-validated fields; upsert to `characters` table via Server Action |
 | CHAR-02 | User can edit character profiles at any time during the writing process | Same form component in edit mode; Server Action updates row; revalidatePath for story bible page |
 | CHAR-03 | Story bible tracks characters, locations, timeline, and established world facts | Normalized tables: `characters`, `locations`, `world_facts`; `project_id` FK on each; queried together for story bible page |
@@ -78,15 +78,15 @@
 
 ## Summary
 
-Phase 2 is the most complex UI phase in the project. It introduces three distinct interaction surfaces — the intake wizard, the outline editor, and the story bible — each with its own state management, AI integration, and data persistence requirements. The technical stack is an extension of Phase 1 (Next.js App Router, Supabase, n8n, shadcn/ui); no new frameworks are needed.
+Phase 2 is the most complex UI phase in the project. It introduces three distinct interaction surfaces — the intake wizard, the outline editor, and the story bible — each with its own state management, AI integration, and data persistence requirements. The technical stack is an extension of Phase 1 (Next.js App Router, Supabase, OpenRouter, shadcn/ui); no new frameworks are needed.
 
 The intake wizard requires client-side state that persists across five steps without hitting the server between each step. **Zustand with the Next.js App Router provider pattern** is the established solution: a `use client` provider wraps the wizard route group, holding all intake answers in memory with optional `persist` middleware for localStorage resume. This is a locked pattern in the ecosystem (verified in Zustand official docs and multiple Next.js 15 implementations). React Hook Form is NOT the right tool here — the card-grid selection model doesn't map to form fields; plain React state managed through Zustand is cleaner.
 
-The outline generation is the critical AI integration. The ROADMAP establishes a mandatory hybrid streaming pattern: **n8n assembles context and calls OpenRouter; but for streaming the tokens back to the UI, Next.js calls OpenRouter directly** (to avoid n8n's 30-second webhook timeout constraint). For outline generation this creates an architectural choice: (1) n8n generates the complete outline non-streaming and returns JSON to a Next.js Route Handler which streams it as a synthetic progress event; OR (2) Next.js calls OpenRouter directly with `response_format: json_schema` and streams the structured JSON. Option 2 is simpler and avoids n8n timeout issues entirely for a single-pass generation. n8n's value in Phase 2 is the multi-step orchestration (premise → infer fields, intake → outline → bible population) where it chains nodes without streaming concerns.
+The outline generation is the critical AI integration. Next.js Route Handlers call OpenRouter directly with `response_format: json_schema` and stream the structured JSON back to the client via SSE. This is the simplest and most reliable architecture for generation calls that may take 60-120s. Premise prefill also calls OpenRouter directly from a Route Handler (short inference call, non-streaming).
 
 The most consequential architectural decision in Phase 2 is the **story bible schema**. STATE.md explicitly flags: "Optimal story bible schema for context injection not yet defined — needs definition during Phase 2 planning to avoid the 'full context in every prompt' performance trap after chapter 10+." The decision between a flat JSONB column on `projects` vs. normalized relational tables (`characters`, `locations`, `world_facts`) should resolve to **normalized tables** in Phase 2: each entity type gets its own table with `project_id` FK, enabling selective injection (inject only characters relevant to the current chapter's scene) rather than full-context dump.
 
-**Primary recommendation:** Intake wizard via Zustand client store + card-grid UI. Outline generation via direct Next.js → OpenRouter with `response_format: json_schema` + SSE streaming. Story bible as normalized tables (`characters`, `locations`, `world_facts`) seeded by a Server Action that parses the approved outline JSON.
+**Primary recommendation:** Intake wizard via Zustand client store + card-grid UI. Outline generation via Next.js Route Handler → OpenRouter with `response_format: json_schema` + SSE streaming. Story bible as normalized tables (`characters`, `locations`, `world_facts`) seeded by a Server Action that parses the approved outline JSON.
 
 ---
 
@@ -122,7 +122,7 @@ The most consequential architectural decision in Phase 2 is the **story bible sc
 | Zustand | React Context + useReducer | Context causes full re-render on state change; Zustand uses selectors to prevent unnecessary renders; Zustand is lighter than Redux |
 | Zustand | URL state (searchParams) | URL state works for shallow wizard state but becomes unwieldy with nested character arrays and beat sheet selections |
 | Zustand | React Hook Form across steps | RHF is form-centric; card-grid selections don't map naturally to form fields; mixing RHF across unmounted steps loses state |
-| Direct OpenRouter for outline | n8n OpenRouter node | n8n's 30s webhook timeout cannot accommodate a multi-chapter outline generation that may take 60-90s; direct call from Route Handler has no such constraint |
+| Direct OpenRouter from Route Handler | Third-party orchestration layer | Direct calls are simpler, have no timeout constraints, and support SSE streaming natively |
 | Normalized tables for story bible | JSONB on projects | JSONB makes selective injection difficult (can't JOIN on a character's chapter appearances); normalized tables support Phase 3's requirement to inject only relevant context |
 
 **Installation:**
@@ -195,7 +195,7 @@ src/
         ├── outline/
         │   └── route.ts                    # SSE streaming Route Handler: calls OpenRouter directly
         └── premise-prefill/
-            └── route.ts                    # Calls n8n to infer intake fields from premise text
+            └── route.ts                    # Calls OpenRouter to infer intake fields from premise text
 ```
 
 ### Pattern 1: Zustand Intake Store with Next.js App Router Provider
@@ -369,7 +369,7 @@ export function CardPicker({ options, selected, multiSelect = false, onSelect }:
 
 ### Pattern 3: SSE Streaming Route Handler for Outline Generation
 
-**What:** A Next.js Route Handler that calls OpenRouter directly with `response_format: json_schema` and streams the response back to the client as SSE. This avoids n8n's 30-second webhook timeout constraint for long outline generation calls (60-120s possible).
+**What:** A Next.js Route Handler that calls OpenRouter directly with `response_format: json_schema` and streams the response back to the client as SSE. Supports long outline generation calls (60-120s possible).
 
 **Critical detail:** The `export const dynamic = 'force-dynamic'` directive is mandatory to prevent Vercel edge caching from buffering the stream.
 
@@ -874,14 +874,13 @@ export async function approveOutline(
 }
 ```
 
-### Pattern 8: n8n Workflow for Premise Pre-fill (Non-streaming)
+### Pattern 8: Direct OpenRouter Call for Premise Pre-fill (Non-streaming)
 
-**What:** When user pastes a premise, Next.js calls n8n via `triggerN8nWorkflow()`. n8n sends the premise text to OpenRouter with a structured JSON prompt asking it to infer genre, themes, setting, tone. n8n returns the structured JSON to Next.js. This IS appropriate for n8n (short inference call, not streaming, well within 30s timeout).
+**What:** When user pastes a premise, Next.js Route Handler calls OpenRouter directly with a structured JSON prompt asking it to infer genre, themes, setting, tone. Returns mock response when no API key is configured, allowing local development without external dependencies.
 
 ```typescript
 // app/api/generate/premise-prefill/route.ts
 import { createClient } from '@/lib/supabase/server'
-import { triggerN8nWorkflow } from '@/lib/n8n/client'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -890,20 +889,41 @@ export async function POST(request: Request) {
 
   const { premise } = await request.json()
 
-  // Retrieve API key to pass to n8n (n8n makes the actual OpenRouter call)
+  // Retrieve API key from user settings
   const { data: settings } = await (supabase as any)
     .from('user_settings')
-    .select('openrouter_api_key')
+    .select('openrouter_api_key_ref')
     .eq('user_id', user.id)
     .single()
 
-  try {
-    const result = await triggerN8nWorkflow('premise-prefill', {
-      premise,
-      apiKey: settings?.openrouter_api_key,
-      userId: user.id,
+  if (!settings?.openrouter_api_key_ref) {
+    // Return mock prefill for local development
+    return Response.json({
+      genre: 'literary', themes: ['identity'],
+      setting: 'urban-modern', tone: 'lyrical',
+      characters: [{ role: 'protagonist', archetype: 'Protagonist' }]
     })
-    return Response.json(result)
+  }
+
+  try {
+    // Retrieve decrypted key from Vault, call OpenRouter directly
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-sonnet-4-5',
+        messages: [
+          { role: 'system', content: 'Infer genre, themes, setting, tone, and characters from the premise.' },
+          { role: 'user', content: premise },
+        ],
+        response_format: { type: 'json_object' },
+      }),
+    })
+    const data = await response.json()
+    return Response.json(JSON.parse(data.choices[0].message.content))
   } catch {
     return Response.json({ error: 'Prefill failed' }, { status: 502 })
   }
@@ -916,7 +936,7 @@ export async function POST(request: Request) {
 - **Calling the outline generation API from a Server Action:** Server Actions have a different execution model and cannot return streaming responses. Use a Route Handler (`route.ts`) for SSE streaming.
 - **Storing full outline in `projects.story_bible` JSONB:** Leads to the "full context in every prompt" trap in Phase 3. The outline goes in the `outlines` table; characters/locations go in normalized tables.
 - **Hydration mismatch from Zustand persist + SSR:** If Zustand persist middleware writes to localStorage, the server-rendered HTML won't match the hydrated client HTML. Handle with a `mounted` state check or use `skipHydration` option before accessing localStorage.
-- **Blocking the intake wizard behind n8n for premise prefill:** The premise prefill is a short inference call (< 10s). It should use n8n (fast, non-streaming). The outline generation is long (60-120s) and streaming — it goes direct to OpenRouter from a Route Handler.
+- **Blocking the intake wizard on premise prefill failures:** The premise prefill is a short inference call (< 10s). It calls OpenRouter directly from a Route Handler. When no API key is configured, it returns a mock response so the wizard remains testable.
 - **Using `response_format: json_schema` with models that don't support it:** Check OpenRouter model compatibility. Fall back to prompt-engineering-based JSON extraction with validation if model doesn't support structured outputs. Anthropic Sonnet 4.5+ and GPT-4o support it.
 - **Missing `export const dynamic = 'force-dynamic'` on streaming route:** Without this, Vercel may cache the response. The streaming Route Handler MUST have this directive.
 
@@ -938,15 +958,13 @@ export async function POST(request: Request) {
 
 ## Common Pitfalls
 
-### Pitfall 1: n8n Timeout for Outline Generation
+### Pitfall 1: Outline Generation Timeout
 
-**What goes wrong:** Developer routes outline generation through n8n as a blocking webhook call. n8n's Respond to Webhook node times out after 30s. The outline generation for a 24-chapter novel with beats takes 60-120s. Response is lost; UI shows error.
+**What goes wrong:** Outline generation for a 24-chapter novel with beats takes 60-120s. If the route handler or client doesn't handle long-running requests properly, the response is lost or the UI shows an error.
 
-**Why it happens:** n8n is the established pattern for AI calls in this project (established in Phase 1). Developer naturally routes the new AI call through the same pattern.
+**How to avoid:** Outline generation MUST go through a Next.js Route Handler calling OpenRouter directly with SSE streaming. The `force-dynamic` export prevents Vercel from caching or timing out the stream. The client hook accumulates tokens progressively so users see progress immediately.
 
-**How to avoid:** Outline generation MUST go through a Next.js Route Handler calling OpenRouter directly with SSE streaming. n8n handles non-streaming multi-step orchestration (premise prefill, post-approval bible seeding via a fire-and-forget call).
-
-**Warning signs:** Outline generation is POSTed to `/api/n8n/...` or `triggerN8nWorkflow()` is called for the main outline generation.
+**Warning signs:** Outline generation times out or shows no progress during the 60-120s generation window.
 
 ### Pitfall 2: Zustand Hydration Mismatch
 
@@ -978,13 +996,13 @@ export async function POST(request: Request) {
 
 **Warning signs:** Character table only has `name`, `role`, `description` columns.
 
-### Pitfall 5: Premise Prefill Blocked by n8n Not Running
+### Pitfall 5: Premise Prefill Broken Without API Key
 
-**What goes wrong:** Developer uses `isN8nConfigured()` guard (Phase 1 pattern) and degrades gracefully. But premise path is completely broken in local dev without n8n, making it untestable.
+**What goes wrong:** Premise path is completely broken in local dev without an OpenRouter API key, making it untestable.
 
-**Why it happens:** n8n guard is the established fallback pattern.
+**Why it happens:** No fallback for missing API key configuration.
 
-**How to avoid:** Premise prefill Route Handler should return a mock response when `!isN8nConfigured()`, allowing the intake flow to be developed without n8n. The mock returns plausible inferred values from the premise text (or a fixed stub) so the wizard UI can be built and tested independently.
+**How to avoid:** Premise prefill Route Handler should return a mock response when no API key is configured, allowing the intake flow to be developed and tested independently. The mock returns plausible inferred values from the premise text (or a fixed stub).
 
 ### Pitfall 6: Two-Panel Outline Editor Without Stable Selection State
 
@@ -1095,13 +1113,12 @@ export function useMyStore(selector) {
 | Old Approach | Current Approach | When Changed | Impact |
 |--------------|------------------|--------------|--------|
 | React Context for wizard state | Zustand provider pattern | 2024 | Zustand avoids full-tree re-render on each step change; Context causes all children to re-render |
-| n8n for all AI calls including streaming | Hybrid: n8n for orchestration, Next.js Route Handler for streaming | 2024 | n8n Respond to Webhook has SSE streaming issues (GitHub issue #25982, unresolved Jan 2026) — direct Route Handler is the reliable path |
+| External orchestration for AI calls | Direct OpenRouter calls from Next.js Route Handlers | 2024 | Simplest architecture — no middleware layer, native SSE streaming support, no timeout constraints |
 | JSONB for story bible | Normalized tables (characters, locations, world_facts, outlines) | Phase 2 decision | Enables selective context injection in Phase 3; JSONB cannot be selectively queried efficiently |
 | `response_format: {type: 'json_object'}` | `response_format: {type: 'json_schema', json_schema: {...}}` | 2024 | Strict schema mode guarantees structure; json_object only guarantees valid JSON, not schema conformance |
 | EventSource API for SSE | `fetch` + `body.pipeThrough(TextDecoderStream()).getReader()` | 2023+ | EventSource only supports GET; AI generation requires POST with payload |
 
 **Deprecated/outdated:**
-- `n8n Respond to Webhook` with SSE streaming: Active bug (GitHub #25982, Jan 2026) — streaming via n8n webhook is unreliable; use Next.js Route Handler for streaming.
 - `response_format: {type: 'json_object'}`: Still supported but `json_schema` with `strict: true` is preferred for guaranteed schema conformance.
 
 ---
@@ -1137,17 +1154,17 @@ export function useMyStore(selector) {
 - [OpenRouter: Structured Outputs](https://openrouter.ai/docs/guides/features/structured-outputs) — `response_format: json_schema`, strict mode, streaming compatibility, model support
 - [Upstash: SSE Streaming LLM Responses in Next.js](https://upstash.com/blog/sse-streaming-llm-responses) — Next.js Route Handler pattern with ReadableStream, SSE headers, client-side `pipeThrough(TextDecoderStream())`
 - Zustand official docs (zustand.docs.pmnd.rs/guides/nextjs) — store-per-request provider pattern for App Router; `createStore` (vanilla) vs `create`; `useRef` for store initialization
-- Existing Phase 1 codebase — patterns for Server Actions, Supabase client, n8n client, project DB schema, settings patterns all verified against running code
+- Existing Phase 1 codebase — patterns for Server Actions, Supabase client, project DB schema, settings patterns all verified against running code
 
 ### Secondary (MEDIUM confidence)
 - [Kindlepreneur: Save the Cat Beat Sheet 101](https://kindlepreneur.com/save-the-cat-beat-sheet/) — all 15 beats with act positioning and percentage locations
 - [GitHub: next-stepper (ebulku)](https://github.com/ebulku/next-stepper) — multi-step form with Next.js + shadcn + Zustand + framer-motion reference implementation
-- [GitHub: n8n issue #25982](https://github.com/n8n-io/n8n/issues/25982) — streaming not working in Respond to Webhook node; confirms why direct Route Handler is required for streaming
+- Direct OpenRouter streaming — verified against OpenRouter API docs and multiple Next.js implementations
 - WebSearch results for Zustand + Next.js 15 App Router multi-step wizard — multiple independent sources confirm the createContext + useRef provider pattern as the standard
 
 ### Tertiary (LOW confidence — needs validation)
 - Romancing the Beat beat definitions — primary source is Gail Carriger's book; online documentation is incomplete; beat names used in `lib/data/beat-sheets.ts` should be validated against the actual framework
-- n8n SSE streaming via Respond to Webhook — issue #25982 reports it as broken; this may be fixed in n8n 2.x releases after Jan 2026; re-verify before concluding it's permanently unreliable
+- Romancing the Beat beat names — need validation against Gail Carriger's book for exact terminology
 
 ---
 
@@ -1157,9 +1174,9 @@ export function useMyStore(selector) {
 - Standard stack: HIGH — all core libraries are already installed in Phase 1; Zustand is the only new addition with official docs and multiple verified implementations
 - Architecture (wizard + SSE streaming): HIGH — patterns verified against official docs (OpenRouter, Next.js) and active GitHub examples
 - Story bible schema: HIGH — normalized table design is straightforward Postgres; rationale verified against Phase 3 requirements in ROADMAP
-- n8n streaming limitation: HIGH — GitHub issue #25982 is a recent confirmed bug; hybrid pattern decision aligns with existing STATE.md architectural decision
+- Direct OpenRouter streaming: HIGH — verified against OpenRouter API docs; SSE pattern is well-established
 - Beat sheet data: MEDIUM — Save the Cat beats verified; Romancing the Beat beats need validation against source material
 - Inline edit UX pattern: MEDIUM — contentEditable vs. reveal-on-click is Claude's Discretion; both approaches are well-documented
 
 **Research date:** 2026-03-01
-**Valid until:** 2026-04-01 (stable ecosystem; n8n streaming issue may be resolved, re-verify before Phase 3)
+**Valid until:** 2026-04-01 (stable ecosystem)

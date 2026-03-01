@@ -43,7 +43,7 @@ Users can go from a blank idea to an approved novel outline with a populated sto
 
 ### AI generation experience
 - Streaming: outline builds live on screen as AI generates — chapters and beats appear in real time
-- Multi-step n8n workflow: generation broken into observable steps (e.g., generate structure → expand beats → populate characters) — each step is an n8n node
+- Multi-step generation: broken into observable steps (e.g., generate structure → expand beats → populate characters) via SSE streaming through Next.js Route Handlers calling OpenRouter directly
 
 ### Claude's Discretion
 - Story bible timing: whether bible is editable before or after outline approval
