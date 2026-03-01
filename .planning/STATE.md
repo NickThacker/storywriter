@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-02-28T22:36:33.428Z"
+last_updated: "2026-03-01T18:53:07.426Z"
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 3
+  completed_phases: 2
+  total_plans: 16
+  completed_plans: 7
 ---
 
 # Project State
@@ -18,32 +18,33 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Users can go from an idea to a complete, full-length novel through structured AI collaboration — with meaningful creative control at every step.
-**Current focus:** Phase 1 - Foundation
+**Current focus:** Phase 2 - Guided Intake and Outline
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation)
-Plan: 5 of 6 in current phase
-Status: In progress
-Last activity: 2026-02-28 — Completed 01-05 (settings page with BYOK API key management and per-task model preferences)
+Phase: 01.1 of 5 (Remove n8n — complete)
+Plan: 1 of 1 in current phase (complete)
+Status: Ready for Phase 2
+Last activity: 2026-03-01 — Completed 01.1-01 (n8n removal — delete webhook client, clean env, update downstream planning docs)
 
-Progress: [█████░░░░░] 20%
+Progress: [██████░░░░] 22%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 5 min
-- Total execution time: 0.4 hours
+- Total plans completed: 6
+- Average duration: 4 min
+- Total execution time: ~0.4 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 23 min | 5 min |
+| 01.1-remove-n8n | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 6 min, 6 min, 3 min, 3 min
+- Last 5 plans: 6 min, 6 min, 3 min, 3 min, 2 min
 - Trend: Stable
 
 ## Accumulated Context
@@ -91,6 +92,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 01-05-PLAN.md — Settings page with BYOK API key management and per-task model preferences
+Last session: 2026-03-01
+Stopped at: Completed 01.1-01-PLAN.md — n8n removal (webhook client deleted, health route simplified, env cleaned, 02-04 plan updated for direct OpenRouter)
 Resume file: None

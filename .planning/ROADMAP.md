@@ -43,7 +43,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Goal:** Strip n8n from the codebase — remove webhook client, test endpoint, env vars, and security perimeter code. All AI orchestration will go through Next.js Route Handlers + Server Actions directly.
 **Requirements**: None (cleanup/removal)
 **Depends on:** Phase 1
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 01.1-01-PLAN.md — Delete n8n source files, simplify health route, clean env/config, update downstream planning docs (Wave 1)
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/6 | In Progress|  |
-| 01.1 Remove n8n | 0/1 | Not started | - |
+| 01.1 Remove n8n | 1/1 | Complete   | 2026-03-01 |
 | 2. Guided Intake and Outline | 0/9 | Not started | - |
 | 3. Chapter Generation | 0/TBD | Not started | - |
 | 4. Creative Checkpoints | 0/TBD | Not started | - |
