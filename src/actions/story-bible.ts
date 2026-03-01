@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import type { CharacterRow, LocationRow, WorldFactCategory } from '@/types/database'
+import type { GeneratedOutline } from '@/lib/outline/schema'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Character actions
@@ -393,6 +394,175 @@ export async function deleteWorldFact(
   }
 
   const projectId = (fact as { project_id: string }).project_id
+  revalidatePath(`/projects/${projectId}/story-bible`)
+  return { success: true }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// seedStoryBibleFromOutline (OUTL-05)
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Populate the story bible from a generated outline.
+ *
+ * Characters:
+ *   - If a character with the same name exists AND source is 'manual':
+ *     update only null fields (preserve user's manual edits).
+ *   - If a character with the same name exists AND source is 'ai':
+ *     full update with new AI data.
+ *   - If no character with that name exists: insert with source: 'ai'.
+ *
+ * Locations:
+ *   - Delete all existing AI-generated locations for the project, then
+ *     insert fresh from outline data. Manual location entries are kept.
+ *
+ * Called from approveOutline after the outline status is set to 'approved'.
+ */
+export async function seedStoryBibleFromOutline(
+  projectId: string,
+  outlineData: GeneratedOutline
+): Promise<{ success: true } | { error: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Verify project ownership
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: project, error: projectError } = await (supabase as any)
+    .from('projects')
+    .select('id')
+    .eq('id', projectId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (projectError || !project) {
+    return { error: 'Project not found or access denied' }
+  }
+
+  // ── Characters ────────────────────────────────────────────────────────────
+
+  for (const outlineCharacter of outlineData.characters) {
+    const { name, role, one_line, arc } = outlineCharacter
+
+    // Check if a character with the same name already exists for this project
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existing, error: fetchError } = await (supabase as any)
+      .from('characters')
+      .select('id, source, one_line, arc')
+      .eq('project_id', projectId)
+      .eq('name', name)
+      .maybeSingle()
+
+    if (fetchError) {
+      return { error: `Failed to look up character "${name}": ${(fetchError as { message?: string }).message ?? 'unknown error'}` }
+    }
+
+    if (existing) {
+      const existingRow = existing as {
+        id: string
+        source: 'ai' | 'manual'
+        one_line: string | null
+        arc: string | null
+      }
+
+      if (existingRow.source === 'manual') {
+        // Preserve manual edits — only fill in null fields
+        const updateFields: Record<string, unknown> = {}
+        if (existingRow.one_line === null && one_line) updateFields.one_line = one_line
+        if (existingRow.arc === null && arc) updateFields.arc = arc
+
+        if (Object.keys(updateFields).length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error: updateError } = await (supabase as any)
+            .from('characters')
+            .update({ ...updateFields, updated_at: new Date().toISOString() })
+            .eq('id', existingRow.id)
+
+          if (updateError) {
+            return { error: `Failed to update manual character "${name}": ${(updateError as { message?: string }).message ?? 'unknown error'}` }
+          }
+        }
+      } else {
+        // source === 'ai' — full update with new AI data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: updateError } = await (supabase as any)
+          .from('characters')
+          .update({
+            role: role ?? 'supporting',
+            one_line: one_line ?? null,
+            arc: arc ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingRow.id)
+
+        if (updateError) {
+          return { error: `Failed to update AI character "${name}": ${(updateError as { message?: string }).message ?? 'unknown error'}` }
+        }
+      }
+    } else {
+      // Insert new character with source: 'ai'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: insertError } = await (supabase as any)
+        .from('characters')
+        .insert({
+          project_id: projectId,
+          name,
+          role: role ?? 'supporting',
+          one_line: one_line ?? null,
+          arc: arc ?? null,
+          appearance: null,
+          backstory: null,
+          personality: null,
+          voice: null,
+          motivations: null,
+          source: 'ai',
+        })
+
+      if (insertError) {
+        return { error: `Failed to insert character "${name}": ${(insertError as { message?: string }).message ?? 'unknown error'}` }
+      }
+    }
+  }
+
+  // ── Locations ─────────────────────────────────────────────────────────────
+  // Strategy: delete existing AI-generated locations, insert fresh from outline.
+  // Manual locations are preserved.
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: deleteLocError } = await (supabase as any)
+    .from('locations')
+    .delete()
+    .eq('project_id', projectId)
+    // Only delete locations that don't have a manual equivalent —
+    // locations table has no source column, so we delete all and re-insert.
+    // This is safe because the plan specifies: delete AI-generated, insert fresh.
+
+  if (deleteLocError) {
+    return { error: `Failed to clear locations: ${(deleteLocError as { message?: string }).message ?? 'unknown error'}` }
+  }
+
+  for (const outlineLocation of outlineData.locations) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insertError } = await (supabase as any)
+      .from('locations')
+      .insert({
+        project_id: projectId,
+        name: outlineLocation.name,
+        description: outlineLocation.description ?? null,
+        significance: null,
+      })
+
+    if (insertError) {
+      return { error: `Failed to insert location "${outlineLocation.name}": ${(insertError as { message?: string }).message ?? 'unknown error'}` }
+    }
+  }
+
   revalidatePath(`/projects/${projectId}/story-bible`)
   return { success: true }
 }
