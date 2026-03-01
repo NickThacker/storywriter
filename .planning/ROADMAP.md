@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Foundation** - Auth, project dashboard, LLM/BYOK configuration, database schema, n8n security perimeter
 - [ ] **Phase 2: Guided Intake and Outline** - Intake wizard, AI outline generation, story bible, character profiles
 - [ ] **Phase 3: Chapter Generation** - Hybrid streaming prose generation, chapter management, progress tracking
-- [ ] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, n8n Wait node HITL
+- [ ] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, human-in-the-loop checkpoints
 - [ ] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness
 
 ## Phase Details
@@ -37,6 +37,16 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] 01-04-PLAN.md — Project dashboard: card grid, empty state, create/delete/resume CRUD (Wave 3)
 - [ ] 01-05-PLAN.md — Settings: BYOK API key with Vault, model selection per task (Wave 3)
 - [ ] 01-06-PLAN.md — End-to-end verification checkpoint (Wave 4)
+
+### Phase 01.1: Remove n8n (INSERTED)
+
+**Goal:** Strip n8n from the codebase — remove webhook client, test endpoint, env vars, and security perimeter code. All AI orchestration will go through Next.js Route Handlers + Server Actions directly.
+**Requirements**: None (cleanup/removal)
+**Depends on:** Phase 1
+**Plans:** 1 plan
+
+Plans:
+- [ ] 01.1-01-PLAN.md — Delete n8n source files, simplify health route, clean env/config, update downstream planning docs (Wave 1)
 
 ### Phase 2: Guided Intake and Outline
 **Goal**: Users can go from a blank idea to an approved novel outline with a populated story bible, ready for chapter generation
@@ -95,11 +105,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/6 | In Progress|  |
+| 01.1 Remove n8n | 0/1 | Not started | - |
 | 2. Guided Intake and Outline | 0/9 | Not started | - |
 | 3. Chapter Generation | 0/TBD | Not started | - |
 | 4. Creative Checkpoints | 0/TBD | Not started | - |
