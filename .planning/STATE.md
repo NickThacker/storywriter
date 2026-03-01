@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T19:23:00Z"
+last_updated: "2026-03-01T19:20:00Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 16
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 02-guided-intake-and-outline (active)
-Plan: 3 of 8 complete in current phase
-Status: In progress — Plans 02-01, 02-02, and 02-03 complete, continuing to 02-04
-Last activity: 2026-03-01 — Completed 02-03 (intake wizard UI: all steps, progress bar, review screen)
+Plan: 4 of 8 complete in current phase
+Status: In progress — Plans 02-01 through 02-04 complete, continuing to 02-05
+Last activity: 2026-03-01 — Completed 02-04 (server actions, prefill API, project page router)
 
-Progress: [████████░░] 31%
+Progress: [████████░░] 34%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 4 min
 - Total execution time: ~0.5 hours
 
@@ -42,10 +42,10 @@ Progress: [████████░░] 31%
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 23 min | 5 min |
 | 01.1-remove-n8n | 1 | 2 min | 2 min |
-| 02-guided-intake-and-outline | 3 | 12 min | 4 min |
+| 02-guided-intake-and-outline | 4 | 18 min | 4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 6 min, 3 min, 2 min, 2 min, 8 min
+- Last 5 plans: 3 min, 2 min, 2 min, 8 min, 6 min
 - Trend: Stable (fast)
 
 ## Accumulated Context
@@ -87,6 +87,10 @@ Recent decisions affecting current work:
 - [Phase 02-03]: ProgressBar maps steps 1-6 to 6 labeled indicators; step 0 path selection excluded
 - [Phase 02-03]: CharactersStep uses local selectedRoles Set + nameInputs state synced to Zustand on toggle/remove
 - [Phase 02-03]: ReviewSection internal component pattern encapsulates title + edit button + missing-field warning
+- [Phase 02-04]: Mock prefill returns fixed stub when no API key is configured — intake wizard is fully testable in local dev without OpenRouter credentials
+- [Phase 02-04]: saveIntakeData syncs genre to both intake_data JSONB and projects.genre column — keeps top-level genre in sync for dashboard display
+- [Phase 02-04]: Project page is a pure redirect router with no rendered content — users always land on contextually correct view
+- [Phase 02-04]: maybeSingle() used for outline existence check — avoids PostgREST 406 on missing row
 
 ### Pending Todos
 
@@ -107,5 +111,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-03-PLAN.md — intake wizard UI (all 7 steps, progress bar, wizard nav, review screen)
+Stopped at: Completed 02-04-PLAN.md — server actions, premise-prefill API route, project page router
 Resume file: None
