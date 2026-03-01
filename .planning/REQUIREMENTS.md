@@ -24,17 +24,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Guided Intake
 
-- [ ] **INTK-01**: User is guided through a multi-step interview (genre, themes, characters, setting, tone) when starting a new novel
+- [x] **INTK-01**: User is guided through a multi-step interview (genre, themes, characters, setting, tone) when starting a new novel
 - [ ] **INTK-02**: User can paste an existing premise/logline instead of using the interview
 - [ ] **INTK-03**: User can review and adjust interview answers before outline generation begins
-- [ ] **INTK-04**: Interview uses decision-driven UI (structured options, not open-ended text boxes)
+- [x] **INTK-04**: Interview uses decision-driven UI (structured options, not open-ended text boxes)
 
 ### Outline Generation
 
 - [ ] **OUTL-01**: AI generates a full novel outline (chapters, plot beats, character arcs) from intake data
 - [ ] **OUTL-02**: User can review the generated outline before writing begins
 - [ ] **OUTL-03**: User can edit the outline — adjust chapter structure, plot beats, and pacing
-- [ ] **OUTL-04**: User sets target novel length and chapter count
+- [x] **OUTL-04**: User sets target novel length and chapter count
 - [ ] **OUTL-05**: Approved outline populates the story bible with characters, locations, and plot beats
 
 ### Characters & Story Bible
@@ -134,14 +134,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LLM-02 | Phase 1 | Complete |
 | LLM-03 | Phase 1 | Complete |
 | LLM-04 | Phase 1 | Complete |
-| INTK-01 | Phase 2 | Pending |
+| INTK-01 | Phase 2 | Complete |
 | INTK-02 | Phase 2 | Pending |
 | INTK-03 | Phase 2 | Pending |
-| INTK-04 | Phase 2 | Pending |
+| INTK-04 | Phase 2 | Complete |
 | OUTL-01 | Phase 2 | Pending |
 | OUTL-02 | Phase 2 | Pending |
 | OUTL-03 | Phase 2 | Pending |
-| OUTL-04 | Phase 2 | Pending |
+| OUTL-04 | Phase 2 | Complete |
 | OUTL-05 | Phase 2 | Pending |
 | CHAR-01 | Phase 2 | Pending |
 | CHAR-02 | Phase 2 | Pending |

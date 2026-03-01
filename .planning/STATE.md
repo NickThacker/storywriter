@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T19:09:34Z"
+last_updated: "2026-03-01T19:10:00Z"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 16
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 02-guided-intake-and-outline (active)
-Plan: 1 of 8 complete in current phase
-Status: In progress — Plan 02-01 complete, continuing to 02-02
-Last activity: 2026-03-01 — Completed 02-01 (story bible schema migration, TypeScript types, Zustand verified)
+Plan: 2 of 8 complete in current phase
+Status: In progress — Plans 02-01 and 02-02 complete, continuing to 02-03
+Last activity: 2026-03-01 — Completed 02-02 (static data files, Zustand intake store, CardPicker component)
 
-Progress: [██████░░░░] 25%
+Progress: [███████░░░] 28%
 
 ## Performance Metrics
 
@@ -42,7 +42,7 @@ Progress: [██████░░░░] 25%
 |-------|-------|-------|----------|
 | 01-foundation | 5 | 23 min | 5 min |
 | 01.1-remove-n8n | 1 | 2 min | 2 min |
-| 02-guided-intake-and-outline | 1 | 2 min | 2 min |
+| 02-guided-intake-and-outline | 2 | 4 min | 2 min |
 
 **Recent Trend:**
 - Last 5 plans: 6 min, 6 min, 3 min, 2 min, 2 min
@@ -79,6 +79,10 @@ Recent decisions affecting current work:
 - [Phase 02-01]: characters.source ('ai'|'manual') tracks edit origin — prevents outline regeneration from overwriting manual user edits
 - [Phase 02-01]: One outline per project enforced via unique constraint on outlines.project_id — simplifies all outline queries
 - [Phase 02-01]: intake_data added to projects table (not separate table) — wizard answers naturally scoped to project, no join needed
+- [Phase 02-02]: Zustand vanilla createStore (not create shorthand) used for App Router SSR safety — avoids global singleton hydration mismatch
+- [Phase 02-02]: No Zustand persist middleware — wizard state is ephemeral per session, committed to DB on submit
+- [Phase 02-02]: TOTAL_STEPS = 7 (path, genre, themes, characters, setting, tone+beatSheet+length, review)
+- [Phase 02-02]: Icon rendering via static ICON_MAP lookup (not dynamic imports) — keeps bundle predictable and tree-shakeable
 
 ### Pending Todos
 
@@ -99,5 +103,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 02-01-PLAN.md — story bible schema migration, TypeScript types for 4 new tables, Zustand verified (2 min)
+Stopped at: Completed 02-02-PLAN.md — static data files, Zustand intake store + provider, CardPicker component
 Resume file: None
