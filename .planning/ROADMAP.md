@@ -48,7 +48,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. AI generates a full novel outline (chapters, plot beats, character arcs) from the intake data for user review; user can set target length and chapter count
   4. User can edit the generated outline — adjusting chapter structure, plot beats, and pacing — before approving it
   5. After approving the outline, user sees a populated story bible with characters, locations, and plot beats stored and ready to inject into chapter generation
-**Plans**: TBD
+**Plans:** 9 plans
+- [ ] 02-01-PLAN.md — Story bible DB schema, TypeScript types, Zustand install (Wave 1)
+- [ ] 02-02-PLAN.md — Static data files, Zustand intake store, CardPicker component (Wave 1)
+- [ ] 02-03-PLAN.md — Intake wizard UI: 5 creative steps, premise input, review screen (Wave 2)
+- [ ] 02-04-PLAN.md — Intake server actions, premise prefill API, project page router (Wave 2)
+- [ ] 02-05-PLAN.md — Outline generation SSE route, streaming hook, outline CRUD actions (Wave 3)
+- [ ] 02-06-PLAN.md — Outline viewer/editor: two-panel layout, inline edit, beat sheet overlay (Wave 3)
+- [ ] 02-07-PLAN.md — Outline regeneration, approval flow, story bible seeding (Wave 4)
+- [ ] 02-08-PLAN.md — Story bible page: tabbed view, character/location CRUD, world facts (Wave 4)
+- [ ] 02-09-PLAN.md — End-to-end verification checkpoint (Wave 5)
 
 ### Phase 3: Chapter Generation
 **Goal**: Users can generate chapters one at a time and watch prose stream in real time, with full chapter management and visible progress through the novel
@@ -91,7 +100,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/6 | In Progress|  |
-| 2. Guided Intake and Outline | 0/TBD | Not started | - |
+| 2. Guided Intake and Outline | 0/9 | Not started | - |
 | 3. Chapter Generation | 0/TBD | Not started | - |
 | 4. Creative Checkpoints | 0/TBD | Not started | - |
 | 5. Export and Billing | 0/TBD | Not started | - |
