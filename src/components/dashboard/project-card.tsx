@@ -58,8 +58,10 @@ interface ProjectCardProps {
 export function ProjectCard({ project }: ProjectCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
+  const showProgress =
+    project.status === 'writing' && project.chapter_count > 0
   const progress =
-    project.chapter_count > 0
+    showProgress
       ? Math.round((project.chapters_done / project.chapter_count) * 100)
       : null
 
@@ -98,27 +100,30 @@ export function ProjectCard({ project }: ProjectCardProps) {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{project.word_count.toLocaleString()} words</span>
+              {/* Word count: shown here for non-writing projects; shown in progress bar for writing projects */}
+              {progress === null ? (
+                <span>{project.word_count.toLocaleString()} words</span>
+              ) : (
+                <span />
+              )}
               <span>{timeAgo(project.updated_at)}</span>
             </div>
-            {/* Progress bar */}
-            {progress !== null ? (
+            {/* Chapter progress bar — only shown for projects in 'writing' status with chapters */}
+            {progress !== null && (
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Progress</span>
                   <span>
-                    {project.chapters_done} / {project.chapter_count} chapters
+                    {project.chapters_done}/{project.chapter_count} chapters
                   </span>
+                  <span>{project.word_count.toLocaleString()} words</span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No chapters yet</p>
             )}
           </CardContent>
         </Card>
