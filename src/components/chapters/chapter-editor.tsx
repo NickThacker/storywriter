@@ -120,19 +120,61 @@ export interface ChapterEditorProps {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
+/**
+ * Convert stored plain text (with \n\n paragraph breaks) to HTML for Tiptap.
+ * Handles **bold**, *italic*, and *** scene breaks.
+ */
+function plainTextToHtml(text: string): string {
+  if (!text || !text.trim()) return '<p></p>'
+
+  // Normalize line endings: \r\n → \n
+  const normalized = text.replace(/\r\n/g, '\n')
+
+  // Split on double-newline first; fall back to single-newline if only one paragraph results
+  let blocks = normalized.split(/\n\n/)
+  if (blocks.length <= 1 && normalized.includes('\n')) {
+    blocks = normalized.split(/\n/)
+  }
+
+  return blocks
+    .map((block) => {
+      const trimmed = block.trim()
+      if (!trimmed) return ''
+      // Scene break
+      if (/^(\*\s*\*\s*\*|---+)$/.test(trimmed)) {
+        return '<hr class="scene-break">'
+      }
+      // Escape HTML, then apply inline markdown
+      let html = trimmed
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+      // Bold-italic (***text***), then bold (**text**), then italic (*text*)
+      html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+      return `<p>${html}</p>`
+    })
+    .filter(Boolean)
+    .join('')
+}
+
 export function ChapterEditor({ initialContent, onSave, readOnly = false }: ChapterEditorProps) {
+  // Convert plain text → HTML once on init
+  const htmlContent = useMemo(() => plainTextToHtml(initialContent), [initialContent])
+
   const debouncedSave = useDebouncedCallback(async (text: string) => {
     await onSave(text)
   }, 600)
 
   const editor = useEditor({
     extensions: [StarterKit, SceneBreak, AuthorNote],
-    content: initialContent, // Tiptap wraps plain text in <p> tags automatically
+    content: htmlContent,
     immediatelyRender: false, // CRITICAL: prevents Next.js SSR/hydration error
     editable: !readOnly,
     onUpdate({ editor }) {
-      // Use getText() — NOT getHTML() — for plain text storage
-      const text = editor.getText()
+      // Save as plain text with double-newline paragraph separators
+      const text = editor.getText({ blockSeparator: '\n\n' })
       debouncedSave(text)
     },
   })
@@ -165,6 +207,13 @@ export function ChapterEditor({ initialContent, onSave, readOnly = false }: Chap
       <style>{`
         .ProseMirror:focus {
           outline: none;
+        }
+        .ProseMirror p {
+          margin-bottom: 1em;
+          line-height: 1.75;
+        }
+        .ProseMirror p:last-child {
+          margin-bottom: 0;
         }
         .ProseMirror hr.scene-break {
           border: none;
@@ -223,7 +272,7 @@ export function ChapterEditor({ initialContent, onSave, readOnly = false }: Chap
       <div className="flex flex-col h-full">
         {/* Toolbar */}
         {!readOnly && editor && (
-          <div className="flex items-center gap-0.5 px-3 py-2 border-b bg-muted/30 flex-wrap">
+          <div className="flex items-center gap-0.5 px-4 py-2.5 border-b border-border bg-muted/30 flex-wrap">
             <ToolbarButton
               onClick={() => editor.chain().focus().toggleBold().run()}
               isActive={editor.isActive('bold')}
@@ -285,7 +334,7 @@ export function ChapterEditor({ initialContent, onSave, readOnly = false }: Chap
         </div>
 
         {/* Word count badge */}
-        <div className="flex justify-end px-4 py-2 border-t bg-muted/20">
+        <div className="flex justify-end px-4 py-2 border-t border-border bg-muted/20">
           <span className="text-xs text-muted-foreground tabular-nums">
             {wordCount.toLocaleString()} {wordCount === 1 ? 'word' : 'words'}
           </span>

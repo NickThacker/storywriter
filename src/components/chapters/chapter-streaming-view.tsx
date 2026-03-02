@@ -1,8 +1,40 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import { Pause, Play, Square, AlertCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+/**
+ * Render basic inline markdown (bold, italic) to React elements.
+ * Handles **bold**, *italic*, and ***bold-italic***.
+ */
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = []
+  // Match ***bold-italic***, **bold**, *italic*
+  const regex = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*)/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index))
+    }
+    if (match[2]) {
+      parts.push(<strong key={match.index}><em>{match[2]}</em></strong>)
+    } else if (match[3]) {
+      parts.push(<strong key={match.index}>{match[3]}</strong>)
+    } else if (match[4]) {
+      parts.push(<em key={match.index}>{match[4]}</em>)
+    }
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+
+  return parts.length > 0 ? parts : [text]
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -43,16 +75,19 @@ export function ChapterStreamingView({
   const proseContainerRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom during streaming (not after pause — let user read)
+  // Scroll within the prose container only — NOT the page
   useEffect(() => {
-    if (isStreaming && sentinelRef.current) {
-      sentinelRef.current.scrollIntoView({ behavior: 'smooth' })
+    if (isStreaming && proseContainerRef.current) {
+      const el = proseContainerRef.current
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
     }
   }, [streamedText, isStreaming])
 
   // Split prose into paragraphs on double newlines
-  const paragraphs = streamedText
-    ? streamedText.split(/\n\n/).filter((p) => p.trim().length > 0)
-    : []
+  const paragraphs = useMemo(() => {
+    if (!streamedText) return []
+    return streamedText.split(/\n\n/).filter((p) => p.trim().length > 0)
+  }, [streamedText])
 
   const hasText = streamedText.trim().length > 0
   const isDone = hasText && !isStreaming && !isPaused && !error
@@ -128,9 +163,18 @@ export function ChapterStreamingView({
           <div className="prose prose-sm max-w-none dark:prose-invert">
             {paragraphs.map((paragraph, i) => {
               const isLastParagraph = i === paragraphs.length - 1
+              const trimmed = paragraph.trim()
+
+              // Scene break: line is just *** or --- or * * *
+              if (/^(\*\s*\*\s*\*|---+)$/.test(trimmed)) {
+                return (
+                  <hr key={i} className="my-8 border-none text-center before:content-['*_*_*'] before:text-muted-foreground before:tracking-[0.5em] before:text-sm" />
+                )
+              }
+
               return (
                 <p key={i} className="mb-4 leading-relaxed text-foreground">
-                  {paragraph}
+                  {renderInlineMarkdown(paragraph)}
                   {/* Typing cursor on the last paragraph when streaming */}
                   {isStreaming && isLastParagraph && (
                     <span

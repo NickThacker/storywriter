@@ -29,7 +29,11 @@ Write in a consistent narrative voice that matches the established style. Focus 
 
 You must maintain perfect continuity with all established facts. If a character was injured in a previous chapter, they're still injured unless healed. If an object was placed somewhere, it's still there unless moved. Time must flow consistently.
 
-Write the full chapter text. Do not include chapter numbers or titles in the output — just the prose.`
+Formatting rules:
+- Use *italics* (single asterisks) for internal thoughts, overheard phone calls, letters, text messages, flashbacks, foreign words, and emphasis — just as a published novel would use italics.
+- Use **bold** (double asterisks) sparingly, only for extreme emphasis.
+- Separate paragraphs with blank lines.
+- Do not include chapter numbers or titles in the output — just the prose.`
 
   // Build the user message with all context sections
   const sections: string[] = []

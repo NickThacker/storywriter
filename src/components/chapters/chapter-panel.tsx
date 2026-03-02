@@ -6,9 +6,10 @@ import { saveChapterProse, updateProjectWordCount } from '@/actions/chapters'
 import { ChapterList } from '@/components/chapters/chapter-list'
 import { ChapterStreamingView } from '@/components/chapters/chapter-streaming-view'
 import { ChapterEditor } from '@/components/chapters/chapter-editor'
+import { ChapterReadingView } from '@/components/chapters/chapter-reading-view'
 import { RewriteDialog } from '@/components/chapters/rewrite-dialog'
-import { PhaseNav } from '@/components/chapters/phase-nav'
 import { ProgressBar } from '@/components/chapters/progress-bar'
+import { useGenerationGuard } from '@/components/chapters/generation-guard-context'
 import { toast } from 'sonner'
 import type { OutlineChapter } from '@/types/database'
 import type { ChapterCheckpointRow } from '@/types/project-memory'
@@ -62,10 +63,35 @@ export function ChapterPanel({
   // Track whether we've already triggered compression for the current stream
   const [compressionTriggered, setCompressionTriggered] = useState(false)
 
+  // Reading mode vs editing mode
+  const [editingChapter, setEditingChapter] = useState<number | null>(null)
+  const [focusMode, setFocusMode] = useState(false)
+
   // ── Streaming hook ───────────────────────────────────────────────────────
 
   const { streamedText, isStreaming, isPaused, error, wordCount, startStream, pause, stop } =
     useChapterStream()
+
+  // ── Generation guard — prevent accidental navigation ───────────────────
+
+  const { setGenerating } = useGenerationGuard()
+
+  useEffect(() => {
+    setGenerating(isStreaming)
+
+    if (!isStreaming) return
+
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isStreaming, setGenerating])
+
+  // Clear guard on unmount
+  useEffect(() => {
+    return () => setGenerating(false)
+  }, [setGenerating])
 
   // ── Derive chapter list items ────────────────────────────────────────────
 
@@ -242,6 +268,13 @@ export function ChapterPanel({
 
   const chapterListItems = deriveChapterList()
 
+  // Reset editing/focus when switching chapters
+  const handleSelectChapter = useCallback((index: number) => {
+    setSelectedIndex(index)
+    setEditingChapter(null)
+    setFocusMode(false)
+  }, [])
+
   const selectedChapter = outlineChapters[selectedIndex]
   const selectedCheckpoint = selectedChapter
     ? checkpointMap.get(selectedChapter.number)
@@ -258,32 +291,37 @@ export function ChapterPanel({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Phase navigation */}
-      <PhaseNav projectId={projectId} currentPhase="chapters" />
-
       {/* Progress bar */}
-      <ProgressBar
-        chaptersDone={localChaptersDone}
-        totalChapters={chapterCount}
-        wordCount={localWordCount}
-        targetLength={targetLength}
-      />
+      <div
+        className="transition-all duration-500 ease-in-out overflow-hidden"
+        style={{ maxHeight: focusMode ? 0 : 200, opacity: focusMode ? 0 : 1 }}
+      >
+        <ProgressBar
+          chaptersDone={localChaptersDone}
+          totalChapters={chapterCount}
+          wordCount={localWordCount}
+          targetLength={targetLength}
+        />
+      </div>
 
       {/* Two-panel layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left panel: Chapter list (~30%) */}
-        <div className="w-[30%] shrink-0 border-r overflow-hidden flex flex-col">
+        {/* Left panel: Chapter list — collapses in focus mode */}
+        <div
+          className="shrink-0 border-r border-border overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
+          style={{ width: focusMode ? 0 : '30%', minWidth: focusMode ? 0 : undefined, opacity: focusMode ? 0 : 1, borderRightWidth: focusMode ? 0 : undefined }}
+        >
           <ChapterList
             chapters={chapterListItems}
             selectedIndex={selectedIndex}
-            onSelect={setSelectedIndex}
+            onSelect={handleSelectChapter}
             onGenerate={handleGenerate}
             generatingChapter={generatingChapter}
           />
         </div>
 
-        {/* Right panel: Streaming view OR editor OR empty state (~70%) */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Right panel: Streaming view OR editor OR empty state */}
+        <div className="flex-1 overflow-hidden flex flex-col transition-all duration-500 ease-in-out">
           {showStreamingView && generatingChapter !== null ? (
             <div className="flex h-full flex-col">
               <ChapterStreamingView
@@ -304,7 +342,7 @@ export function ChapterPanel({
               />
               {/* Rewrite button in streaming view footer (visible for chapters with existing text) */}
               {checkpointMap.has(generatingChapter) && !isStreaming && !isPaused && (
-                <div className="border-t px-4 py-2 flex justify-end">
+                <div className="border-t border-border px-4 py-2 flex justify-end">
                   <button
                     onClick={() => handleRewriteRequest(generatingChapter)}
                     className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors"
@@ -316,26 +354,68 @@ export function ChapterPanel({
             </div>
           ) : selectedCheckpoint?.chapter_text ? (
             <div className="flex h-full flex-col">
-              {/* Editor header with rewrite button */}
-              <div className="flex items-center justify-between border-b px-4 py-2.5">
+              {/* Header with actions */}
+              <div className="flex items-center justify-between border-b border-border px-6 py-3">
                 <h2 className="text-sm font-semibold truncate">
                   Chapter {selectedChapter?.number}: {selectedChapter?.title}
                 </h2>
-                <button
-                  onClick={() =>
-                    selectedChapter && handleRewriteRequest(selectedChapter.number)
-                  }
-                  className="ml-3 shrink-0 text-xs rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  Rewrite
-                </button>
+                <div className="ml-3 flex shrink-0 items-center gap-2">
+                  {editingChapter === selectedChapter?.number ? (
+                    <button
+                      onClick={() => setEditingChapter(null)}
+                      className="text-xs rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    >
+                      Done Editing
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setFocusMode((p) => !p)}
+                        className={`text-xs rounded-md border px-2.5 py-1 transition-colors ${focusMode ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                      >
+                        Focus
+                      </button>
+                      <button
+                        onClick={() => selectedChapter && setEditingChapter(selectedChapter.number)}
+                        className="text-xs rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() =>
+                          selectedChapter && handleRewriteRequest(selectedChapter.number)
+                        }
+                        className="text-xs rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                      >
+                        Rewrite
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 overflow-hidden">
-                <ChapterEditor
-                  initialContent={selectedCheckpoint.chapter_text}
-                  onSave={handleEditorSave}
-                />
-              </div>
+
+              {/* Reading view or Editor */}
+              {editingChapter === selectedChapter?.number ? (
+                <div className="flex-1 overflow-hidden">
+                  <ChapterEditor
+                    key={selectedChapter?.number}
+                    initialContent={selectedCheckpoint.chapter_text}
+                    onSave={handleEditorSave}
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto">
+                  <div className={`mx-auto max-w-2xl px-8 py-8 ${focusMode ? '' : ''}`}>
+                    <ChapterReadingView
+                      text={selectedCheckpoint.chapter_text}
+                      wordCount={
+                        selectedCheckpoint.chapter_text.trim().split(/\s+/).filter(Boolean).length
+                      }
+                      onClickToEdit={() => selectedChapter && setEditingChapter(selectedChapter.number)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             // Empty state

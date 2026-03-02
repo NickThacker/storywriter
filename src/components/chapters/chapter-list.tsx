@@ -102,7 +102,7 @@ export function ChapterList({
     <div className="flex h-full flex-col">
       {/* Generate Next button */}
       {firstPendingChapter && (
-        <div className="border-b border-border p-3">
+        <div className="border-b border-border p-4">
           <button
             onClick={() => onGenerate(firstPendingChapter.number)}
             disabled={isAnyGenerating}
@@ -131,10 +131,13 @@ export function ChapterList({
 
             return (
               <li key={chapter.number}>
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSelect(index)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(index) } }}
                   className={cn(
-                    'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50',
+                    'flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50',
                     isSelected && 'bg-muted ring-2 ring-inset ring-primary/40'
                   )}
                 >
@@ -181,7 +184,7 @@ export function ChapterList({
                       <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
                     </div>
                   )}
-                </button>
+                </div>
               </li>
             )
           })}

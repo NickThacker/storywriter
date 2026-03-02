@@ -1,8 +1,9 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ClipboardList, FileText, BookOpen, PenTool, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useGenerationGuard } from '@/components/chapters/generation-guard-context'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -59,14 +60,28 @@ const PHASE_ORDER: Phase[] = ['intake', 'outline', 'story-bible', 'chapters']
 
 export function PhaseNav({ projectId, currentPhase }: PhaseNavProps) {
   const currentIndex = PHASE_ORDER.indexOf(currentPhase)
+  const router = useRouter()
+  const { isGenerating } = useGenerationGuard()
+
+  function handleNav(e: React.MouseEvent, href: string) {
+    e.preventDefault()
+    if (isGenerating) {
+      const ok = window.confirm(
+        'A chapter is being generated. Leaving now will lose the generated text.\n\nLeave anyway?'
+      )
+      if (!ok) return
+    }
+    router.push(href)
+  }
 
   return (
-    <nav className="border-b bg-background">
-      <div className="flex items-center px-4 py-0 overflow-x-auto">
+    <nav className="border-b border-border bg-background">
+      <div className="flex items-center px-4 py-2 overflow-x-auto">
         {PHASES.map((phase, index) => {
           const isActive = phase.id === currentPhase
           const isCompleted = index < currentIndex
           const Icon = phase.icon
+          const href = phase.path(projectId)
 
           return (
             <div key={phase.id} className="flex items-center">
@@ -80,8 +95,9 @@ export function PhaseNav({ projectId, currentPhase }: PhaseNavProps) {
                 />
               )}
 
-              <Link
-                href={phase.path(projectId)}
+              <a
+                href={href}
+                onClick={(e) => handleNav(e, href)}
                 className={cn(
                   'flex items-center gap-1.5 rounded-md px-3 py-2.5 text-xs font-medium transition-colors whitespace-nowrap',
                   isActive
@@ -97,7 +113,7 @@ export function PhaseNav({ projectId, currentPhase }: PhaseNavProps) {
                   <Icon className="h-3.5 w-3.5 shrink-0" />
                 )}
                 <span>{phase.label}</span>
-              </Link>
+              </a>
             </div>
           )
         })}
