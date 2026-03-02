@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 02-guided-intake-and-outline (active)
-Plan: 7 of 9 complete in current phase
-Status: In progress — Plan 07 (Outline regeneration dialog, approval flow, story bible seeding) complete
-Last activity: 2026-03-01 — Completed 02-07 (regeneration dialog, approveOutline action, seedStoryBibleFromOutline)
+Phase: 02-guided-intake-and-outline (complete)
+Plan: 9 of 9 complete in current phase
+Status: Complete — All automated checks pass, project memory system implemented, bug fixes applied
+Last activity: 2026-03-01 — Phase 2 closed out, ready for Phase 3
 
-Progress: [█████████████] 87%
+Progress: [████████████████] 100%
 
 ## Performance Metrics
 
@@ -119,7 +119,7 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- [Pre-Phase 3]: Vercel Fluid Compute vs. self-host deployment decision must be made before Phase 3 begins (streaming chapters take 60-300s; hits Vercel 60s function limit on standard plans)
+- [Pre-Phase 3]: RESOLVED — User is on Vercel Pro (longer function timeouts); no deployment blocker for streaming chapters
 - [Phase 2 planning]: Optimal story bible schema for context injection — RESOLVED in 02-01: normalized tables with project_id indexes enable selective injection per chapter
 - [Phase 5 planning]: DOCX generation library not yet selected (docx.js pure-JS vs. pandoc headless); needs brief research during Phase 5 planning for serverless compatibility
 
