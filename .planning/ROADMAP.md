@@ -95,7 +95,12 @@ Plans:
   2. User can approve the chapter and continue, or request a rewrite with specific direction, from the checkpoint screen
   3. User is presented with 2-3 AI-generated plot direction options for the next chapter at each checkpoint
   4. User can provide their own custom direction instead of selecting a presented option
-**Plans**: TBD
+**Plans:** 5 plans
+- [ ] 04-01-PLAN.md — DB migration, TypeScript types, server actions (Wave 1)
+- [ ] 04-02-PLAN.md — ChapterPanel integration, CheckpointPanel, approve/rewrite UI (Wave 2)
+- [ ] 04-03-PLAN.md — Direction options route, DirectionOptionCard, custom direction UI (Wave 3)
+- [ ] 04-04-PLAN.md — Impact analysis route, affected badges, novel complete summary (Wave 4)
+- [ ] 04-05-PLAN.md — End-to-end verification checkpoint (Wave 5)
 
 ### Phase 5: Export and Billing
 **Goal**: Users can export their completed novel and the platform has a functioning billing model — the final requirements for a public launch
@@ -118,5 +123,5 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | 01.1 Remove n8n | 1/1 | Complete    | 2026-03-01 |
 | 2. Guided Intake and Outline | 9/9 | Complete | 2026-03-01 |
 | 3. Chapter Generation | 4/5 | In Progress|  |
-| 4. Creative Checkpoints | 0/TBD | Not started | - |
+| 4. Creative Checkpoints | 0/5 | Not started | - |
 | 5. Export and Billing | 0/TBD | Not started | - |
