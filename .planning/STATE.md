@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-02T05:37:05.955Z"
+last_updated: "2026-03-02T05:41:30.720Z"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 21
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-28)
 
 **Core value:** Users can go from an idea to a complete, full-length novel through structured AI collaboration — with meaningful creative control at every step.
-**Current focus:** Phase 2 - Guided Intake and Outline
+**Current focus:** Phase 3 - Chapter Generation
 
 ## Current Position
 
 Phase: 03-chapter-generation (in progress)
-Plan: 2 of 5 complete in current phase
-Status: In Progress — Plan 02 complete (Tiptap 3 ChapterEditor with SceneBreak, AuthorNote, auto-save)
-Last activity: 2026-03-02 — Phase 3 Plan 02 complete, chapter editor component ready for integration
+Plan: 3 of 5 complete in current phase
+Status: In Progress — Plan 03 complete (chapters server page, ChapterList status badges, ChapterStreamingView typing cursor)
+Last activity: 2026-03-02 — Phase 3 Plan 03 complete, chapter management UI ready for orchestrator (Plan 04)
 
 Progress: [████████████████] 100%
 
@@ -52,6 +52,7 @@ Progress: [████████████████] 100%
 | Phase 02-guided-intake-and-outline P07 | 5 | 3 tasks | 5 files |
 | Phase 03 P01 | 2 | 3 tasks | 4 files |
 | Phase 03 P02 | 2 | 2 tasks | 3 files |
+| Phase 03 P03 | 2 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Tiptap 3 chosen for chapter editor: MIT license, official Next.js SSR docs with immediatelyRender: false, custom Node extensions for novel-specific tools (SceneBreak, AuthorNote)
 - [Phase 03]: editor.getText() for chapter_text storage (NOT getHTML()): prevents HTML markup in DB, keeps word count/compression/export operations simple
 - [Phase 03]: TypeScript Commands<ReturnType> augmentation pattern for Tiptap custom node commands: type-safe insertSceneBreak/insertAuthorNote without any-casts
+- [Phase 03-03]: ChapterPanel stub created to allow chapters/page.tsx to compile before Plan 04 orchestrator ships
+- [Phase 03-03]: Auto-scroll only fires when isStreaming=true to prevent scroll jump when user reads paused prose
+- [Phase 03-03]: Typing cursor implemented as inline animate-pulse span on last paragraph for React compatibility
 
 ### Pending Todos
 
