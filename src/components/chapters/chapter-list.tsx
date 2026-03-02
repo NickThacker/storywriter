@@ -1,6 +1,6 @@
 'use client'
 
-import { Clock, Loader2, BookOpen, CheckCircle, Sparkles } from 'lucide-react'
+import { Clock, Loader2, BookOpen, CheckCircle, Sparkles, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -13,6 +13,7 @@ export interface ChapterListItem {
   status: 'pending' | 'generating' | 'checkpoint' | 'approved'
   wordCount: number
   hasText: boolean
+  isAffected: boolean
 }
 
 interface ChapterListProps {
@@ -151,8 +152,14 @@ export function ChapterList({
                     <p className="truncate text-sm font-medium leading-snug text-foreground">
                       {chapter.title}
                     </p>
-                    <div className="mt-1 flex items-center gap-2">
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
                       <StatusBadge status={chapter.status} />
+                      {chapter.isAffected && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          Affected
+                        </span>
+                      )}
                       {chapter.hasText && (
                         <span className="text-xs text-muted-foreground">
                           {chapter.wordCount.toLocaleString()} words
