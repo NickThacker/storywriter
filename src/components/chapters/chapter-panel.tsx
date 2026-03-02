@@ -348,6 +348,21 @@ export function ChapterPanel({
 
   const chapterListItems = deriveChapterList()
 
+  // Plot thread stats from state_diff data across all checkpoints (approximate for v1)
+  const plotThreadStats = useMemo(() => {
+    let resolved = 0
+    let total = 0
+    checkpointMap.forEach((cp) => {
+      const diff = cp.state_diff
+      if (diff) {
+        resolved += diff.resolvedThreads?.length ?? 0
+        total += diff.newThreads?.length ?? 0
+      }
+    })
+    // open = total new threads introduced minus resolved (approximate)
+    return { resolved, open: Math.max(0, total - resolved) }
+  }, [checkpointMap])
+
   // Reset editing/focus when switching chapters
   const handleSelectChapter = useCallback((index: number) => {
     setSelectedIndex(index)
@@ -384,15 +399,20 @@ export function ChapterPanel({
   // Show streaming view when generating or when stream just completed (before compression finishes)
   const showStreamingView = generatingChapter !== null || (isStreaming && streamedText.length > 0)
 
-  // Show checkpoint panel when chapter has text, is not approved, and not streaming/editing
-  const showCheckpoint = useMemo(
-    () =>
-      !showStreamingView &&
-      !!selectedCheckpoint?.chapter_text &&
-      (selectedCheckpoint.approval_status ?? 'draft') !== 'approved' &&
-      editingChapter !== selectedChapter?.number,
-    [showStreamingView, selectedCheckpoint, editingChapter, selectedChapter]
-  )
+  // Show checkpoint panel when chapter has text, is not editing/streaming, and:
+  // - Chapter is not yet approved (standard checkpoint flow), OR
+  // - Chapter is the last chapter AND is approved (shows NovelCompleteSummary)
+  const showCheckpoint = useMemo(() => {
+    if (showStreamingView) return false
+    if (!selectedCheckpoint?.chapter_text) return false
+    if (editingChapter === selectedChapter?.number) return false
+
+    const isApproved = (selectedCheckpoint.approval_status ?? 'draft') === 'approved'
+    const isLast = selectedChapter?.number === outlineChapters.length
+
+    // Show for unapproved chapters (normal flow), or last chapter when approved (completion summary)
+    return !isApproved || isLast
+  }, [showStreamingView, selectedCheckpoint, editingChapter, selectedChapter, outlineChapters])
 
   // ── Rewrite chapter context ───────────────────────────────────────────────
 
@@ -561,6 +581,10 @@ export function ChapterPanel({
                 onApprove={handleApprove}
                 onRewrite={handleRewriteRequest}
                 onDirectionSaved={handleDirectionSaved}
+                projectTitle={projectTitle}
+                totalWordCount={localWordCount}
+                totalChapters={chapterCount}
+                plotThreadStats={plotThreadStats}
               />
             )}
           </div>

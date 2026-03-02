@@ -1,16 +1,23 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, ChevronDown, ChevronUp, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DirectionOptionCard } from './direction-option-card'
 import { saveDirection } from '@/actions/chapters'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { ChapterCheckpointRow, DirectionOption, SelectedDirection } from '@/types/project-memory'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────────────────────────────────────
+
+interface AffectedChapterResult {
+  chapterNumber: number
+  description: string
+  affectsPlotThreads: string[]
+}
 
 interface CheckpointStepDirectionProps {
   projectId: string
@@ -103,6 +110,10 @@ export function CheckpointStepDirection({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  // ── Impact analysis state
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [impactResults, setImpactResults] = useState<AffectedChapterResult[] | null>(null)
+
   // ── Whether direction was already confirmed
   const alreadySaved = !!checkpoint.selected_direction
 
@@ -151,6 +162,56 @@ export function CheckpointStepDirection({
       freeText.trim().length > 0
     )
   }, [selectionMode, selectedOptionId, tone, pacing, characterFocus, freeText])
+
+  // ── Assemble the current direction string (for impact analysis)
+  function getAssembledDirection(): string {
+    if (selectionMode === 'option' && selectedOptionId) {
+      const option = options.find((o) => o.id === selectedOptionId)
+      if (option) return buildDirectionForNextFromOption(option)
+    }
+    return buildDirectionForNextFromCustom(tone, pacing, characterFocus, freeText)
+  }
+
+  // ── Handle impact analysis (on-demand — user clicks "Analyze Impact")
+  async function handleAnalyzeImpact() {
+    const assembledDirection = getAssembledDirection()
+    if (!assembledDirection.trim()) {
+      toast.error('Select or enter a direction before analyzing impact')
+      return
+    }
+
+    setIsAnalyzing(true)
+    setImpactResults(null)
+
+    try {
+      const response = await fetch('/api/generate/analyze-impact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          chapterNumber,
+          newDirection: assembledDirection,
+        }),
+      })
+      const result = (await response.json()) as
+        | { success: true; affectedChapters: AffectedChapterResult[] }
+        | { error: string }
+
+      if ('success' in result && result.success) {
+        setImpactResults(result.affectedChapters)
+        if (result.affectedChapters.length === 0) {
+          toast.success('No downstream chapters are concretely affected by this direction change.')
+        }
+      } else {
+        const errMsg = 'error' in result ? result.error : 'Impact analysis failed'
+        toast.error(errMsg)
+      }
+    } catch {
+      toast.error('Failed to analyze impact')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
 
   // ── Handle confirm direction
   async function handleConfirm() {
@@ -363,6 +424,67 @@ export function CheckpointStepDirection({
               <p className="text-xs text-muted-foreground">
                 <span className="font-medium text-foreground">Direction saved.</span> You can change your selection and confirm again.
               </p>
+            </div>
+          )}
+
+          {/* Analyze Impact button — shown when changing a previously-saved direction */}
+          {alreadySaved && (
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                onClick={handleAnalyzeImpact}
+                disabled={isAnalyzing || !canConfirm()}
+                className="w-full text-amber-700 border-amber-300 hover:bg-amber-50 hover:text-amber-800 dark:text-amber-400 dark:border-amber-500/40 dark:hover:bg-amber-500/10"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Analyzing impact...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Analyze Impact
+                  </>
+                )}
+              </Button>
+
+              {/* Impact results */}
+              {impactResults !== null && (
+                <div className="space-y-2">
+                  {impactResults.length > 0 ? (
+                    <>
+                      <h4 className="text-xs font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                        Affected Chapters
+                      </h4>
+                      {impactResults.map((r) => (
+                        <div
+                          key={r.chapterNumber}
+                          className="rounded-md bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 px-3 py-2"
+                        >
+                          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                            Chapter {r.chapterNumber}
+                          </p>
+                          <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">
+                            {r.description}
+                          </p>
+                          {r.affectsPlotThreads.length > 0 && (
+                            <p className="text-xs text-amber-500/80 dark:text-amber-500/60 mt-1">
+                              Threads: {r.affectsPlotThreads.join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="rounded-md bg-muted px-3 py-2">
+                      <p className="text-xs text-muted-foreground">
+                        No downstream chapters are concretely affected by this direction change.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

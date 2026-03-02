@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { CheckpointStepApprove } from './checkpoint-step-approve'
 import { CheckpointStepDirection } from './checkpoint-step-direction'
+import { NovelCompleteSummary } from './novel-complete-summary'
 import type { OutlineChapter } from '@/types/database'
 import type { ChapterCheckpointRow } from '@/types/project-memory'
 
@@ -19,6 +20,11 @@ interface CheckpointPanelProps {
   onApprove: (chapterNumber: number) => void
   onRewrite: (chapterNumber: number) => void
   onDirectionSaved: (chapterNumber: number, directionForNext: string) => void
+  // Novel completion props (used when isLastChapter is true and chapter is approved)
+  projectTitle: string
+  totalWordCount: number
+  totalChapters: number
+  plotThreadStats: { resolved: number; open: number }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -34,6 +40,10 @@ export function CheckpointPanel({
   onApprove,
   onRewrite,
   onDirectionSaved,
+  projectTitle,
+  totalWordCount,
+  totalChapters,
+  plotThreadStats,
 }: CheckpointPanelProps) {
   // Step state: 'approve' (step 1) or 'direction' (step 2)
   const [step, setStep] = useState<'approve' | 'direction'>('approve')
@@ -79,7 +89,16 @@ export function CheckpointPanel({
 
       {/* Step content */}
       <div className="flex-1 overflow-y-auto">
-        {step === 'approve' ? (
+        {/* Last chapter approved — show novel completion summary instead of direction step */}
+        {isLastChapter && (checkpoint.approval_status ?? 'draft') === 'approved' ? (
+          <NovelCompleteSummary
+            projectTitle={projectTitle}
+            totalChapters={totalChapters}
+            totalWordCount={totalWordCount}
+            resolvedThreads={plotThreadStats.resolved}
+            openThreads={plotThreadStats.open}
+          />
+        ) : step === 'approve' ? (
           <CheckpointStepApprove
             chapter={chapter}
             checkpoint={checkpoint}
