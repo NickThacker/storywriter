@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 ## Current Position
 
 Phase: 03-chapter-generation (in progress)
-Plan: 3 of 5 complete in current phase
-Status: In Progress — Plan 03 complete (chapters server page, ChapterList status badges, ChapterStreamingView typing cursor)
-Last activity: 2026-03-02 — Phase 3 Plan 03 complete, chapter management UI ready for orchestrator (Plan 04)
+Plan: 4 of 5 complete in current phase
+Status: In Progress — Plan 04 complete (ChapterPanel orchestrator, RewriteDialog, PhaseNav, ProgressBar)
+Last activity: 2026-03-02 — Phase 3 Plan 04 complete, full chapter generation UI assembled and ready for review/approval (Plan 05)
 
 Progress: [████████████████] 100%
 
@@ -53,6 +53,7 @@ Progress: [████████████████] 100%
 | Phase 03 P01 | 2 | 3 tasks | 4 files |
 | Phase 03 P02 | 2 | 2 tasks | 3 files |
 | Phase 03 P03 | 2 | 3 tasks | 4 files |
+| Phase 03 P04 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,10 @@ Recent decisions affecting current work:
 - [Phase 03-03]: ChapterPanel stub created to allow chapters/page.tsx to compile before Plan 04 orchestrator ships
 - [Phase 03-03]: Auto-scroll only fires when isStreaming=true to prevent scroll jump when user reads paused prose
 - [Phase 03-03]: Typing cursor implemented as inline animate-pulse span on last paragraph for React compatibility
+- [Phase 03-04]: useEffect watching [isStreaming, streamedText] with compressionTriggered boolean guard prevents double-POST to compress-chapter in React strict mode
+- [Phase 03-04]: Optimistic checkpointMap update after compression — inserts minimal placeholder row if no prior checkpoint exists
+- [Phase 03-04]: PhaseNav rendered as horizontal bar (not vertical sidebar) to fit above two-panel chapter layout
+- [Phase 03-04]: ProgressBar milestone markers as rotated divs (no SVG) — pure Tailwind, no extra dependencies
 
 ### Pending Todos
 
@@ -138,5 +143,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 03-02-PLAN.md — Tiptap 3 ChapterEditor with SceneBreak and AuthorNote custom extensions, auto-save, word count (CHAP-05)
+Stopped at: Completed 03-04-PLAN.md — ChapterPanel orchestrator, RewriteDialog, PhaseNav, ProgressBar (CHAP-04, PROG-01, PROG-02, PROG-03)
 Resume file: None

@@ -79,7 +79,7 @@ Plans:
   3. User can manually edit generated prose inline within the application
   4. User sees a chapter list with status indicators (pending, generating, checkpoint, approved) and total word count with percentage complete
   5. User always knows which phase of the novel-writing process they are in via a visible progress indicator
-**Plans:** 2/5 plans executed
+**Plans:** 4/5 plans executed
 - [ ] 03-01-PLAN.md — Chapter stream hook, server actions, route handler adjustments (Wave 1)
 - [ ] 03-02-PLAN.md — Tiptap editor with scene breaks, author notes, auto-save (Wave 1)
 - [ ] 03-03-PLAN.md — Chapters page, chapter list with status badges, streaming view (Wave 2)
@@ -117,6 +117,6 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | 1. Foundation | 5/6 | In Progress|  |
 | 01.1 Remove n8n | 1/1 | Complete    | 2026-03-01 |
 | 2. Guided Intake and Outline | 9/9 | Complete | 2026-03-01 |
-| 3. Chapter Generation | 2/5 | In Progress|  |
+| 3. Chapter Generation | 4/5 | In Progress|  |
 | 4. Creative Checkpoints | 0/TBD | Not started | - |
 | 5. Export and Billing | 0/TBD | Not started | - |
