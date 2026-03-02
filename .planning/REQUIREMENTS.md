@@ -54,17 +54,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Creative Checkpoints
 
-- [ ] **CKPT-01**: After each chapter generates, user reaches a checkpoint before proceeding
-- [ ] **CKPT-02**: At each checkpoint, user can approve the chapter and continue
+- [x] **CKPT-01**: After each chapter generates, user reaches a checkpoint before proceeding
+- [x] **CKPT-02**: At each checkpoint, user can approve the chapter and continue
 - [ ] **CKPT-03**: At each checkpoint, user can request a rewrite with specific direction
 - [ ] **CKPT-04**: At each checkpoint, user is presented with 2-3 plot direction options for the next chapter
 - [ ] **CKPT-05**: User can provide custom direction instead of choosing a presented option
 
 ### Progress & Navigation
 
-- [ ] **PROG-01**: User can see a chapter list with status indicators (pending, generating, checkpoint, approved)
-- [ ] **PROG-02**: User can see total word count and percentage complete
-- [ ] **PROG-03**: User always knows where they are in the novel-writing process (current phase, progress bar)
+- [x] **PROG-01**: User can see a chapter list with status indicators (pending, generating, checkpoint, approved)
+- [x] **PROG-02**: User can see total word count and percentage complete
+- [x] **PROG-03**: User always knows where they are in the novel-writing process (current phase, progress bar)
 
 ### LLM Configuration
 
@@ -152,11 +152,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAP-03 | Phase 3 | Complete |
 | CHAP-04 | Phase 3 | Complete |
 | CHAP-05 | Phase 3 | Complete |
-| PROG-01 | Phase 3 | Pending |
-| PROG-02 | Phase 3 | Pending |
-| PROG-03 | Phase 3 | Pending |
-| CKPT-01 | Phase 4 | Pending |
-| CKPT-02 | Phase 4 | Pending |
+| PROG-01 | Phase 3 | Complete |
+| PROG-02 | Phase 3 | Complete |
+| PROG-03 | Phase 3 | Complete |
+| CKPT-01 | Phase 4 | Complete |
+| CKPT-02 | Phase 4 | Complete |
 | CKPT-03 | Phase 4 | Pending |
 | CKPT-04 | Phase 4 | Pending |
 | CKPT-05 | Phase 4 | Pending |

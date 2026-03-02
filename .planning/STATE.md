@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-02T05:41:30.720Z"
+last_updated: "2026-03-02T22:31:53.936Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 2
-  total_plans: 21
-  completed_plans: 18
+  total_plans: 26
+  completed_plans: 20
 ---
 
 # Project State
@@ -54,6 +54,7 @@ Progress: [████████████████] 100%
 | Phase 03 P02 | 2 | 2 tasks | 3 files |
 | Phase 03 P03 | 2 | 3 tasks | 4 files |
 | Phase 03 P04 | 2 | 2 tasks | 4 files |
+| Phase 04-creative-checkpoints P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,7 @@ Recent decisions affecting current work:
 - [Phase 03-04]: Optimistic checkpointMap update after compression — inserts minimal placeholder row if no prior checkpoint exists
 - [Phase 03-04]: PhaseNav rendered as horizontal bar (not vertical sidebar) to fit above two-panel chapter layout
 - [Phase 03-04]: ProgressBar milestone markers as rotated divs (no SVG) — pure Tailwind, no extra dependencies
+- [Phase 04-01]: approveChapter clears affected flag atomically; saveDirection stores both SelectedDirection object and direction_for_next prompt string separately
 
 ### Pending Todos
 
