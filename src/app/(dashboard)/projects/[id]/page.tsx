@@ -22,12 +22,16 @@ export default async function ProjectPage({
 
   // Fetch project (verify ownership via user_id)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: project } = await (supabase as any)
+  const { data: project, error: projectError } = await (supabase as any)
     .from('projects')
     .select('id, status, intake_data')
     .eq('id', id)
     .eq('user_id', user.id)
     .single()
+
+  if (projectError) {
+    console.error('[project-page] DB error:', projectError.message, projectError.code)
+  }
 
   if (!project) redirect('/dashboard')
 
@@ -51,19 +55,21 @@ export default async function ProjectPage({
     if (hasOutline) {
       // Draft project with outline → go to outline review
       redirect(`/projects/${id}/outline`)
+    } else if (intake_data && (intake_data as Record<string, unknown>).genre) {
+      // Intake complete (has at least genre set) but no outline yet → go to outline page
+      // which shows "Ready to Generate" prompt
+      redirect(`/projects/${id}/outline`)
     } else {
-      // Draft project with or without intake_data → go to intake wizard
-      // (layout handles resume from saved intake_data)
+      // Fresh project — go to intake wizard
       redirect(`/projects/${id}/intake`)
     }
   }
 
-  // Status 'writing' (outline approved) → go to outline view for now
-  // Phase 3 will add chapter view routing
+  // Status 'writing' (outline approved) → go to chapters page
   if (status === 'writing') {
-    redirect(`/projects/${id}/outline`)
+    redirect(`/projects/${id}/chapters`)
   }
 
-  // Fallback for any other status (e.g. 'complete') — go to outline
-  redirect(`/projects/${id}/outline`)
+  // Fallback for any other status (e.g. 'complete') — go to chapters
+  redirect(`/projects/${id}/chapters`)
 }
