@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-02T22:38:46.181Z"
+last_updated: "2026-03-02T22:44:34.518Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 26
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 03-chapter-generation (in progress)
-Plan: 4 of 5 complete in current phase
-Status: In Progress — Plan 04 complete (ChapterPanel orchestrator, RewriteDialog, PhaseNav, ProgressBar)
-Last activity: 2026-03-02 — Phase 3 Plan 04 complete, full chapter generation UI assembled and ready for review/approval (Plan 05)
+Phase: 04-creative-checkpoints (in progress)
+Plan: 3 of 5 complete in current phase
+Status: In Progress — Plan 03 complete (direction options endpoint, DirectionOptionCard, CheckpointStepDirection, CheckpointPanel Step 2)
+Last activity: 2026-03-02 — Phase 4 Plan 03 complete, direction options UI wired, ready for Plan 04 (impact analysis)
 
 Progress: [████████████████] 100%
 
@@ -56,6 +56,7 @@ Progress: [████████████████] 100%
 | Phase 03 P04 | 2 | 2 tasks | 4 files |
 | Phase 04-creative-checkpoints P01 | 2 | 2 tasks | 4 files |
 | Phase 04-creative-checkpoints P02 | 5 | 3 tasks | 6 files |
+| Phase 04-creative-checkpoints P03 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -129,6 +130,9 @@ Recent decisions affecting current work:
 - [Phase 04-02]: showCheckpoint computed via useMemo combining showStreamingView + approval_status + editingChapter — avoids recalculating on every render
 - [Phase 04-02]: Scene-level prompt approach: AI instructed to rewrite only the selected scene in-place; stitchScenes available for v2 post-generation safety net
 - [Phase 04-02]: SCENE_BREAK_PATTERN.lastIndex reset to 0 before exec loop (module-level regex with /g flag requires manual reset to avoid stale match position across calls)
+- [Phase 04-03]: Direction options cached at both route handler (early return if non-null) and client useEffect (skips fetch if options.length > 0) — double defense against Pitfall 2
+- [Phase 04-03]: direction_for_next assembled client-side from option title+body or custom field concat before saveDirection call
+- [Phase 04-03]: onBack prop on CheckpointStepDirection is optional — passed by CheckpointPanel for back-to-review navigation
 
 ### Pending Todos
 
@@ -149,5 +153,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: 03-05 checkpoint:human-verify — Tasks 1-2 complete (router redirect + dashboard progress), awaiting end-to-end verification
+Stopped at: 04-03 complete — direction options endpoint + UI Step 2 wired, continuing to Plan 04 impact analysis
 Resume file: None
