@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { CheckpointStepApprove } from './checkpoint-step-approve'
+import { CheckpointStepDirection } from './checkpoint-step-direction'
 import type { OutlineChapter } from '@/types/database'
 import type { ChapterCheckpointRow } from '@/types/project-memory'
 
@@ -25,11 +26,14 @@ interface CheckpointPanelProps {
 // ──────────────────────────────────────────────────────────────────────────────
 
 export function CheckpointPanel({
+  projectId,
   chapter,
   checkpoint,
+  outlineChapters,
   isLastChapter,
   onApprove,
   onRewrite,
+  onDirectionSaved,
 }: CheckpointPanelProps) {
   // Step state: 'approve' (step 1) or 'direction' (step 2)
   const [step, setStep] = useState<'approve' | 'direction'>('approve')
@@ -47,6 +51,10 @@ export function CheckpointPanel({
   const handleRewrite = useCallback(() => {
     onRewrite(chapter.number)
   }, [chapter.number, onRewrite])
+
+  const handleBackToApprove = useCallback(() => {
+    setStep('approve')
+  }, [])
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -80,11 +88,20 @@ export function CheckpointPanel({
             isLastChapter={isLastChapter}
           />
         ) : (
-          // Step 2: Direction selection — placeholder for Plan 03
-          // CheckpointStepDirection will be imported here in Plan 03
-          <div className="p-5 text-sm text-muted-foreground">
-            Direction selection loading...
-          </div>
+          // Step 2: Direction selection
+          step === 'direction' && !isLastChapter ? (
+            <CheckpointStepDirection
+              projectId={projectId}
+              chapterNumber={chapter.number}
+              checkpoint={checkpoint}
+              nextChapterTitle={
+                outlineChapters.find((c) => c.number === chapter.number + 1)?.title ??
+                `Chapter ${chapter.number + 1}`
+              }
+              onDirectionSaved={onDirectionSaved}
+              onBack={handleBackToApprove}
+            />
+          ) : null
         )}
       </div>
     </div>
