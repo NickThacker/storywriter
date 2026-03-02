@@ -46,10 +46,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Chapter Generation
 
-- [ ] **CHAP-01**: AI generates chapters one at a time, streaming prose in real time
-- [ ] **CHAP-02**: User can watch prose appear via real-time streaming (SSE)
-- [ ] **CHAP-03**: Generated chapter prose is saved to file storage and metadata to database
-- [ ] **CHAP-04**: User can request a rewrite of any chapter with style/tone adjustments
+- [x] **CHAP-01**: AI generates chapters one at a time, streaming prose in real time
+- [x] **CHAP-02**: User can watch prose appear via real-time streaming (SSE)
+- [x] **CHAP-03**: Generated chapter prose is saved to file storage and metadata to database
+- [x] **CHAP-04**: User can request a rewrite of any chapter with style/tone adjustments
 - [ ] **CHAP-05**: User can manually edit generated prose inline
 
 ### Creative Checkpoints
@@ -147,10 +147,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHAR-02 | Phase 2 | Complete |
 | CHAR-03 | Phase 2 | Complete |
 | CHAR-04 | Phase 2 | Complete |
-| CHAP-01 | Phase 3 | Pending |
-| CHAP-02 | Phase 3 | Pending |
-| CHAP-03 | Phase 3 | Pending |
-| CHAP-04 | Phase 3 | Pending |
+| CHAP-01 | Phase 3 | Complete |
+| CHAP-02 | Phase 3 | Complete |
+| CHAP-03 | Phase 3 | Complete |
+| CHAP-04 | Phase 3 | Complete |
 | CHAP-05 | Phase 3 | Pending |
 | PROG-01 | Phase 3 | Pending |
 | PROG-02 | Phase 3 | Pending |

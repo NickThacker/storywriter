@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T19:46:17.031Z"
+last_updated: "2026-03-02T05:37:05.955Z"
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 2
-  total_plans: 16
-  completed_plans: 15
+  total_plans: 21
+  completed_plans: 17
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-28)
 
 ## Current Position
 
-Phase: 02-guided-intake-and-outline (complete)
-Plan: 9 of 9 complete in current phase
-Status: Complete — All automated checks pass, project memory system implemented, bug fixes applied
-Last activity: 2026-03-01 — Phase 2 closed out, ready for Phase 3
+Phase: 03-chapter-generation (in progress)
+Plan: 1 of 7 complete in current phase
+Status: In Progress — Plan 01 complete (streaming hook, server actions, route adjustments)
+Last activity: 2026-03-02 — Phase 3 Plan 01 complete, foundation data layer built
 
 Progress: [████████████████] 100%
 
@@ -50,6 +50,8 @@ Progress: [████████████████] 100%
 | Phase 02-guided-intake-and-outline P05 | 2 | 3 tasks | 5 files |
 | Phase 02-guided-intake-and-outline P06 | 8 | 3 tasks | 8 files |
 | Phase 02-guided-intake-and-outline P07 | 5 | 3 tasks | 5 files |
+| Phase 03 P01 | 2 | 3 tasks | 4 files |
+| Phase 03 P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -106,6 +108,12 @@ Recent decisions affecting current work:
 - [Phase 02-guided-intake-and-outline]: Approve button is session-gated — enabled only after stream completes in current session (parsedOutline available)
 - [Phase 02-guided-intake-and-outline]: Location seeding is delete-all-then-insert — locations table has no source column so AI/manual distinction is not possible
 - [Phase 02-guided-intake-and-outline]: seedStoryBibleFromOutline: source-aware character merge (manual=fill-nulls-only, ai=full-update, new=insert-with-source-ai)
+- [Phase 03-01]: saveChapterProse omits revalidatePath to prevent client state reset on debounced auto-save
+- [Phase 03-01]: resume() only clears isPaused flag — caller re-triggers startStream for actual stream restart (prevents duplicate streams)
+- [Phase 03-01]: startStream always aborts any existing AbortController first to prevent ReadableStream locked error
+- [Phase 03]: Tiptap 3 chosen for chapter editor: MIT license, official Next.js SSR docs with immediatelyRender: false, custom Node extensions for novel-specific tools (SceneBreak, AuthorNote)
+- [Phase 03]: editor.getText() for chapter_text storage (NOT getHTML()): prevents HTML markup in DB, keeps word count/compression/export operations simple
+- [Phase 03]: TypeScript Commands<ReturnType> augmentation pattern for Tiptap custom node commands: type-safe insertSceneBreak/insertAuthorNote without any-casts
 
 ### Pending Todos
 
@@ -125,6 +133,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Completed 02-07-PLAN.md — Outline regeneration controls (three levels), approval flow, seedStoryBibleFromOutline (OUTL-05)
+Last session: 2026-03-02
+Stopped at: Completed 03-01-PLAN.md — Chapter generation foundation (useChapterStream hook, chapter server actions, adjustments support in route)
 Resume file: None
