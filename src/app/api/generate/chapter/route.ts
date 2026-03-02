@@ -1,0 +1,169 @@
+// CRITICAL: force-dynamic prevents Vercel from caching the streaming response
+export const dynamic = 'force-dynamic'
+
+import { createClient } from '@/lib/supabase/server'
+import { assembleChapterContext } from '@/lib/memory/context-assembly'
+import { buildChapterPrompt } from '@/lib/memory/chapter-prompt'
+
+interface GenerateChapterBody {
+  projectId: string
+  chapterNumber: number
+  adjustments?: string  // Style/tone adjustments for rewrite
+}
+
+export async function POST(request: Request): Promise<Response> {
+  // 1. Authenticate user
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  // 2. Parse request body
+  let body: GenerateChapterBody
+  try {
+    body = (await request.json()) as GenerateChapterBody
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const { projectId, chapterNumber, adjustments } = body
+
+  if (!projectId || !chapterNumber || chapterNumber < 1) {
+    return new Response(
+      JSON.stringify({ error: 'Missing projectId or valid chapterNumber' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // 3. Verify project ownership
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: project, error: projectError } = await (supabase as any)
+    .from('projects')
+    .select('id')
+    .eq('id', projectId)
+    .eq('user_id', user.id)
+    .single()
+
+  if (projectError || !project) {
+    return new Response(
+      JSON.stringify({ error: 'Project not found or access denied' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // 4. Retrieve API key server-side
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: settings, error: settingsError } = await (supabase as any)
+    .from('user_settings')
+    .select('openrouter_api_key')
+    .eq('user_id', user.id)
+    .single()
+
+  const apiKey =
+    settingsError || !settings
+      ? null
+      : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
+
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ error: 'No OpenRouter API key configured. Add your key in Settings.' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // 5. Retrieve user's preferred prose model
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: modelPref } = await (supabase as any)
+    .from('user_model_preferences')
+    .select('model_id')
+    .eq('user_id', user.id)
+    .eq('task_type', 'prose')
+    .single()
+
+  const modelId =
+    modelPref && typeof (modelPref as { model_id?: string }).model_id === 'string'
+      ? (modelPref as { model_id: string }).model_id
+      : 'anthropic/claude-sonnet-4-5'
+
+  // 6. Assemble context from project memory
+  let context
+  try {
+    context = await assembleChapterContext(projectId, chapterNumber)
+  } catch (err) {
+    console.error('Context assembly error:', err)
+    return new Response(
+      JSON.stringify({ error: 'Failed to assemble chapter context' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // 7. Build prompt
+  const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments)
+
+  // 8. Call OpenRouter with streaming
+  let orResponse: Response
+  try {
+    orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+        'X-Title': 'StoryWriter',
+      },
+      body: JSON.stringify({
+        model: modelId,
+        stream: true,
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: userMessage },
+        ],
+      }),
+    })
+  } catch (err) {
+    console.error('OpenRouter fetch error:', err)
+    return new Response(JSON.stringify({ error: 'Failed to connect to OpenRouter' }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (!orResponse.ok) {
+    const errorText = await orResponse.text().catch(() => 'Unknown upstream error')
+    console.error('OpenRouter error response:', orResponse.status, errorText)
+    return new Response(
+      JSON.stringify({ error: `Chapter generation failed: ${errorText}` }),
+      { status: 502, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const responseBody = orResponse.body
+  if (!responseBody) {
+    return new Response(JSON.stringify({ error: 'Empty response from OpenRouter' }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  // 9. Stream through as SSE
+  return new Response(responseBody, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      'Content-Encoding': 'none',
+    },
+  })
+}
