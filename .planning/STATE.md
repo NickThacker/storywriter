@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-02T22:31:53.936Z"
+last_updated: "2026-03-02T22:38:46.181Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 26
-  completed_plans: 20
+  completed_plans: 21
 ---
 
 # Project State
@@ -55,6 +55,7 @@ Progress: [████████████████] 100%
 | Phase 03 P03 | 2 | 3 tasks | 4 files |
 | Phase 03 P04 | 2 | 2 tasks | 4 files |
 | Phase 04-creative-checkpoints P01 | 2 | 2 tasks | 4 files |
+| Phase 04-creative-checkpoints P02 | 5 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Recent decisions affecting current work:
 - [Phase 03-04]: PhaseNav rendered as horizontal bar (not vertical sidebar) to fit above two-panel chapter layout
 - [Phase 03-04]: ProgressBar milestone markers as rotated divs (no SVG) — pure Tailwind, no extra dependencies
 - [Phase 04-01]: approveChapter clears affected flag atomically; saveDirection stores both SelectedDirection object and direction_for_next prompt string separately
+- [Phase 04-02]: showCheckpoint computed via useMemo combining showStreamingView + approval_status + editingChapter — avoids recalculating on every render
+- [Phase 04-02]: Scene-level prompt approach: AI instructed to rewrite only the selected scene in-place; stitchScenes available for v2 post-generation safety net
+- [Phase 04-02]: SCENE_BREAK_PATTERN.lastIndex reset to 0 before exec loop (module-level regex with /g flag requires manual reset to avoid stale match position across calls)
 
 ### Pending Todos
 

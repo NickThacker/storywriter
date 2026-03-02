@@ -56,7 +56,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **CKPT-01**: After each chapter generates, user reaches a checkpoint before proceeding
 - [x] **CKPT-02**: At each checkpoint, user can approve the chapter and continue
-- [ ] **CKPT-03**: At each checkpoint, user can request a rewrite with specific direction
+- [x] **CKPT-03**: At each checkpoint, user can request a rewrite with specific direction
 - [ ] **CKPT-04**: At each checkpoint, user is presented with 2-3 plot direction options for the next chapter
 - [ ] **CKPT-05**: User can provide custom direction instead of choosing a presented option
 
@@ -157,7 +157,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROG-03 | Phase 3 | Complete |
 | CKPT-01 | Phase 4 | Complete |
 | CKPT-02 | Phase 4 | Complete |
-| CKPT-03 | Phase 4 | Pending |
+| CKPT-03 | Phase 4 | Complete |
 | CKPT-04 | Phase 4 | Pending |
 | CKPT-05 | Phase 4 | Pending |
 | EXPT-01 | Phase 5 | Pending |
