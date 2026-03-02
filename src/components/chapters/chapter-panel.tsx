@@ -188,6 +188,13 @@ export function ChapterPanel({
                 chapter_text: streamedText,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
+                // Phase 4: Creative Checkpoint defaults
+                approval_status: 'draft' as const,
+                direction_options: null,
+                selected_direction: null,
+                direction_for_next: null,
+                affected: false,
+                impact_description: null,
               })
             }
             return next
