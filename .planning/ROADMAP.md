@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Foundation** - Auth, project dashboard, LLM/BYOK configuration, database schema, n8n security perimeter
 - [x] **Phase 2: Guided Intake and Outline** - Intake wizard, AI outline generation, story bible, character profiles (completed 2026-03-03)
-- [ ] **Phase 3: Chapter Generation** - Hybrid streaming prose generation, chapter management, progress tracking
+- [x] **Phase 3: Chapter Generation** - Hybrid streaming prose generation, chapter management, progress tracking (completed 2026-03-03)
 - [ ] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, human-in-the-loop checkpoints
 - [ ] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness
 - [ ] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context
@@ -80,7 +80,7 @@ Plans:
   3. User can manually edit generated prose inline within the application
   4. User sees a chapter list with status indicators (pending, generating, checkpoint, approved) and total word count with percentage complete
   5. User always knows which phase of the novel-writing process they are in via a visible progress indicator
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 - [ ] 03-01-PLAN.md — Chapter stream hook, server actions, route handler adjustments (Wave 1)
 - [ ] 03-02-PLAN.md — Tiptap editor with scene breaks, author notes, auto-save (Wave 1)
 - [ ] 03-03-PLAN.md — Chapters page, chapter list with status badges, streaming view (Wave 2)
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | 1. Foundation | 5/6 | In Progress|  |
 | 01.1 Remove n8n | 1/1 | Complete    | 2026-03-01 |
 | 2. Guided Intake and Outline | 9/9 | Complete   | 2026-03-03 |
-| 3. Chapter Generation | 4/5 | In Progress|  |
+| 3. Chapter Generation | 5/5 | Complete   | 2026-03-03 |
 | 4. Creative Checkpoints | 0/5 | Not started | - |
 | 5. Export and Billing | 0/TBD | Not started | - |
 | 6. Author Onboarding & Voice Analysis | 0/TBD | Not started | - |
