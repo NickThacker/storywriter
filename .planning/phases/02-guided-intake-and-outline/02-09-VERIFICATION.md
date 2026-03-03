@@ -181,3 +181,39 @@ Integration hooks verified:
 | Memory integration hooks | 5 | 5 | 0 |
 | Bug fixes | 4 | 4 | 0 |
 | **Total** | **61** | **61** | **0** |
+
+---
+
+## 8. Manual End-to-End Verification
+
+**Date:** 2026-03-03
+**Result: PASS — All 16 steps verified by user**
+
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | Dev server starts at `npm run dev` | PASS |
+| 2 | Log in and create a new project from dashboard | PASS |
+| 3 | Redirect to intake wizard at `/projects/[id]/intake` | PASS |
+| 4 | Walk through wizard: genre, themes, characters, setting, tone/structure | PASS |
+| 5 | Review screen shows all selections with edit buttons | PASS |
+| 6 | Click "Generate Outline" — streaming generation via SSE | PASS |
+| 7 | Appropriate error shown when API key not configured | PASS |
+| 8 | Two-panel outline layout: chapter list + detail panel | PASS |
+| 9 | Clicking chapters in list updates detail panel | PASS |
+| 10 | Inline editing of chapter title and summary | PASS |
+| 11 | Beat sheet overlay opens with beat-to-chapter mappings | PASS |
+| 12 | Switching beat sheet in dropdown updates visualization | PASS |
+| 13 | "Approve Outline" populates story bible | PASS |
+| 14 | Story bible page shows Characters and Locations tabs with data | PASS |
+| 15 | Creating a new character manually saves successfully | PASS |
+| 16 | Editing a character profile auto-saves | PASS |
+
+**Manual verification: 16/16 PASS**
+
+---
+
+## Final Status
+
+**Phase 2 Verification: COMPLETE — PASS**
+All automated checks (61/61) and manual end-to-end steps (16/16) passed.
+Phase 2 is ready for Phase 3 (chapter generation).
