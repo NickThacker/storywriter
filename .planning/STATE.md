@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 04-creative-checkpoints
+current_phase: 05-author-onboarding-and-voice-analysis
 status: planning
-last_updated: "2026-03-03T21:43:32.562Z"
+last_updated: "2026-03-03T21:59:57.007Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 26
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Session State
@@ -21,7 +21,7 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v1.0 milestone
-**Current phase:** 04-creative-checkpoints
+**Current phase:** 05-author-onboarding-and-voice-analysis
 **Status:** Ready to plan
 
 ## Session Log
@@ -30,6 +30,7 @@ See: .planning/PROJECT.md
 - 2026-03-03: Completed 02-09 (Phase 2 verification) — all 61 automated + 16 manual checks passed
 - 2026-03-03: Completed 03-05 tasks (router redirect + dashboard progress) — Phase 3 awaiting human verify
 - 2026-03-03: Phase 3 human verification approved — Phase 3 complete, advancing to Phase 4
+- 2026-03-03: Phase 4 (Creative Checkpoints) human verification approved — all CKPT-01 through CKPT-05 confirmed, advancing to Phase 5
 
 ## Decisions
 
@@ -41,3 +42,6 @@ See: .planning/PROJECT.md
 - Dashboard progress bar only shown when status='writing' AND chapter_count > 0
 - Phase 3 human verification approved 2026-03-03: full end-to-end generation flow confirmed working
 - [Phase 03-05]: Phase 3 human verification approved 2026-03-03: full end-to-end generation flow confirmed
+- [Phase 04-05]: Phase 4 human verification approved 2026-03-03: all CKPT-01 through CKPT-05 requirements confirmed end-to-end
+- Migration 00004_checkpoint_extensions.sql must be applied manually in Supabase SQL Editor before checkpoint features function in a fresh environment
+- [Phase 04]: Phase 4 human verification approved 2026-03-03: all CKPT-01 through CKPT-05 requirements confirmed end-to-end
