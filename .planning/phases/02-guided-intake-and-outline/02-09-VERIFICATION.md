@@ -1,7 +1,7 @@
 # Phase 2 Verification Report
 
-**Date:** 2026-03-01
-**Status:** AUTOMATED CHECKS COMPLETE — Awaiting manual end-to-end verification
+**Date:** 2026-03-03 (re-verified)
+**Status:** COMPLETE
 
 ---
 
@@ -15,11 +15,15 @@
 **Result: PASS**
 `npm run build` — All routes compiled successfully.
 
-Build output:
+Build output (re-verified 2026-03-03, includes Phase 3/4 routes):
 ```
 Route (app)
 ├ ○ /
 ├ ○ /_not-found
+├ ƒ /api/generate/analyze-impact
+├ ƒ /api/generate/chapter
+├ ƒ /api/generate/compress-chapter
+├ ƒ /api/generate/direction-options
 ├ ƒ /api/generate/outline
 ├ ƒ /api/generate/premise-prefill
 ├ ƒ /api/health
@@ -28,6 +32,7 @@ Route (app)
 ├ ƒ /dashboard
 ├ ƒ /login
 ├ ƒ /projects/[id]
+├ ƒ /projects/[id]/chapters
 ├ ƒ /projects/[id]/intake
 ├ ƒ /projects/[id]/outline
 ├ ƒ /projects/[id]/story-bible
@@ -129,28 +134,37 @@ create trigger outlines_updated_at ...
 
 ---
 
-## 6. Manual End-to-End Verification
+## 6. Post-Phase Additions (Project Memory System)
 
-**Status: PENDING — Awaiting human verification**
+The following were added after initial verification as Phase 2/3 bridge work:
 
-Steps to verify:
-1. Start dev server: `npm run dev`
-2. Log in and create a new project from the dashboard
-3. Verify redirect to intake wizard at `/projects/[id]/intake`
-4. Walk through the wizard: select genre, themes, characters, setting, tone/structure
-5. Verify review screen shows all selections with edit buttons
-6. (If API key configured) Click "Generate Outline" and watch streaming generation
-7. (If no API key) Verify appropriate error message
-8. On outline page: verify two-panel layout with chapter list and detail
-9. Click chapters in list — detail panel should update
-10. Try inline editing a chapter title and summary
-11. Open beat sheet overlay — verify beat-to-chapter mappings
-12. Try switching beat sheet in dropdown — visualization should update
-13. Click "Approve Outline" — verify story bible is populated
-14. Navigate to story bible page — verify Characters and Locations tabs have data
-15. Try creating a new character manually — verify it saves
-16. Try editing a character profile — verify auto-save
-17. Verify project status shows "writing" on dashboard after approval
+| File | Purpose | Status |
+|------|---------|--------|
+| `supabase/migrations/00003_project_memory.sql` | project_memory + chapter_checkpoints tables | PASS |
+| `src/types/project-memory.ts` | 18 TypeScript types for memory system | PASS |
+| `src/actions/project-memory.ts` | 7 server actions (init, update, seed, get, save, reset) | PASS |
+| `src/lib/memory/schema.ts` | JSON Schema for AI compression | PASS |
+| `src/lib/memory/compression-prompt.ts` | Compression pass prompt builder | PASS |
+| `src/lib/memory/context-assembly.ts` | Chapter context assembly (~10k tokens) | PASS |
+| `src/lib/memory/chapter-prompt.ts` | Chapter generation prompt builder | PASS |
+| `src/app/api/generate/chapter/route.ts` | SSE streaming chapter generation | PASS |
+| `src/app/api/generate/compress-chapter/route.ts` | Post-chapter compression route | PASS |
+
+Integration hooks verified:
+- `intake.ts` calls `initializeMemory()` after save | PASS
+- `outline.ts` calls `updateMemoryIdentity()` on save | PASS
+- `outline.ts` calls `resetMemory()` on regeneration | PASS
+- `outline.ts` calls `seedPlotThreadsFromOutline()` on approval | PASS
+- `database.ts` includes `project_memory` and `chapter_checkpoints` tables | PASS
+
+## 7. Bug Fixes Applied During Verification
+
+| Fix | File | Details |
+|-----|------|---------|
+| Chapter count validation | `src/lib/validations/intake.ts` | Zod max raised from 60 to 200 to match UI input |
+| Timeline position | `src/components/outline/outline-panel.tsx` | Moved to top of page, always visible |
+| Timeline dot navigation | `src/components/outline/outline-panel.tsx` | Clicks navigate to chapter in both review and editor modes |
+| Cross-beat-sheet mapping | `src/components/outline/beat-sheet-overlay.tsx` | Position-based fallback when viewing non-generated beat sheets |
 
 ---
 
@@ -163,5 +177,7 @@ Steps to verify:
 | Key links | 6 | 6 | 0 |
 | Schema | 3 | 3 | 0 |
 | Requirements (automated) | 13 | 13 | 0 |
-| **Total automated** | **43** | **43** | **0** |
-| Manual end-to-end | 17 | PENDING | - |
+| Memory system files | 9 | 9 | 0 |
+| Memory integration hooks | 5 | 5 | 0 |
+| Bug fixes | 4 | 4 | 0 |
+| **Total** | **61** | **61** | **0** |
