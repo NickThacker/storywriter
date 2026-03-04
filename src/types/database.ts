@@ -1,8 +1,24 @@
 // TypeScript types matching the Supabase database schema.
 // These follow Supabase's generated types pattern with Row, Insert, and Update variants.
 
+import type {
+  ProjectMemoryRow,
+  ProjectMemoryInsert,
+  ProjectMemoryUpdate,
+  ChapterCheckpointRow,
+  ChapterCheckpointInsert,
+  ChapterCheckpointUpdate,
+} from '@/types/project-memory'
+
+import type {
+  TokenUsageRow,
+  TokenUsageInsert,
+  TokenUsageUpdate,
+  StripeWebhookEventRow,
+} from '@/types/billing'
+
 export type ProjectStatus = 'draft' | 'writing' | 'complete'
-export type SubscriptionTier = 'none' | 'hosted'
+export type SubscriptionTier = 'none' | 'hosted' | 'starter' | 'writer' | 'pro'
 export type TaskType = 'outline' | 'prose' | 'editing'
 
 // ------- Phase 2 story bible enum types -------
@@ -23,6 +39,13 @@ export interface UserSettingsRow {
   subscription_tier: SubscriptionTier
   created_at: string
   updated_at: string
+  // Phase 5 billing fields
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+  token_budget_total: number
+  token_budget_remaining: number
+  credit_pack_tokens: number
+  billing_period_end: string | null
 }
 
 export interface UserModelPreferenceRow {
@@ -116,6 +139,12 @@ export type UserSettingsInsert = Omit<UserSettingsRow, 'id' | 'created_at' | 'up
   id?: string
   created_at?: string
   updated_at?: string
+  stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
+  token_budget_total?: number
+  token_budget_remaining?: number
+  credit_pack_tokens?: number
+  billing_period_end?: string | null
 }
 
 export type UserModelPreferenceInsert = Omit<UserModelPreferenceRow, 'id' | 'updated_at'> & {
@@ -267,6 +296,30 @@ export type Database = {
         Update: OutlineUpdate
         Relationships: GenericRelationship[]
       }
+      project_memory: {
+        Row: ProjectMemoryRow
+        Insert: ProjectMemoryInsert
+        Update: ProjectMemoryUpdate
+        Relationships: GenericRelationship[]
+      }
+      chapter_checkpoints: {
+        Row: ChapterCheckpointRow
+        Insert: ChapterCheckpointInsert
+        Update: ChapterCheckpointUpdate
+        Relationships: GenericRelationship[]
+      }
+      token_usage: {
+        Row: TokenUsageRow
+        Insert: TokenUsageInsert
+        Update: TokenUsageUpdate
+        Relationships: GenericRelationship[]
+      }
+      stripe_webhook_events: {
+        Row: StripeWebhookEventRow
+        Insert: Omit<StripeWebhookEventRow, 'processed_at'> & { processed_at?: string }
+        Update: Partial<StripeWebhookEventRow>
+        Relationships: GenericRelationship[]
+      }
     }
     Views: {
       [_ in never]: never
@@ -295,3 +348,13 @@ export type Character = CharacterRow
 export type Location = LocationRow
 export type WorldFact = WorldFactRow
 export type Outline = OutlineRow
+
+// ------- Phase 3 convenience aliases -------
+
+export type ProjectMemory = ProjectMemoryRow
+export type ChapterCheckpoint = ChapterCheckpointRow
+
+// ------- Phase 5 convenience aliases -------
+
+export type { TokenUsageRow, TokenUsageInsert, TokenUsageUpdate } from '@/types/billing'
+export type TokenUsage = TokenUsageRow
