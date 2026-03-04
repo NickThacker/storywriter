@@ -83,7 +83,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **BILL-01**: Hosted tier users subscribe to a plan with token/credit budget
 - [x] **BILL-02**: Token usage is tracked per user and per project
-- [ ] **BILL-03**: User is warned when approaching their token budget limit
+- [x] **BILL-03**: User is warned when approaching their token budget limit
 - [x] **BILL-04**: BYOK users bypass billing (use their own OpenRouter credits)
 
 ## v2 Requirements
@@ -165,7 +165,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPT-03 | Phase 5 | Complete |
 | BILL-01 | Phase 5 | Complete |
 | BILL-02 | Phase 5 | Complete |
-| BILL-03 | Phase 5 | Pending |
+| BILL-03 | Phase 5 | Complete |
 | BILL-04 | Phase 5 | Complete |
 
 **Coverage:**
