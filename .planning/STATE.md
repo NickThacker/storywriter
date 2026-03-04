@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 05-export-and-billing
 status: in-progress
-last_updated: "2026-03-04T06:10:00Z"
+last_updated: "2026-03-04T06:16:00Z"
 progress:
   total_phases: 6
   completed_phases: 4
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 05-export-and-billing
-**Current plan:** 05-05
-**Status:** In progress (05-04 complete)
+**Current plan:** 05-06
+**Status:** In progress (05-05 complete)
 
 ## Session Log
 
@@ -36,6 +36,7 @@ See: .planning/PROJECT.md
 - 2026-03-04: Completed 05-02 — four-format export pipeline (DOCX, ePub, RTF, TXT) and unified /api/export/[projectId] route
 - 2026-03-04: Completed 05-03 — ExportDialog UI component and chapters page project-level header integration
 - 2026-03-04: Completed 05-04 — Stripe billing pipeline (checkout sessions, webhook handler, subscription management, credit packs)
+- 2026-03-04: Completed 05-05 — Token tracking and budget enforcement on all 4 generation routes (TransformStream interceptor, budget check gate, fire-and-forget deduction, token usage query actions)
 
 ## Decisions
 
@@ -63,3 +64,7 @@ See: .planning/PROJECT.md
 - [Phase 05-04]: Stripe 2026-02-25.clover removes current_period_end from Subscription — billing_period_end set via invoice.paid event only
 - [Phase 05-04]: Stripe 2026-02-25.clover moves Invoice subscription ref to invoice.parent.subscription_details.subscription
 - [Phase 05-04]: Webhook always returns 200 after recording idempotency — prevents Stripe retry storms on app errors
+- [Phase 05-05]: Token interceptor always enqueues chunk before parsing — SSE stream latency is strictly zero-overhead
+- [Phase 05-05]: Non-streaming routes read usage from already-parsed orJson object (not orResponse.clone()) — body is consumed by parse step
+- [Phase 05-05]: checkTokenBudget returns isByok=true on settings read failure — fail-open avoids blocking BYOK users during DB degradation
+- [Phase 05-05]: direction-options and analyze-impact use chapterNumber=0 in token_usage inserts (not chapter-specific requests)
