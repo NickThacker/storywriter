@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 05-author-onboarding-and-voice-analysis
-status: planning
-last_updated: "2026-03-03T22:11:02.411Z"
+current_phase: 05-export-and-billing
+status: in-progress
+last_updated: "2026-03-04T05:50:31Z"
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 26
-  completed_plans: 26
+  completed_phases: 4
+  total_plans: 33
+  completed_plans: 27
 ---
 
 # Session State
@@ -21,8 +21,9 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v1.0 milestone
-**Current phase:** 05-author-onboarding-and-voice-analysis
-**Status:** Ready to plan
+**Current phase:** 05-export-and-billing
+**Current plan:** 05-02
+**Status:** In progress (05-01 complete)
 
 ## Session Log
 
@@ -31,6 +32,7 @@ See: .planning/PROJECT.md
 - 2026-03-03: Completed 03-05 tasks (router redirect + dashboard progress) — Phase 3 awaiting human verify
 - 2026-03-03: Phase 3 human verification approved — Phase 3 complete, advancing to Phase 4
 - 2026-03-03: Phase 4 (Creative Checkpoints) human verification approved — all CKPT-01 through CKPT-05 confirmed, advancing to Phase 5
+- 2026-03-04: Completed 05-01 — billing database schema, TypeScript types, and Stripe client singleton
 
 ## Decisions
 
@@ -45,3 +47,7 @@ See: .planning/PROJECT.md
 - [Phase 04-05]: Phase 4 human verification approved 2026-03-03: all CKPT-01 through CKPT-05 requirements confirmed end-to-end
 - Migration 00004_checkpoint_extensions.sql must be applied manually in Supabase SQL Editor before checkpoint features function in a fresh environment
 - [Phase 04]: Phase 4 human verification approved 2026-03-03: all CKPT-01 through CKPT-05 requirements confirmed end-to-end
+- [Phase 05-01]: Stripe API version pinned to 2026-02-25.clover (stripe v20.4.0 requires .clover suffix, not .acacia)
+- [Phase 05-01]: stripe client export is Stripe | null — BYOK deployments with no STRIPE_SECRET_KEY still build without error
+- [Phase 05-01]: billing.ts is standalone type module imported by database.ts to avoid circular dependency
+- [Phase 05-01]: Migration 00005_billing_and_token_tracking.sql must be applied manually in Supabase SQL Editor
