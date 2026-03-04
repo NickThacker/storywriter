@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getChapterCheckpoints } from '@/actions/chapters'
 import { ChapterPanel } from '@/components/chapters/chapter-panel'
+import { ExportDialog } from '@/components/export/export-dialog'
 import type { OutlineChapter, ProjectRow, OutlineRow } from '@/types/database'
 import type { ChapterCheckpointRow } from '@/types/project-memory'
 
@@ -21,6 +22,11 @@ export default async function ChaptersPage({
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  // Derive display name for pen name default (full_name > email username > "Author")
+  const userName: string =
+    (user.user_metadata?.full_name as string | undefined) ??
+    (user.email ? user.email.split('@')[0] : 'Author')
 
   // 2. Fetch project (verify ownership via user_id)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,17 +97,32 @@ export default async function ChaptersPage({
     )
   }
 
-  // 8. Render ChapterPanel with all data
+  // 8. Render page with project-level header (title + export) and ChapterPanel
   return (
-    <ChapterPanel
-      projectId={typedProject.id}
-      projectTitle={typedProject.title}
-      outlineChapters={typedOutline.chapters as OutlineChapter[]}
-      checkpoints={checkpoints}
-      chapterCount={typedOutline.chapter_count}
-      targetLength={typedOutline.target_length}
-      projectWordCount={typedProject.word_count}
-      chaptersDone={typedProject.chapters_done}
-    />
+    <div className="flex h-full flex-col">
+      {/* Page-level header — project title and project actions */}
+      <div className="flex items-center justify-between border-b border-border px-6 py-3 shrink-0">
+        <h1 className="text-base font-semibold truncate">{typedProject.title}</h1>
+        <ExportDialog
+          projectId={typedProject.id}
+          projectTitle={typedProject.title}
+          userName={userName}
+        />
+      </div>
+
+      {/* Chapter management area */}
+      <div className="flex-1 overflow-hidden">
+        <ChapterPanel
+          projectId={typedProject.id}
+          projectTitle={typedProject.title}
+          outlineChapters={typedOutline.chapters as OutlineChapter[]}
+          checkpoints={checkpoints}
+          chapterCount={typedOutline.chapter_count}
+          targetLength={typedOutline.target_length}
+          projectWordCount={typedProject.word_count}
+          chaptersDone={typedProject.chapters_done}
+        />
+      </div>
+    </div>
   )
 }

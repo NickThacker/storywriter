@@ -59,8 +59,20 @@ export function ChapterPanel({
   const [rewriteOpen, setRewriteOpen] = useState(false)
   const [rewriteChapter, setRewriteChapter] = useState<number | null>(null)
 
-  const [localWordCount, setLocalWordCount] = useState(projectWordCount)
-  const [localChaptersDone, setLocalChaptersDone] = useState(chaptersDone)
+  // Derive word count and chapters done from checkpointMap so they update
+  // in realtime when chapters are edited, generated, or rewritten.
+  const { localWordCount, localChaptersDone } = useMemo(() => {
+    let totalWords = 0
+    let chaptersWithText = 0
+    checkpointMap.forEach((cp) => {
+      const text = cp.chapter_text ?? ''
+      if (text.trim().length > 0) {
+        totalWords += text.trim().split(/\s+/).filter(Boolean).length
+        chaptersWithText += 1
+      }
+    })
+    return { localWordCount: totalWords, localChaptersDone: chaptersWithText }
+  }, [checkpointMap])
 
   // Track whether we've already triggered compression for the current stream
   const [compressionTriggered, setCompressionTriggered] = useState(false)
@@ -71,7 +83,7 @@ export function ChapterPanel({
 
   // ── Streaming hook ───────────────────────────────────────────────────────
 
-  const { streamedText, isStreaming, isPaused, error, wordCount, startStream, pause, stop } =
+  const { streamedText, isStreaming, error, wordCount, startStream, stop } =
     useChapterStream()
 
   // ── Generation guard — prevent accidental navigation ───────────────────
@@ -211,13 +223,10 @@ export function ChapterPanel({
             return next
           })
 
-          // Sync word count totals
+          // Sync word count totals to DB (local display derives from checkpointMap)
           const wordCountResult = await updateProjectWordCount(projectId)
           if ('error' in wordCountResult) {
             toast.error(`Word count update failed: ${wordCountResult.error}`)
-          } else {
-            setLocalWordCount(wordCountResult.wordCount)
-            setLocalChaptersDone(wordCountResult.chaptersDone)
           }
 
           // Show toast after checkpoint map is updated — with Review action button
@@ -251,7 +260,7 @@ export function ChapterPanel({
 
       await saveChapterProse(projectId, chapterNumber, text)
 
-      // Update local checkpoint map
+      // Update local checkpoint map — triggers derived word count recalculation
       setCheckpointMap((prev) => {
         const next = new Map(prev)
         const existing = next.get(chapterNumber)
@@ -263,6 +272,12 @@ export function ChapterPanel({
     },
     [projectId, selectedIndex, outlineChapters]
   )
+
+  // Sync DB word count when exiting editing mode
+  const handleDoneEditing = useCallback(async () => {
+    setEditingChapter(null)
+    await updateProjectWordCount(projectId)
+  }, [projectId])
 
   // ── Rewrite flow ─────────────────────────────────────────────────────────
 
@@ -338,12 +353,6 @@ export function ChapterPanel({
     }
   }, [generatingChapter, projectId, startStream])
 
-  const handleResume = useCallback(() => {
-    if (generatingChapter !== null) {
-      void startStream(projectId, generatingChapter)
-    }
-  }, [generatingChapter, projectId, startStream])
-
   // ── Derived data ─────────────────────────────────────────────────────────
 
   const chapterListItems = deriveChapterList()
@@ -399,10 +408,11 @@ export function ChapterPanel({
   // Show streaming view when generating or when stream just completed (before compression finishes)
   const showStreamingView = generatingChapter !== null || (isStreaming && streamedText.length > 0)
 
-  // Show checkpoint panel when chapter has text, is not editing/streaming, and:
+  // Show checkpoint panel when chapter has text, is not editing/streaming/focus, and:
   // - Chapter is not yet approved (standard checkpoint flow), OR
   // - Chapter is the last chapter AND is approved (shows NovelCompleteSummary)
   const showCheckpoint = useMemo(() => {
+    if (focusMode) return false
     if (showStreamingView) return false
     if (!selectedCheckpoint?.chapter_text) return false
     if (editingChapter === selectedChapter?.number) return false
@@ -412,7 +422,7 @@ export function ChapterPanel({
 
     // Show for unapproved chapters (normal flow), or last chapter when approved (completion summary)
     return !isApproved || isLast
-  }, [showStreamingView, selectedCheckpoint, editingChapter, selectedChapter, outlineChapters])
+  }, [focusMode, showStreamingView, selectedCheckpoint, editingChapter, selectedChapter, outlineChapters])
 
   // ── Rewrite chapter context ───────────────────────────────────────────────
 
@@ -437,10 +447,15 @@ export function ChapterPanel({
 
       {/* Two-panel layout */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left panel: Chapter list — collapses in focus mode */}
+        {/* Left panel: Chapter list — collapses in focus mode, shrinks to number strip when checkpoint open */}
         <div
           className="shrink-0 border-r border-border overflow-hidden flex flex-col transition-all duration-500 ease-in-out"
-          style={{ width: focusMode ? 0 : '30%', minWidth: focusMode ? 0 : undefined, opacity: focusMode ? 0 : 1, borderRightWidth: focusMode ? 0 : undefined }}
+          style={{
+            width: focusMode ? 0 : showCheckpoint ? 52 : '30%',
+            minWidth: focusMode ? 0 : showCheckpoint ? 52 : undefined,
+            opacity: focusMode ? 0 : 1,
+            borderRightWidth: focusMode ? 0 : undefined,
+          }}
         >
           <ChapterList
             chapters={chapterListItems}
@@ -448,15 +463,15 @@ export function ChapterPanel({
             onSelect={handleSelectChapter}
             onGenerate={handleGenerate}
             generatingChapter={generatingChapter}
+            collapsed={showCheckpoint}
           />
         </div>
 
         {/* Right panel: main content area + checkpoint slide-in panel */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Main content area — shrinks when checkpoint is open */}
+          {/* Main content area — flexes to fill remaining space */}
           <div
-            className="flex flex-col overflow-hidden transition-all duration-300 ease-in-out"
-            style={{ width: showCheckpoint ? '55%' : '100%' }}
+            className="flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out"
           >
             {showStreamingView && generatingChapter !== null ? (
               <div className="flex h-full flex-col">
@@ -468,16 +483,13 @@ export function ChapterPanel({
                   }
                   streamedText={streamedText}
                   isStreaming={isStreaming}
-                  isPaused={isPaused}
                   wordCount={wordCount}
                   error={error}
-                  onPause={pause}
                   onStop={stop}
-                  onResume={handleResume}
                   onRetry={handleRetry}
                 />
                 {/* Rewrite button in streaming view footer (visible for chapters with existing text) */}
-                {checkpointMap.has(generatingChapter) && !isStreaming && !isPaused && (
+                {checkpointMap.has(generatingChapter) && !isStreaming && (
                   <div className="border-t border-border px-4 py-2 flex justify-end">
                     <button
                       onClick={() => handleRewriteRequest(generatingChapter)}
@@ -498,7 +510,7 @@ export function ChapterPanel({
                   <div className="ml-3 flex shrink-0 items-center gap-2">
                     {editingChapter === selectedChapter?.number ? (
                       <button
-                        onClick={() => setEditingChapter(null)}
+                        onClick={handleDoneEditing}
                         className="text-xs rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                       >
                         Done Editing
@@ -569,7 +581,7 @@ export function ChapterPanel({
           {/* Checkpoint panel — slides in from right */}
           <div
             className="shrink-0 border-l border-border transition-all duration-300 ease-in-out overflow-hidden"
-            style={{ width: showCheckpoint ? '45%' : 0, opacity: showCheckpoint ? 1 : 0 }}
+            style={{ width: showCheckpoint ? '38%' : 0, opacity: showCheckpoint ? 1 : 0 }}
           >
             {showCheckpoint && selectedChapter && selectedCheckpoint && (
               <CheckpointPanel
