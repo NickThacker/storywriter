@@ -1,16 +1,14 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import { checkBudgetWarning } from '@/hooks/use-budget-warning'
 
 interface UseChapterStreamReturn {
   streamedText: string
   isStreaming: boolean
-  isPaused: boolean
   error: string | null
   wordCount: number
   startStream: (projectId: string, chapterNumber: number, adjustments?: string) => Promise<void>
-  pause: () => void
-  resume: () => void
   stop: () => void
 }
 
@@ -20,19 +18,11 @@ interface UseChapterStreamReturn {
  * Calls /api/generate/chapter, reads SSE chunks, accumulates raw prose tokens,
  * and tracks word count live during streaming.
  *
- * Supports pause (abort + preserve text), stop (abort + clear state), and
- * resume (caller re-triggers startStream after pause).
- *
- * Handles:
- * - OpenAI-compatible SSE format (data: {...} lines)
- * - [DONE] completion signal
- * - OpenRouter heartbeat lines (": OPENROUTER PROCESSING")
- * - Raw prose accumulation (NOT JSON parsing — chapter output is prose)
+ * Stop aborts the connection and preserves accumulated text.
  */
 export function useChapterStream(): UseChapterStreamReturn {
   const [streamedText, setStreamedText] = useState<string>('')
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
-  const [isPaused, setIsPaused] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [wordCount, setWordCount] = useState<number>(0)
 
@@ -50,7 +40,6 @@ export function useChapterStream(): UseChapterStreamReturn {
       setStreamedText('')
       setError(null)
       setIsStreaming(true)
-      setIsPaused(false)
       setWordCount(0)
 
       const controller = new AbortController()
@@ -79,6 +68,9 @@ export function useChapterStream(): UseChapterStreamReturn {
           setIsStreaming(false)
           return
         }
+
+        // Check X-Budget-Warning header and show toast if near limit (80%)
+        checkBudgetWarning(response)
 
         if (!response.body) {
           setError('No response body from server')
@@ -142,7 +134,7 @@ export function useChapterStream(): UseChapterStreamReturn {
           }
         }
       } catch (err) {
-        // Intentional abort (pause or stop) — return silently
+        // Intentional abort (stop) — return silently
         if (err instanceof Error && err.name === 'AbortError') {
           return
         }
@@ -158,28 +150,7 @@ export function useChapterStream(): UseChapterStreamReturn {
   )
 
   /**
-   * Abort the stream and preserve accumulated text for display.
-   * Sets isPaused true — caller should re-trigger startStream to resume.
-   */
-  const pause = useCallback((): void => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-      abortControllerRef.current = null
-    }
-    setIsStreaming(false)
-    setIsPaused(true)
-  }, [])
-
-  /**
-   * Clear the paused state. Caller is responsible for re-triggering startStream.
-   */
-  const resume = useCallback((): void => {
-    setIsPaused(false)
-  }, [])
-
-  /**
-   * Abort the stream and clear paused state.
-   * Does NOT clear streamedText — caller decides whether to keep the text.
+   * Abort the stream. Preserves accumulated text — caller decides whether to keep it.
    */
   const stop = useCallback((): void => {
     if (abortControllerRef.current) {
@@ -187,18 +158,14 @@ export function useChapterStream(): UseChapterStreamReturn {
       abortControllerRef.current = null
     }
     setIsStreaming(false)
-    setIsPaused(false)
   }, [])
 
   return {
     streamedText,
     isStreaming,
-    isPaused,
     error,
     wordCount,
     startStream,
-    pause,
-    resume,
     stop,
   }
 }

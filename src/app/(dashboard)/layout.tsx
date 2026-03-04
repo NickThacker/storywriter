@@ -18,6 +18,17 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  // Check if BYOK: if user has openrouter_api_key set they are BYOK
+  // BYOK users get no billing UI at all — no /usage link
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: settings } = await (supabase as any)
+    .from('user_settings')
+    .select('openrouter_api_key')
+    .eq('user_id', user.id)
+    .single()
+
+  const isByok = Boolean((settings as { openrouter_api_key?: string | null } | null)?.openrouter_api_key)
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top navigation bar */}
@@ -39,6 +50,14 @@ export default async function DashboardLayout({
             >
               Dashboard
             </Link>
+            {!isByok && (
+              <Link
+                href="/usage"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Usage
+              </Link>
+            )}
             <Link
               href="/settings"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
