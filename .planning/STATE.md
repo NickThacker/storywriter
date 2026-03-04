@@ -3,13 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 05-export-and-billing
-status: in-progress
-last_updated: "2026-03-04T06:16:00Z"
+current_plan: 05-06
+status: executing
+last_updated: "2026-03-04T06:23:06.673Z"
 progress:
-  total_phases: 6
-  completed_phases: 4
+  total_phases: 7
+  completed_phases: 5
   total_plans: 33
-  completed_plans: 30
+  completed_plans: 32
 ---
 
 # Session State
@@ -22,8 +23,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 05-export-and-billing
-**Current plan:** 05-06
-**Status:** In progress (05-05 complete)
+**Current plan:** 05-07
+**Status:** In progress (05-06 complete)
 
 ## Session Log
 
@@ -37,6 +38,7 @@ See: .planning/PROJECT.md
 - 2026-03-04: Completed 05-03 — ExportDialog UI component and chapters page project-level header integration
 - 2026-03-04: Completed 05-04 — Stripe billing pipeline (checkout sessions, webhook handler, subscription management, credit packs)
 - 2026-03-04: Completed 05-05 — Token tracking and budget enforcement on all 4 generation routes (TransformStream interceptor, budget check gate, fire-and-forget deduction, token usage query actions)
+- 2026-03-04: Completed 05-06 — Billing UI: /usage page, UsageBar, PlanCard, UpgradeModal, BillingSection, budget warning hook wired into chapter stream, BYOK gating in settings and nav
 
 ## Decisions
 
@@ -68,3 +70,5 @@ See: .planning/PROJECT.md
 - [Phase 05-05]: Non-streaming routes read usage from already-parsed orJson object (not orResponse.clone()) — body is consumed by parse step
 - [Phase 05-05]: checkTokenBudget returns isByok=true on settings read failure — fail-open avoids blocking BYOK users during DB degradation
 - [Phase 05-05]: direction-options and analyze-impact use chapterNumber=0 in token_usage inserts (not chapter-specific requests)
+- [Phase 05-export-and-billing]: BYOK check in dashboard layout queries openrouter_api_key directly to avoid heavy getBillingStatus on every layout render
+- [Phase 05-export-and-billing]: checkBudgetWarning exported as standalone function (not hook-only) for safe use inside useCallback in use-chapter-stream.ts
