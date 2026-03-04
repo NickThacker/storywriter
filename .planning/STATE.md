@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 05-export-and-billing
-current_plan: 05-06
-status: executing
-last_updated: "2026-03-04T06:23:06.673Z"
+current_phase: 06-author-onboarding-and-voice-analysis
+current_plan: 06-01
+status: ready
+last_updated: "2026-03-04T23:18:37Z"
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 33
-  completed_plans: 32
+  completed_plans: 33
 ---
 
 # Session State
@@ -22,9 +22,9 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v1.0 milestone
-**Current phase:** 05-export-and-billing
-**Current plan:** 05-07
-**Status:** In progress (05-06 complete)
+**Current phase:** 06-author-onboarding-and-voice-analysis
+**Current plan:** 06-01
+**Status:** Phase 05 complete — ready to begin Phase 06
 
 ## Session Log
 
@@ -39,6 +39,7 @@ See: .planning/PROJECT.md
 - 2026-03-04: Completed 05-04 — Stripe billing pipeline (checkout sessions, webhook handler, subscription management, credit packs)
 - 2026-03-04: Completed 05-05 — Token tracking and budget enforcement on all 4 generation routes (TransformStream interceptor, budget check gate, fire-and-forget deduction, token usage query actions)
 - 2026-03-04: Completed 05-06 — Billing UI: /usage page, UsageBar, PlanCard, UpgradeModal, BillingSection, budget warning hook wired into chapter stream, BYOK gating in settings and nav
+- 2026-03-04: Completed 05-07 — Phase 5 verification: all EXPT-01 through BILL-04 requirements confirmed; auto-fixed missing checkTokenBudget gate on outline generation route; human approved
 
 ## Decisions
 
@@ -72,3 +73,5 @@ See: .planning/PROJECT.md
 - [Phase 05-05]: direction-options and analyze-impact use chapterNumber=0 in token_usage inserts (not chapter-specific requests)
 - [Phase 05-export-and-billing]: BYOK check in dashboard layout queries openrouter_api_key directly to avoid heavy getBillingStatus on every layout render
 - [Phase 05-export-and-billing]: checkBudgetWarning exported as standalone function (not hook-only) for safe use inside useCallback in use-chapter-stream.ts
+- [Phase 05-07]: Human approved Phase 5 export and billing verification — all EXPT and BILL requirements confirmed
+- [Phase 05-07]: Stripe billing verification is optional pending Stripe dashboard setup; export verification confirmed functional

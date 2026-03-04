@@ -15,8 +15,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Foundation** - Auth, project dashboard, LLM/BYOK configuration, database schema, n8n security perimeter
 - [x] **Phase 2: Guided Intake and Outline** - Intake wizard, AI outline generation, story bible, character profiles (completed 2026-03-03)
 - [x] **Phase 3: Chapter Generation** - Hybrid streaming prose generation, chapter management, progress tracking (completed 2026-03-03)
-- [ ] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, human-in-the-loop checkpoints
-- [ ] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness
+- [x] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, human-in-the-loop checkpoints (completed 2026-03-03)
+- [x] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness (completed 2026-03-04)
 - [ ] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context
 
 ## Phase Details
@@ -112,14 +112,14 @@ Plans:
   2. Hosted tier users can subscribe to a plan and generate prose within their token/credit budget
   3. User is warned when approaching their token budget limit; BYOK users bypass billing entirely
   4. Token usage is tracked per user and per project, visible to the user
-**Plans:** 5/7 plans executed
-- [ ] 05-01-PLAN.md — DB migration, billing types, Stripe client singleton (Wave 1)
-- [ ] 05-02-PLAN.md — Export engine: DOCX/ePub/RTF/TXT builders + API route (Wave 1)
-- [ ] 05-03-PLAN.md — Export dialog UI, chapters page integration (Wave 2)
-- [ ] 05-04-PLAN.md — Stripe billing: checkout sessions, webhooks, subscription management (Wave 2)
-- [ ] 05-05-PLAN.md — Token tracking: TransformStream interception, budget checks, usage recording (Wave 3)
-- [ ] 05-06-PLAN.md — Usage page, billing UI, budget warnings, settings integration (Wave 4)
-- [ ] 05-07-PLAN.md — End-to-end verification checkpoint (Wave 5)
+**Plans:** 7/7 plans complete
+- [x] 05-01-PLAN.md — DB migration, billing types, Stripe client singleton (Wave 1)
+- [x] 05-02-PLAN.md — Export engine: DOCX/ePub/RTF/TXT builders + API route (Wave 1)
+- [x] 05-03-PLAN.md — Export dialog UI, chapters page integration (Wave 2)
+- [x] 05-04-PLAN.md — Stripe billing: checkout sessions, webhooks, subscription management (Wave 2)
+- [x] 05-05-PLAN.md — Token tracking: TransformStream interception, budget checks, usage recording (Wave 3)
+- [x] 05-06-PLAN.md — Usage page, billing UI, budget warnings, settings integration (Wave 4)
+- [x] 05-07-PLAN.md — End-to-end verification checkpoint (Wave 5)
 
 ## Progress
 
@@ -132,8 +132,8 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | 01.1 Remove n8n | 1/1 | Complete    | 2026-03-01 |
 | 2. Guided Intake and Outline | 9/9 | Complete   | 2026-03-03 |
 | 3. Chapter Generation | 5/5 | Complete   | 2026-03-03 |
-| 4. Creative Checkpoints | 0/5 | Not started | - |
-| 5. Export and Billing | 5/7 | In Progress|  |
+| 4. Creative Checkpoints | 5/5 | Complete    | 2026-03-03 |
+| 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
 | 6. Author Onboarding & Voice Analysis | 0/TBD | Not started | - |
 
 ### Phase 6: Author Onboarding and Voice Analysis
