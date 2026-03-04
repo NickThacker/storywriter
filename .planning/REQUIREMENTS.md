@@ -86,6 +86,16 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **BILL-03**: User is warned when approaching their token budget limit
 - [x] **BILL-04**: BYOK users bypass billing (use their own OpenRouter credits)
 
+### Author Voice & Onboarding
+
+- [ ] **VOIC-01**: User can complete a 3-step voice onboarding wizard (writing samples, style preferences, analysis results)
+- [ ] **VOIC-02**: User can provide writing samples by pasting text or uploading PDF, DOCX, or TXT files
+- [ ] **VOIC-03**: AI analyzes writing samples and style preferences to produce a structured author voice persona (style descriptors, thematic preferences, voice description, guidance text)
+- [ ] **VOIC-04**: User receives a downloadable PDF style report after analysis completes
+- [ ] **VOIC-05**: Author voice persona is stored per user and automatically injected into all generation prompts (outline and chapter) without requiring any action per generation
+- [ ] **VOIC-06**: User can revisit and edit their voice profile from the Settings page (Voice Profile tab)
+- [ ] **VOIC-07**: First-time users are softly nudged to set up their voice profile via a dismissible dashboard banner
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -167,12 +177,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BILL-02 | Phase 5 | Complete |
 | BILL-03 | Phase 5 | Complete |
 | BILL-04 | Phase 5 | Complete |
+| VOIC-01 | Phase 6 | Planned |
+| VOIC-02 | Phase 6 | Planned |
+| VOIC-03 | Phase 6 | Planned |
+| VOIC-04 | Phase 6 | Planned |
+| VOIC-05 | Phase 6 | Planned |
+| VOIC-06 | Phase 6 | Planned |
+| VOIC-07 | Phase 6 | Planned |
 
 **Coverage:**
-- v1 requirements: 46 total
-- Mapped to phases: 46
-- Unmapped: 0 ✓
+- v1 requirements: 53 total (46 prior + 7 Phase 6)
+- Mapped to phases: 53
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after roadmap creation*
+*Last updated: 2026-03-04 after Phase 6 planning*

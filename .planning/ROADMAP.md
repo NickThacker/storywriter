@@ -138,10 +138,15 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 
 ### Phase 6: Author Onboarding and Voice Analysis
 
-**Goal:** Onboarding sequence (accessible before dashboard, revisitable) where users provide style/voice preferences and upload writing samples. AI analyzes their writing style to produce: 1) a downloadable PDF style report, and 2) an "author voice" persona loaded into generation context. Users can manage multiple personas and provide general AI guidance.
-**Requirements**: TBD
+**Goal:** Onboarding sequence (accessible before dashboard, revisitable) where users provide style/voice preferences and upload writing samples. AI analyzes their writing style to produce: 1) a downloadable PDF style report, and 2) an "author voice" persona loaded into generation context. Users can provide general AI guidance and revisit their profile from Settings.
+**Requirements**: VOIC-01, VOIC-02, VOIC-03, VOIC-04, VOIC-05, VOIC-06, VOIC-07
 **Depends on:** Phase 1 (auth required, but independent of writing pipeline)
-**Plans:** 0 plans
+**Plans:** 6 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 6 to break down)
+- [ ] 06-01-PLAN.md — DB migration (author_personas table), TypeScript types, npm install (mammoth/pdf-parse/pdfkit), next.config.ts serverExternalPackages (Wave 1)
+- [ ] 06-02-PLAN.md — Voice wizard Zustand store, provider, lib/voice utilities (text-extraction, schema, prompt, pdf-report), server actions (Wave 2)
+- [ ] 06-03-PLAN.md — 3-step onboarding wizard UI at /onboarding (writing samples, style preferences, streaming analysis + PDF download) (Wave 2)
+- [ ] 06-04-PLAN.md — Three API routes: /api/voice-upload, /api/voice-analysis (SSE), /api/voice-report (PDF) (Wave 3)
+- [ ] 06-05-PLAN.md — First-login nudge, Voice Profile settings tab, persona injection into outline + chapter generation prompts (Wave 3)
+- [ ] 06-06-PLAN.md — End-to-end verification checkpoint (Wave 4)
