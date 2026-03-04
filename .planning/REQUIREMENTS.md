@@ -75,16 +75,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Export
 
-- [ ] **EXPT-01**: User can export their novel to DOCX format
-- [ ] **EXPT-02**: User can export their novel to plain text format
-- [ ] **EXPT-03**: Export assembles all approved chapters into a single document
+- [x] **EXPT-01**: User can export their novel to DOCX format
+- [x] **EXPT-02**: User can export their novel to plain text format
+- [x] **EXPT-03**: Export assembles all approved chapters into a single document
 
 ### Billing
 
-- [ ] **BILL-01**: Hosted tier users subscribe to a plan with token/credit budget
-- [ ] **BILL-02**: Token usage is tracked per user and per project
+- [x] **BILL-01**: Hosted tier users subscribe to a plan with token/credit budget
+- [x] **BILL-02**: Token usage is tracked per user and per project
 - [ ] **BILL-03**: User is warned when approaching their token budget limit
-- [ ] **BILL-04**: BYOK users bypass billing (use their own OpenRouter credits)
+- [x] **BILL-04**: BYOK users bypass billing (use their own OpenRouter credits)
 
 ## v2 Requirements
 
@@ -160,13 +160,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CKPT-03 | Phase 4 | Complete |
 | CKPT-04 | Phase 4 | Complete |
 | CKPT-05 | Phase 4 | Complete |
-| EXPT-01 | Phase 5 | Pending |
-| EXPT-02 | Phase 5 | Pending |
-| EXPT-03 | Phase 5 | Pending |
-| BILL-01 | Phase 5 | Pending |
-| BILL-02 | Phase 5 | Pending |
+| EXPT-01 | Phase 5 | Complete |
+| EXPT-02 | Phase 5 | Complete |
+| EXPT-03 | Phase 5 | Complete |
+| BILL-01 | Phase 5 | Complete |
+| BILL-02 | Phase 5 | Complete |
 | BILL-03 | Phase 5 | Pending |
-| BILL-04 | Phase 5 | Pending |
+| BILL-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 46 total
