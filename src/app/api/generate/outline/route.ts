@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { OUTLINE_SCHEMA } from '@/lib/outline/schema'
 import { buildOutlinePrompt, buildRegeneratePrompt } from '@/lib/outline/prompt'
 import type { IntakeData } from '@/lib/validations/intake'
+import { checkTokenBudget } from '@/lib/billing/budget-check'
 
 interface GenerateOutlineBody {
   projectId: string
@@ -67,6 +68,21 @@ export async function POST(request: Request): Promise<Response> {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       }
+    )
+  }
+
+  // 3a. Budget check — block hosted-tier users who have exhausted their tokens
+  const budgetCheck = await checkTokenBudget(user.id)
+  if (!budgetCheck.allowed) {
+    return new Response(
+      JSON.stringify({
+        error:
+          budgetCheck.reason === 'budget_exhausted'
+            ? 'Token budget exhausted. Upgrade your plan or purchase a credit pack.'
+            : 'No active subscription. Subscribe to start generating.',
+        code: budgetCheck.reason,
+      }),
+      { status: 402, headers: { 'Content-Type': 'application/json' } }
     )
   }
 
