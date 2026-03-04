@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { IMPACT_ANALYSIS_SCHEMA, buildImpactPrompt } from '@/lib/checkpoint/impact-prompt'
 import { flagAffectedChapters } from '@/actions/chapters'
+import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -178,6 +179,21 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
+  // 6a. Budget check — block hosted-tier users who have exhausted their tokens
+  const budgetCheck = await checkTokenBudget(user.id)
+  if (!budgetCheck.allowed) {
+    return new Response(
+      JSON.stringify({
+        error:
+          budgetCheck.reason === 'budget_exhausted'
+            ? 'Token budget exhausted. Upgrade your plan or purchase a credit pack.'
+            : 'No active subscription. Subscribe to start generating.',
+        code: budgetCheck.reason,
+      }),
+      { status: 402, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
   // 7. Use editing model preference (cheaper model — impact analysis sends full chapter text)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: modelPref } = await (supabase as any)
@@ -248,8 +264,9 @@ export async function POST(request: Request): Promise<Response> {
 
   // 10. Parse the structured response
   let impactResult: ImpactAnalysisResult
+  let orJson: { choices?: Array<{ message?: { content?: string } }>; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }
   try {
-    const orJson = await orResponse.json()
+    orJson = await orResponse.json()
     const content = orJson.choices?.[0]?.message?.content
     if (!content) {
       throw new Error('No content in OpenRouter response')
@@ -260,6 +277,23 @@ export async function POST(request: Request): Promise<Response> {
     return new Response(
       JSON.stringify({ error: 'Failed to parse impact analysis result from AI' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
+  // 10a. Record and deduct tokens for hosted-tier users (fire-and-forget)
+  if (!budgetCheck.isByok && orJson.usage?.total_tokens) {
+    const usage = orJson.usage
+    recordTokenUsage({
+      userId: user.id,
+      projectId,
+      chapterNumber: 0, // not chapter-specific
+      promptTokens: usage.prompt_tokens,
+      completionTokens: usage.completion_tokens,
+      totalTokens: usage.total_tokens,
+    }).catch((err) => console.error('[analyze-impact] Token recording error:', err))
+
+    deductTokens(user.id, usage.total_tokens).catch((err) =>
+      console.error('[analyze-impact] Token deduction error:', err)
     )
   }
 

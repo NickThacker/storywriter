@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { assembleChapterContext } from '@/lib/memory/context-assembly'
 import { buildChapterPrompt } from '@/lib/memory/chapter-prompt'
+import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
+import { createTokenInterceptStream } from '@/lib/billing/token-interceptor'
 
 interface GenerateChapterBody {
   projectId: string
@@ -82,6 +84,21 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
+  // 5a. Budget check — block hosted-tier users who have exhausted their tokens
+  const budgetCheck = await checkTokenBudget(user.id)
+  if (!budgetCheck.allowed) {
+    return new Response(
+      JSON.stringify({
+        error:
+          budgetCheck.reason === 'budget_exhausted'
+            ? 'Token budget exhausted. Upgrade your plan or purchase a credit pack.'
+            : 'No active subscription. Subscribe to start generating.',
+        code: budgetCheck.reason,
+      }),
+      { status: 402, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+
   // 5. Retrieve user's preferred prose model
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: modelPref } = await (supabase as any)
@@ -156,14 +173,42 @@ export async function POST(request: Request): Promise<Response> {
     })
   }
 
-  // 9. Stream through as SSE
-  return new Response(responseBody, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive',
-      'Content-Encoding': 'none',
-    },
-  })
+  // 9. Stream through as SSE — BYOK bypasses token tracking
+  const sseHeaders: Record<string, string> = {
+    'Content-Type': 'text/event-stream; charset=utf-8',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'Content-Encoding': 'none',
+  }
+
+  if (budgetCheck.isByok) {
+    // BYOK: passthrough, no tracking
+    return new Response(responseBody, { status: 200, headers: sseHeaders })
+  }
+
+  // Hosted tier: pipe through token interceptor
+  const interceptedStream = responseBody.pipeThrough(
+    createTokenInterceptStream((usage) => {
+      // Fire-and-forget: do not await, do not block the stream
+      recordTokenUsage({
+        userId: user.id,
+        projectId,
+        chapterNumber,
+        promptTokens: usage.prompt_tokens,
+        completionTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens,
+      }).catch((err) => console.error('[chapter] Token recording error:', err))
+
+      deductTokens(user.id, usage.total_tokens).catch((err) =>
+        console.error('[chapter] Token deduction error:', err)
+      )
+    })
+  )
+
+  // Add budget warning header if near limit
+  if (budgetCheck.warningThreshold === 'near_limit') {
+    sseHeaders['X-Budget-Warning'] = 'near_limit'
+  }
+
+  return new Response(interceptedStream, { status: 200, headers: sseHeaders })
 }
