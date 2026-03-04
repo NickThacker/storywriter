@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 05-export-and-billing
 status: in-progress
-last_updated: "2026-03-04T05:56:34Z"
+last_updated: "2026-03-04T06:05:00Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 33
-  completed_plans: 28
+  completed_plans: 29
 ---
 
 # Session State
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 05-export-and-billing
-**Current plan:** 05-03
-**Status:** In progress (05-02 complete)
+**Current plan:** 05-04
+**Status:** In progress (05-03 complete)
 
 ## Session Log
 
@@ -34,6 +34,7 @@ See: .planning/PROJECT.md
 - 2026-03-03: Phase 4 (Creative Checkpoints) human verification approved — all CKPT-01 through CKPT-05 confirmed, advancing to Phase 5
 - 2026-03-04: Completed 05-01 — billing database schema, TypeScript types, and Stripe client singleton
 - 2026-03-04: Completed 05-02 — four-format export pipeline (DOCX, ePub, RTF, TXT) and unified /api/export/[projectId] route
+- 2026-03-04: Completed 05-03 — ExportDialog UI component and chapters page project-level header integration
 
 ## Decisions
 
@@ -55,3 +56,6 @@ See: .planning/PROJECT.md
 - [Phase 05-02]: Manual TOC in DOCX (HEADING_2 list) avoids Word's Update Field prompt for auto-TOC
 - [Phase 05-02]: Buffer cast to BodyInit required for TypeScript strict mode in Next.js Response constructor
 - [Phase 05-02]: epub-gen-memory API — epub(options, content) — content is second arg, not nested in options
+- [Phase 05-03]: Anchor-based download (create anchor, click) avoids navigating away from SPA
+- [Phase 05-03]: Button-group toggle pattern used for format/include selection (no @radix-ui/react-radio-group needed)
+- [Phase 05-03]: ChapterPanel height changed from calc(100vh - 64px - 64px) to h-full — respects new page-level flex container

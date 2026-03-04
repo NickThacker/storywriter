@@ -112,7 +112,7 @@ Plans:
   2. Hosted tier users can subscribe to a plan and generate prose within their token/credit budget
   3. User is warned when approaching their token budget limit; BYOK users bypass billing entirely
   4. Token usage is tracked per user and per project, visible to the user
-**Plans:** 2/7 plans executed
+**Plans:** 3/7 plans executed
 - [ ] 05-01-PLAN.md — DB migration, billing types, Stripe client singleton (Wave 1)
 - [ ] 05-02-PLAN.md — Export engine: DOCX/ePub/RTF/TXT builders + API route (Wave 1)
 - [ ] 05-03-PLAN.md — Export dialog UI, chapters page integration (Wave 2)
@@ -133,7 +133,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | 2. Guided Intake and Outline | 9/9 | Complete   | 2026-03-03 |
 | 3. Chapter Generation | 5/5 | Complete   | 2026-03-03 |
 | 4. Creative Checkpoints | 0/5 | Not started | - |
-| 5. Export and Billing | 2/7 | In Progress|  |
+| 5. Export and Billing | 3/7 | In Progress|  |
 | 6. Author Onboarding & Voice Analysis | 0/TBD | Not started | - |
 
 ### Phase 6: Author Onboarding and Voice Analysis
