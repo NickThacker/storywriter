@@ -4,12 +4,12 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 05-export-and-billing
 status: in-progress
-last_updated: "2026-03-04T06:05:00Z"
+last_updated: "2026-03-04T06:10:00Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 33
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # Session State
@@ -22,8 +22,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 05-export-and-billing
-**Current plan:** 05-04
-**Status:** In progress (05-03 complete)
+**Current plan:** 05-05
+**Status:** In progress (05-04 complete)
 
 ## Session Log
 
@@ -35,6 +35,7 @@ See: .planning/PROJECT.md
 - 2026-03-04: Completed 05-01 — billing database schema, TypeScript types, and Stripe client singleton
 - 2026-03-04: Completed 05-02 — four-format export pipeline (DOCX, ePub, RTF, TXT) and unified /api/export/[projectId] route
 - 2026-03-04: Completed 05-03 — ExportDialog UI component and chapters page project-level header integration
+- 2026-03-04: Completed 05-04 — Stripe billing pipeline (checkout sessions, webhook handler, subscription management, credit packs)
 
 ## Decisions
 
@@ -59,3 +60,6 @@ See: .planning/PROJECT.md
 - [Phase 05-03]: Anchor-based download (create anchor, click) avoids navigating away from SPA
 - [Phase 05-03]: Button-group toggle pattern used for format/include selection (no @radix-ui/react-radio-group needed)
 - [Phase 05-03]: ChapterPanel height changed from calc(100vh - 64px - 64px) to h-full — respects new page-level flex container
+- [Phase 05-04]: Stripe 2026-02-25.clover removes current_period_end from Subscription — billing_period_end set via invoice.paid event only
+- [Phase 05-04]: Stripe 2026-02-25.clover moves Invoice subscription ref to invoice.parent.subscription_details.subscription
+- [Phase 05-04]: Webhook always returns 200 after recording idempotency — prevents Stripe retry storms on app errors
