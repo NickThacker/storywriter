@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/actions/auth'
+import { VoiceOnboardingNudge } from '@/components/dashboard/voice-onboarding-nudge'
 
 export default async function DashboardLayout({
   children,
@@ -18,16 +19,23 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  // Check if BYOK: if user has openrouter_api_key set they are BYOK
-  // BYOK users get no billing UI at all — no /usage link
+  // Fetch settings and persona in parallel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key')
-    .eq('user_id', user.id)
-    .single()
+  const [{ data: settings }, { data: persona }] = await Promise.all([
+    (supabase as any)
+      .from('user_settings')
+      .select('openrouter_api_key, voice_onboarding_dismissed')
+      .eq('user_id', user.id)
+      .single(),
+    (supabase as any)
+      .from('author_personas')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
   const isByok = Boolean((settings as { openrouter_api_key?: string | null } | null)?.openrouter_api_key)
+  const showVoiceNudge = !(settings as { voice_onboarding_dismissed?: boolean } | null)?.voice_onboarding_dismissed && !persona
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,6 +91,7 @@ export default async function DashboardLayout({
 
       {/* Page content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {showVoiceNudge && <VoiceOnboardingNudge />}
         {children}
       </main>
     </div>
