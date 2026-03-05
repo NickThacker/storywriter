@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 06-author-onboarding-and-voice-analysis
-current_plan: 06-03
+current_plan: 06-04
 status: in_progress
-last_updated: "2026-03-05T00:45:30.000Z"
+last_updated: "2026-03-05T00:52:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 39
-  completed_plans: 35
+  completed_plans: 36
 ---
 
 # Session State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 06-author-onboarding-and-voice-analysis
-**Current plan:** 06-03
+**Current plan:** 06-04
 **Status:** In Progress
 
 ## Session Log
@@ -42,6 +42,7 @@ See: .planning/PROJECT.md
 - 2026-03-04: Completed 05-07 — Phase 5 verification: all EXPT-01 through BILL-04 requirements confirmed; auto-fixed missing checkTokenBudget gate on outline generation route; human approved
 - 2026-03-05: Completed 06-01 — author_personas DB schema, TypeScript types (AuthorPersonaRow/Insert/Update), mammoth/pdf-parse/pdfkit packages installed, next.config.ts serverExternalPackages configured
 - 2026-03-05: Completed 06-02 — Zustand voice wizard store, text extraction utilities, voice analysis schema/prompt/PDF report, and persona CRUD server actions
+- 2026-03-05: Completed 06-03 — 3-step onboarding wizard UI at /onboarding (writing samples, style preferences, SSE analysis display with PDF download)
 
 ## Decisions
 
@@ -82,3 +83,7 @@ See: .planning/PROJECT.md
 - [Phase 06-02]: pdf-parse v2 exports named PDFParse class — import as { PDFParse }, construct with new PDFParse({ data: buffer }), call .getText()
 - [Phase 06-02]: VoiceWizardStoreProvider has no initialState prop — voice wizard resume is handled by DB load in layout, not store hydration
 - [Phase 06-02]: savePersona accepts AuthorPersonaUpdate & { wizard_step?, analysis_complete? } for flexible partial updates
+- [Phase 06-03]: Inline VoiceProgressBar in page.tsx — existing ProgressBar is tightly coupled to useIntakeStore and cannot be reused
+- [Phase 06-03]: textarea.tsx added as new shadcn-style UI component — was missing from the component library
+- [Phase 06-03]: hasFiredRef (useRef(false)) guard prevents double SSE fetch in React StrictMode double-mount cycle
+- [Phase 06-03]: as unknown as StyleDescriptors cast for flexible mapping from AI partial result to savePersona typed fields
