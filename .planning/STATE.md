@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 06-author-onboarding-and-voice-analysis
-current_plan: 06-04
+current_plan: 06-05
 status: in_progress
-last_updated: "2026-03-05T00:52:00.000Z"
+last_updated: "2026-03-05T00:56:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 39
-  completed_plans: 36
+  completed_plans: 37
 ---
 
 # Session State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 06-author-onboarding-and-voice-analysis
-**Current plan:** 06-04
+**Current plan:** 06-05
 **Status:** In Progress
 
 ## Session Log
@@ -43,6 +43,7 @@ See: .planning/PROJECT.md
 - 2026-03-05: Completed 06-01 — author_personas DB schema, TypeScript types (AuthorPersonaRow/Insert/Update), mammoth/pdf-parse/pdfkit packages installed, next.config.ts serverExternalPackages configured
 - 2026-03-05: Completed 06-02 — Zustand voice wizard store, text extraction utilities, voice analysis schema/prompt/PDF report, and persona CRUD server actions
 - 2026-03-05: Completed 06-03 — 3-step onboarding wizard UI at /onboarding (writing samples, style preferences, SSE analysis display with PDF download)
+- 2026-03-05: Completed 06-04 — Three API routes: /api/voice-upload (multipart → text extraction), /api/voice-analysis (SSE streaming AI analysis), /api/voice-report (PDF download)
 
 ## Decisions
 
@@ -87,3 +88,6 @@ See: .planning/PROJECT.md
 - [Phase 06-03]: textarea.tsx added as new shadcn-style UI component — was missing from the component library
 - [Phase 06-03]: hasFiredRef (useRef(false)) guard prevents double SSE fetch in React StrictMode double-mount cycle
 - [Phase 06-03]: as unknown as StyleDescriptors cast for flexible mapping from AI partial result to savePersona typed fields
+- [Phase 06-04]: voice-analysis uses 'editing' task_type for model preference lookup — no 'voice' task_type exists in schema
+- [Phase 06-04]: voice-upload is a route handler (not server action) to bypass the 1MB server action body size limit for file uploads
+- [Phase 06-04]: voice-report uses maybeSingle() — returns null gracefully when user has no persona yet
