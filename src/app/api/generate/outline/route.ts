@@ -86,24 +86,34 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 4. Retrieve user's preferred outline model
+  // 4. Retrieve user's preferred outline model and persona in parallel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: modelPref } = await (supabase as any)
-    .from('user_model_preferences')
-    .select('model_id')
-    .eq('user_id', user.id)
-    .eq('task_type', 'outline')
-    .single()
+  const [{ data: modelPref }, { data: personaData }] = await Promise.all([
+    (supabase as any)
+      .from('user_model_preferences')
+      .select('model_id')
+      .eq('user_id', user.id)
+      .eq('task_type', 'outline')
+      .single(),
+    (supabase as any)
+      .from('author_personas')
+      .select('voice_description, raw_guidance_text')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
   const modelId =
     modelPref && typeof (modelPref as { model_id?: string }).model_id === 'string'
       ? (modelPref as { model_id: string }).model_id
       : 'anthropic/claude-sonnet-4-5'
 
-  // 5. Build the prompt
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const persona = (personaData as any) ?? null
+
+  // 5. Build the prompt — pass persona for voice injection (fail-open: null persona is fine)
   const { systemMessage, userMessage } = direction
-    ? buildRegeneratePrompt(intakeData, direction)
-    : buildOutlinePrompt(intakeData)
+    ? buildRegeneratePrompt(intakeData, direction, persona)
+    : buildOutlinePrompt(intakeData, persona)
 
   // 6. Call OpenRouter directly with streaming and structured JSON schema output
   let orResponse: Response

@@ -1,18 +1,28 @@
 import type { ChapterContextPackage } from '@/types/project-memory'
+import type { AuthorPersona } from '@/types/database'
 
 /**
  * Build the system + user messages for chapter generation.
  * Converts the assembled ChapterContextPackage into clearly labeled
  * prompt sections that the AI uses to write the chapter.
+ * Optionally accepts an AuthorPersona to inject voice context into the system message.
  */
 export function buildChapterPrompt(
   context: ChapterContextPackage,
-  adjustments?: string
+  adjustments?: string,
+  persona?: AuthorPersona | null
 ): {
   systemMessage: string
   userMessage: string
 } {
   const { identity } = context
+
+  const personaSection = persona?.voice_description
+    ? `\n\nAuthor Voice:\n${persona.voice_description}`
+    : ''
+  const guidanceSection = persona?.raw_guidance_text
+    ? `\n\nAuthor Guidance:\n${persona.raw_guidance_text}`
+    : ''
 
   const systemMessage = `You are an expert novelist writing Chapter ${context.chapterNumber} of a ${identity.genre ?? 'literary fiction'} novel.
 
@@ -33,7 +43,7 @@ Formatting rules:
 - Use *italics* (single asterisks) for internal thoughts, overheard phone calls, letters, text messages, flashbacks, foreign words, and emphasis — just as a published novel would use italics.
 - Use **bold** (double asterisks) sparingly, only for extreme emphasis.
 - Separate paragraphs with blank lines.
-- Do not include chapter numbers or titles in the output — just the prose.`
+- Do not include chapter numbers or titles in the output — just the prose.${personaSection}${guidanceSection}`
 
   // Build the user message with all context sections
   const sections: string[] = []

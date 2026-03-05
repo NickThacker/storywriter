@@ -113,10 +113,22 @@ export async function POST(request: Request): Promise<Response> {
       ? (modelPref as { model_id: string }).model_id
       : 'anthropic/claude-sonnet-4-5'
 
-  // 6. Assemble context from project memory
+  // 6. Assemble context from project memory and fetch persona in parallel
   let context
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let personaData: any = null
   try {
-    context = await assembleChapterContext(projectId, chapterNumber)
+    const [assembledContext, personaResult] = await Promise.all([
+      assembleChapterContext(projectId, chapterNumber),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
+        .from('author_personas')
+        .select('voice_description, raw_guidance_text')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ])
+    context = assembledContext
+    personaData = personaResult.data ?? null
   } catch (err) {
     console.error('Context assembly error:', err)
     return new Response(
@@ -125,8 +137,8 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 7. Build prompt
-  const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments)
+  // 7. Build prompt — pass persona for voice injection (fail-open: null persona is fine)
+  const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments, personaData)
 
   // 8. Call OpenRouter with streaming
   let orResponse: Response

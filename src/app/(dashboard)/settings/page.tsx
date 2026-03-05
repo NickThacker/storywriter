@@ -3,9 +3,12 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getApiKeyStatus, getModelPreferences } from '@/actions/settings'
 import { getBillingStatus } from '@/actions/billing'
+import { getPersona } from '@/actions/voice'
 import { ApiKeyForm } from '@/components/settings/api-key-form'
 import { ModelSelector } from '@/components/settings/model-selector'
 import { BillingSection } from '@/components/billing/billing-section'
+import { VoiceProfileTab } from '@/components/settings/voice-profile-tab'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const metadata: Metadata = {
   title: 'Settings — StoryWriter',
@@ -21,10 +24,11 @@ export default async function SettingsPage() {
     redirect('/login')
   }
 
-  const [apiKeyStatus, modelPreferences, billingStatusResult] = await Promise.all([
+  const [apiKeyStatus, modelPreferences, billingStatusResult, persona] = await Promise.all([
     getApiKeyStatus(),
     getModelPreferences(),
     getBillingStatus(),
+    getPersona(),
   ])
 
   const billingStatus = 'error' in billingStatusResult ? null : billingStatusResult
@@ -37,7 +41,7 @@ export default async function SettingsPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="mt-1 text-muted-foreground">
-          Configure your AI access and model preferences.
+          Configure your AI access, model preferences, and author voice.
         </p>
       </div>
 
@@ -48,23 +52,37 @@ export default async function SettingsPage() {
         </div>
       )}
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">API Key</h2>
-        <ApiKeyForm initialKeyStatus={apiKeyStatus} />
-      </section>
+      <Tabs defaultValue="api-key">
+        <TabsList>
+          <TabsTrigger value="api-key">API Key</TabsTrigger>
+          <TabsTrigger value="model-preferences">Model Preferences</TabsTrigger>
+          <TabsTrigger value="voice-profile">Voice Profile</TabsTrigger>
+        </TabsList>
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Model Preferences</h2>
-        <ModelSelector initialPreferences={modelPreferences} />
-      </section>
+        <TabsContent value="api-key" className="space-y-6 pt-4">
+          <section className="space-y-2">
+            <h2 className="text-lg font-semibold">API Key</h2>
+            <ApiKeyForm initialKeyStatus={apiKeyStatus} />
+          </section>
 
-      {/* Billing section — only shown for non-BYOK (hosted tier) users */}
-      {billingStatus && !billingStatus.isByok && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Billing &amp; Subscription</h2>
-          <BillingSection billingStatus={billingStatus} />
-        </section>
-      )}
+          {/* Billing section — only shown for non-BYOK (hosted tier) users */}
+          {billingStatus && !billingStatus.isByok && (
+            <section className="space-y-2">
+              <h2 className="text-lg font-semibold">Billing &amp; Subscription</h2>
+              <BillingSection billingStatus={billingStatus} />
+            </section>
+          )}
+        </TabsContent>
+
+        <TabsContent value="model-preferences" className="space-y-2 pt-4">
+          <h2 className="text-lg font-semibold">Model Preferences</h2>
+          <ModelSelector initialPreferences={modelPreferences} />
+        </TabsContent>
+
+        <TabsContent value="voice-profile" className="pt-4">
+          <VoiceProfileTab persona={persona} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
