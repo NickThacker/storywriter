@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 06-author-onboarding-and-voice-analysis
-current_plan: 06-01
-status: planning
-last_updated: "2026-03-04T23:28:04.734Z"
+current_plan: 06-02
+status: in_progress
+last_updated: "2026-03-05T00:40:15.879Z"
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 33
-  completed_plans: 33
+  total_plans: 39
+  completed_plans: 34
 ---
 
 # Session State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 06-author-onboarding-and-voice-analysis
-**Current plan:** 06-01
-**Status:** Ready to plan
+**Current plan:** 06-02
+**Status:** In Progress
 
 ## Session Log
 
@@ -40,6 +40,7 @@ See: .planning/PROJECT.md
 - 2026-03-04: Completed 05-05 — Token tracking and budget enforcement on all 4 generation routes (TransformStream interceptor, budget check gate, fire-and-forget deduction, token usage query actions)
 - 2026-03-04: Completed 05-06 — Billing UI: /usage page, UsageBar, PlanCard, UpgradeModal, BillingSection, budget warning hook wired into chapter stream, BYOK gating in settings and nav
 - 2026-03-04: Completed 05-07 — Phase 5 verification: all EXPT-01 through BILL-04 requirements confirmed; auto-fixed missing checkTokenBudget gate on outline generation route; human approved
+- 2026-03-05: Completed 06-01 — author_personas DB schema, TypeScript types (AuthorPersonaRow/Insert/Update), mammoth/pdf-parse/pdfkit packages installed, next.config.ts serverExternalPackages configured
 
 ## Decisions
 
@@ -75,3 +76,5 @@ See: .planning/PROJECT.md
 - [Phase 05-export-and-billing]: checkBudgetWarning exported as standalone function (not hook-only) for safe use inside useCallback in use-chapter-stream.ts
 - [Phase 05-07]: Human approved Phase 5 export and billing verification — all EXPT and BILL requirements confirmed
 - [Phase 05-07]: Stripe billing verification is optional pending Stripe dashboard setup; export verification confirmed functional
+- [Phase 06-01]: @types/mammoth does not exist on npm — mammoth ships its own types inline
+- [Phase 06-01]: Migration 00006_author_personas.sql must be applied manually in Supabase SQL Editor before Phase 6 features work

@@ -88,10 +88,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Author Voice & Onboarding
 
-- [ ] **VOIC-01**: User can complete a 3-step voice onboarding wizard (writing samples, style preferences, analysis results)
-- [ ] **VOIC-02**: User can provide writing samples by pasting text or uploading PDF, DOCX, or TXT files
+- [x] **VOIC-01**: User can complete a 3-step voice onboarding wizard (writing samples, style preferences, analysis results)
+- [x] **VOIC-02**: User can provide writing samples by pasting text or uploading PDF, DOCX, or TXT files
 - [ ] **VOIC-03**: AI analyzes writing samples and style preferences to produce a structured author voice persona (style descriptors, thematic preferences, voice description, guidance text)
-- [ ] **VOIC-04**: User receives a downloadable PDF style report after analysis completes
+- [x] **VOIC-04**: User receives a downloadable PDF style report after analysis completes
 - [ ] **VOIC-05**: Author voice persona is stored per user and automatically injected into all generation prompts (outline and chapter) without requiring any action per generation
 - [ ] **VOIC-06**: User can revisit and edit their voice profile from the Settings page (Voice Profile tab)
 - [ ] **VOIC-07**: First-time users are softly nudged to set up their voice profile via a dismissible dashboard banner

@@ -134,14 +134,14 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | 3. Chapter Generation | 5/5 | Complete   | 2026-03-03 |
 | 4. Creative Checkpoints | 5/5 | Complete    | 2026-03-03 |
 | 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
-| 6. Author Onboarding & Voice Analysis | 0/TBD | Not started | - |
+| 6. Author Onboarding & Voice Analysis | 1/6 | In Progress|  |
 
 ### Phase 6: Author Onboarding and Voice Analysis
 
 **Goal:** Onboarding sequence (accessible before dashboard, revisitable) where users provide style/voice preferences and upload writing samples. AI analyzes their writing style to produce: 1) a downloadable PDF style report, and 2) an "author voice" persona loaded into generation context. Users can provide general AI guidance and revisit their profile from Settings.
 **Requirements**: VOIC-01, VOIC-02, VOIC-03, VOIC-04, VOIC-05, VOIC-06, VOIC-07
 **Depends on:** Phase 1 (auth required, but independent of writing pipeline)
-**Plans:** 6 plans
+**Plans:** 1/6 plans executed
 
 Plans:
 - [ ] 06-01-PLAN.md — DB migration (author_personas table), TypeScript types, npm install (mammoth/pdf-parse/pdfkit), next.config.ts serverExternalPackages (Wave 1)
