@@ -46,6 +46,8 @@ export interface UserSettingsRow {
   token_budget_remaining: number
   credit_pack_tokens: number
   billing_period_end: string | null
+  // Phase 6 voice onboarding
+  voice_onboarding_dismissed: boolean
 }
 
 export interface UserModelPreferenceRow {
@@ -133,6 +135,47 @@ export interface OutlineRow {
   updated_at: string
 }
 
+// ------- Phase 6 author persona row types -------
+
+export interface StyleDescriptors {
+  sentence_length: string
+  rhythm: string
+  diction_level: string
+  pov_preference: string
+}
+
+export interface ThematicPreferences {
+  tone: string
+  pacing: string
+  dialogue_ratio: string
+  dark_light_theme: string
+}
+
+export interface AuthorPersonaRow {
+  id: string
+  user_id: string
+  style_descriptors: StyleDescriptors | null
+  thematic_preferences: ThematicPreferences | null
+  voice_description: string | null
+  raw_guidance_text: string | null
+  wizard_step: number
+  analysis_complete: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type AuthorPersonaInsert = Omit<AuthorPersonaRow, 'id' | 'created_at' | 'updated_at'> & {
+  id?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export type AuthorPersonaUpdate = Partial<
+  Omit<AuthorPersonaRow, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+>
+
+export type AuthorPersona = AuthorPersonaRow
+
 // ------- Insert types (what you send for INSERT — id/created_at are optional) -------
 
 export type UserSettingsInsert = Omit<UserSettingsRow, 'id' | 'created_at' | 'updated_at'> & {
@@ -145,6 +188,7 @@ export type UserSettingsInsert = Omit<UserSettingsRow, 'id' | 'created_at' | 'up
   token_budget_remaining?: number
   credit_pack_tokens?: number
   billing_period_end?: string | null
+  voice_onboarding_dismissed?: boolean
 }
 
 export type UserModelPreferenceInsert = Omit<UserModelPreferenceRow, 'id' | 'updated_at'> & {
@@ -318,6 +362,12 @@ export type Database = {
         Row: StripeWebhookEventRow
         Insert: Omit<StripeWebhookEventRow, 'processed_at'> & { processed_at?: string }
         Update: Partial<StripeWebhookEventRow>
+        Relationships: GenericRelationship[]
+      }
+      author_personas: {
+        Row: AuthorPersonaRow
+        Insert: AuthorPersonaInsert
+        Update: AuthorPersonaUpdate
         Relationships: GenericRelationship[]
       }
     }
