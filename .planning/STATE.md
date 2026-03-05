@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 06-author-onboarding-and-voice-analysis
-current_plan: 06-02
+current_plan: 06-03
 status: in_progress
-last_updated: "2026-03-05T00:40:15.879Z"
+last_updated: "2026-03-05T00:45:30.000Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 39
-  completed_plans: 34
+  completed_plans: 35
 ---
 
 # Session State
@@ -23,7 +23,7 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 06-author-onboarding-and-voice-analysis
-**Current plan:** 06-02
+**Current plan:** 06-03
 **Status:** In Progress
 
 ## Session Log
@@ -41,6 +41,7 @@ See: .planning/PROJECT.md
 - 2026-03-04: Completed 05-06 — Billing UI: /usage page, UsageBar, PlanCard, UpgradeModal, BillingSection, budget warning hook wired into chapter stream, BYOK gating in settings and nav
 - 2026-03-04: Completed 05-07 — Phase 5 verification: all EXPT-01 through BILL-04 requirements confirmed; auto-fixed missing checkTokenBudget gate on outline generation route; human approved
 - 2026-03-05: Completed 06-01 — author_personas DB schema, TypeScript types (AuthorPersonaRow/Insert/Update), mammoth/pdf-parse/pdfkit packages installed, next.config.ts serverExternalPackages configured
+- 2026-03-05: Completed 06-02 — Zustand voice wizard store, text extraction utilities, voice analysis schema/prompt/PDF report, and persona CRUD server actions
 
 ## Decisions
 
@@ -78,3 +79,6 @@ See: .planning/PROJECT.md
 - [Phase 05-07]: Stripe billing verification is optional pending Stripe dashboard setup; export verification confirmed functional
 - [Phase 06-01]: @types/mammoth does not exist on npm — mammoth ships its own types inline
 - [Phase 06-01]: Migration 00006_author_personas.sql must be applied manually in Supabase SQL Editor before Phase 6 features work
+- [Phase 06-02]: pdf-parse v2 exports named PDFParse class — import as { PDFParse }, construct with new PDFParse({ data: buffer }), call .getText()
+- [Phase 06-02]: VoiceWizardStoreProvider has no initialState prop — voice wizard resume is handled by DB load in layout, not store hydration
+- [Phase 06-02]: savePersona accepts AuthorPersonaUpdate & { wizard_step?, analysis_complete? } for flexible partial updates
