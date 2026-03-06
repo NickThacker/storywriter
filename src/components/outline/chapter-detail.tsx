@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
+import Link from 'next/link'
 import { useDebouncedCallback } from 'use-debounce'
 import { Badge } from '@/components/ui/badge'
 import { InlineEditable } from '@/components/outline/inline-editable'
@@ -10,16 +11,16 @@ interface ChapterDetailProps {
   chapter: OutlineChapter
   chapterIndex: number
   onUpdate: (index: number, updates: Partial<OutlineChapter>) => void
+  projectId: string
 }
 
-// Act badge colors
 const ACT_COLORS: Record<number, string> = {
-  1: 'bg-blue-100 text-blue-800 border-blue-200',
-  2: 'bg-amber-100 text-amber-800 border-amber-200',
-  3: 'bg-green-100 text-green-800 border-green-200',
+  1: 'text-[color:var(--gold)] border-[color:var(--gold)]/30 bg-[color:var(--gold)]/5',
+  2: 'text-rose-400 border-rose-400/30 bg-rose-400/5',
+  3: 'text-teal-400 border-teal-400/30 bg-teal-400/5',
 }
 
-export function ChapterDetail({ chapter, chapterIndex, onUpdate }: ChapterDetailProps) {
+export function ChapterDetail({ chapter, chapterIndex, onUpdate, projectId }: ChapterDetailProps) {
   // Debounced save — consistent with PROJ-05 pattern (600ms)
   const debouncedUpdate = useDebouncedCallback(
     useCallback(
@@ -30,6 +31,13 @@ export function ChapterDetail({ chapter, chapterIndex, onUpdate }: ChapterDetail
     ),
     600
   )
+
+  // Flush pending debounced saves on unmount (e.g. when navigating away)
+  useEffect(() => {
+    return () => {
+      debouncedUpdate.flush()
+    }
+  }, [debouncedUpdate])
 
   function handleTitleSave(title: string) {
     debouncedUpdate({ title })
@@ -151,9 +159,13 @@ export function ChapterDetail({ chapter, chapterIndex, onUpdate }: ChapterDetail
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {chapter.characters_featured.map((name) => (
-              <Badge key={name} variant="outline" className="text-xs">
+              <Link
+                key={name}
+                href={`/projects/${projectId}/story-bible`}
+                className="text-xs px-2 py-0.5 border border-border rounded text-muted-foreground hover:text-[color:var(--gold)] hover:border-[color:var(--gold)]/40 transition-colors"
+              >
                 {name}
-              </Badge>
+              </Link>
             ))}
           </div>
         </div>

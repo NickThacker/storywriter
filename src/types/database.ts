@@ -25,8 +25,16 @@ export type TaskType = 'outline' | 'prose' | 'editing'
 
 export type CharacterRole = 'protagonist' | 'antagonist' | 'supporting' | 'minor'
 export type CharacterSource = 'ai' | 'manual'
+export type LocationSource = 'ai' | 'manual'
 export type WorldFactCategory = 'timeline' | 'rule' | 'lore' | 'relationship'
+export type WorldFactSource = 'ai' | 'manual'
 export type OutlineStatus = 'draft' | 'approved'
+
+export interface ChangelogEntry {
+  at: string       // ISO timestamp
+  by: 'ai' | 'user'
+  note: string     // human-readable description of what changed
+}
 export type BeatSheetId = 'save-the-cat' | 'three-act' | 'heros-journey' | 'romancing-the-beat'
 export type NovelLength = 'short' | 'standard' | 'epic'
 
@@ -98,6 +106,7 @@ export interface CharacterRow {
   motivations: string | null
   arc: string | null
   source: CharacterSource
+  changelog: ChangelogEntry[]
   created_at: string
   updated_at: string
 }
@@ -108,6 +117,8 @@ export interface LocationRow {
   name: string
   description: string | null
   significance: string | null
+  source: LocationSource
+  changelog: ChangelogEntry[]
   created_at: string
   updated_at: string
 }
@@ -117,6 +128,8 @@ export interface WorldFactRow {
   project_id: string
   category: WorldFactCategory
   fact: string
+  source: WorldFactSource
+  changelog: ChangelogEntry[]
   created_at: string
   updated_at: string
 }
@@ -137,12 +150,10 @@ export interface OutlineRow {
 
 // ------- Phase 6 author persona row types -------
 
-export interface StyleDescriptors {
-  sentence_length: string
-  rhythm: string
-  diction_level: string
-  pov_preference: string
-}
+// Widened to hold the full VoiceAnalysisResult JSON when rich analysis is available.
+// Legacy personas store only { sentence_length, rhythm, diction_level, pov_preference }.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type StyleDescriptors = Record<string, any>
 
 export interface ThematicPreferences {
   tone: string
@@ -230,12 +241,16 @@ export type LocationInsert = Omit<LocationRow, 'id' | 'created_at' | 'updated_at
   id?: string
   description?: string | null
   significance?: string | null
+  source?: LocationSource
+  changelog?: ChangelogEntry[]
   created_at?: string
   updated_at?: string
 }
 
 export type WorldFactInsert = Omit<WorldFactRow, 'id' | 'created_at' | 'updated_at'> & {
   id?: string
+  source?: WorldFactSource
+  changelog?: ChangelogEntry[]
   created_at?: string
   updated_at?: string
 }

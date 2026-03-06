@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useActionState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -42,14 +43,14 @@ export function CreateProjectDialog({ trigger }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false)
   const [state, formAction, isPending] = useActionState(createProject, null)
   const [genre, setGenre] = useState('')
+  const router = useRouter()
 
-  // Close dialog on success
+  // Navigate to intake wizard on success — push before closing so revalidatePath doesn't race
   useEffect(() => {
     if (state && 'projectId' in state) {
-      setOpen(false)
-      setGenre('')
+      router.push(`/projects/${state.projectId}`)
     }
-  }, [state])
+  }, [state, router])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

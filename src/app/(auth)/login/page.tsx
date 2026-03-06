@@ -12,7 +12,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams
   const error =
     params.error === 'invalid_token'
-      ? 'The verification link is invalid or has expired. Please try again.'
+      ? 'The verification link is invalid. Please try again.'
+      : params.error === 'expired_link'
+      ? 'This link has already been used or has expired. Please request a new one.'
       : undefined
 
   return <AuthForm initialError={error} />

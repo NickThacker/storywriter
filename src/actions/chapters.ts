@@ -178,6 +178,7 @@ export async function updateProjectWordCount(
   }
 
   revalidatePath(`/projects/${projectId}`)
+  revalidatePath('/dashboard')
 
   return { success: true, wordCount: totalWords, chaptersDone: chaptersWithText }
 }

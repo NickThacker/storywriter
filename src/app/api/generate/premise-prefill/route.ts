@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { logPrompt } from '@/lib/logging/prompt-logger'
 
 interface PrefillResult {
   genre: string | null
@@ -83,6 +84,11 @@ Return ONLY valid JSON. Do not include explanations or markdown.`
   try {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 30_000)
+
+    logPrompt({ userId: user.id, route: 'premise-prefill', model: 'openai/gpt-4o-mini', messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Infer story details from this premise:\n\n${premise}` },
+    ] })
 
     const orResponse = await fetch(
       'https://openrouter.ai/api/v1/chat/completions',

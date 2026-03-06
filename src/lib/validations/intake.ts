@@ -15,7 +15,7 @@ export const intakeDataSchema = z.object({
   tone: z.string().nullable(),
   beatSheet: z.string().nullable(),
   targetLength: z.enum(['short', 'standard', 'epic']),
-  chapterCount: z.number().int().min(5).max(60),
+  chapterCount: z.number().int().min(5).max(200),
   premise: z.string().nullable(),
 })
 

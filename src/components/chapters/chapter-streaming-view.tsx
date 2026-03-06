@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useMemo } from 'react'
-import { Pause, Play, Square, AlertCircle, Loader2 } from 'lucide-react'
+import { Square, AlertCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -45,12 +45,9 @@ interface ChapterStreamingViewProps {
   chapterTitle: string
   streamedText: string
   isStreaming: boolean
-  isPaused: boolean
   wordCount: number
   error: string | null
-  onPause: () => void
   onStop: () => void
-  onResume: () => void
   onRetry: () => void
 }
 
@@ -63,12 +60,9 @@ export function ChapterStreamingView({
   chapterTitle,
   streamedText,
   isStreaming,
-  isPaused,
   wordCount,
   error,
-  onPause,
   onStop,
-  onResume,
   onRetry,
 }: ChapterStreamingViewProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -90,7 +84,7 @@ export function ChapterStreamingView({
   }, [streamedText])
 
   const hasText = streamedText.trim().length > 0
-  const isDone = hasText && !isStreaming && !isPaused && !error
+  const isDone = hasText && !isStreaming && !error
 
   return (
     <div className="flex h-full flex-col">
@@ -118,12 +112,6 @@ export function ChapterStreamingView({
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
               </span>
               Generating
-            </span>
-          )}
-          {isPaused && (
-            <span className="flex items-center gap-1.5 text-xs text-amber-500">
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              Paused
             </span>
           )}
         </div>
@@ -198,13 +186,6 @@ export function ChapterStreamingView({
         {isStreaming && (
           <div className="flex items-center gap-2">
             <button
-              onClick={onPause}
-              className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              <Pause className="h-3.5 w-3.5" />
-              Pause
-            </button>
-            <button
               onClick={onStop}
               className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
             >
@@ -212,29 +193,6 @@ export function ChapterStreamingView({
               Stop
             </button>
             <Loader2 className="ml-auto h-4 w-4 animate-spin text-muted-foreground" />
-          </div>
-        )}
-
-        {/* Paused controls */}
-        {isPaused && !isStreaming && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onResume}
-              className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Play className="h-3.5 w-3.5" />
-              Resume
-            </button>
-            <button
-              onClick={onStop}
-              className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/5"
-            >
-              <Square className="h-3.5 w-3.5" />
-              Stop
-            </button>
-            <span className="ml-auto text-xs text-muted-foreground">
-              Generation paused. Text is preserved.
-            </span>
           </div>
         )}
 

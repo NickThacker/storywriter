@@ -1,20 +1,13 @@
 import { createStore } from 'zustand/vanilla'
 
-export const TOTAL_VOICE_STEPS = 3
+export const TOTAL_VOICE_STEPS = 2
 
 export interface VoiceWizardState {
   currentStep: number
   // Step 1: Writing samples
   pastedSamples: string[]         // User-pasted text blocks (array supports multiple)
   uploadedFileTexts: string[]     // Extracted text from uploaded files
-  // Step 2: Style preferences
-  tonePreference: string | null
-  pacingPreference: string | null
-  dialogueRatio: string | null
-  darkLightTheme: string | null
-  povPreference: string | null
-  dictionLevel: string | null
-  // Step 3: Analysis results (populated after AI analysis completes)
+  // Step 2: Analysis results (populated after AI analysis completes)
   analysisComplete: boolean
   voiceDescription: string | null
   styleDescriptors: Record<string, string> | null
@@ -28,10 +21,6 @@ export interface VoiceWizardState {
   removePastedSample: (index: number) => void
   addUploadedFileText: (text: string) => void
   removeUploadedFileText: (index: number) => void
-  setStylePreference: (key: keyof Pick<VoiceWizardState,
-    'tonePreference' | 'pacingPreference' | 'dialogueRatio' |
-    'darkLightTheme' | 'povPreference' | 'dictionLevel'
-  >, value: string) => void
   setAnalysisResult: (result: {
     voiceDescription: string
     styleDescriptors: Record<string, string>
@@ -46,12 +35,6 @@ export const createVoiceWizardStore = () =>
     currentStep: 1,
     pastedSamples: [],
     uploadedFileTexts: [],
-    tonePreference: null,
-    pacingPreference: null,
-    dialogueRatio: null,
-    darkLightTheme: null,
-    povPreference: null,
-    dictionLevel: null,
     analysisComplete: false,
     voiceDescription: null,
     styleDescriptors: null,
@@ -70,7 +53,6 @@ export const createVoiceWizardStore = () =>
       set((s) => ({ uploadedFileTexts: [...s.uploadedFileTexts, text] })),
     removeUploadedFileText: (index) =>
       set((s) => ({ uploadedFileTexts: s.uploadedFileTexts.filter((_, i) => i !== index) })),
-    setStylePreference: (key, value) => set({ [key]: value }),
     setAnalysisResult: (result) =>
       set({
         analysisComplete: true,
@@ -84,12 +66,6 @@ export const createVoiceWizardStore = () =>
         currentStep: 1,
         pastedSamples: [],
         uploadedFileTexts: [],
-        tonePreference: null,
-        pacingPreference: null,
-        dialogueRatio: null,
-        darkLightTheme: null,
-        povPreference: null,
-        dictionLevel: null,
         analysisComplete: false,
         voiceDescription: null,
         styleDescriptors: null,

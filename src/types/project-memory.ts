@@ -221,6 +221,9 @@ export interface ChapterContextPackage {
   identity: ProjectIdentity
   // This chapter's outline info
   chapterNumber: number
+  totalChapters: number
+  act: number | null
+  beatSheetMapping: string | null
   chapterTitle: string
   chapterSummary: string
   chapterBeats: string[]

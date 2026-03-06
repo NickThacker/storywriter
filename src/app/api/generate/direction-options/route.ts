@@ -6,6 +6,7 @@ import { saveDirectionOptions } from '@/actions/chapters'
 import type { DirectionOption } from '@/types/project-memory'
 import type { OutlineChapter } from '@/types/database'
 import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
+import { logPrompt } from '@/lib/logging/prompt-logger'
 
 interface DirectionOptionsBody {
   projectId: string
@@ -199,6 +200,11 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // 10. Call OpenRouter with response_format: json_schema
+  logPrompt({ userId: user.id, route: 'direction-options', model: modelId, messages: [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: userMessage },
+  ] })
+
   let orResponse: Response
   try {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {

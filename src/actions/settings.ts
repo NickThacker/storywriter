@@ -38,12 +38,19 @@ export async function saveApiKey(
     return { error: 'You must be logged in to save an API key' }
   }
 
-  // Store key directly in user_settings. RLS ensures only the owner can access.
+  // Upsert into user_settings — creates row if user signed up before settings table existed.
+  // RLS ensures only the owner can access.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updateError } = await (supabase as any)
     .from('user_settings')
-    .update({ openrouter_api_key: parsed.data.apiKey })
-    .eq('user_id', user.id)
+    .upsert(
+      {
+        user_id: user.id,
+        openrouter_api_key: parsed.data.apiKey,
+        subscription_tier: 'none',
+      },
+      { onConflict: 'user_id' }
+    )
 
   if (updateError) {
     return { error: `Failed to save API key: ${updateError.message}` }

@@ -1,5 +1,7 @@
 import type { ChapterContextPackage } from '@/types/project-memory'
 import type { AuthorPersona } from '@/types/database'
+import type { VoiceAnalysisResult } from '@/lib/voice/schema'
+import { buildVoiceContextBrief } from '@/lib/voice/context-brief'
 
 /**
  * Build the system + user messages for chapter generation.
@@ -17,17 +19,30 @@ export function buildChapterPrompt(
 } {
   const { identity } = context
 
-  const personaSection = persona?.voice_description
-    ? `\n\nAuthor Voice:\n${persona.voice_description}`
-    : ''
-  const guidanceSection = persona?.raw_guidance_text
-    ? `\n\nAuthor Guidance:\n${persona.raw_guidance_text}`
+  // Use the full Voice DNA brief if rich analysis data is available,
+  // otherwise fall back to the two legacy fields.
+  let voiceSection = ''
+  if (persona) {
+    const richAnalysis = persona.style_descriptors as unknown as VoiceAnalysisResult | null
+    if (richAnalysis?.voice_identity) {
+      voiceSection = `\n\n${buildVoiceContextBrief(richAnalysis)}`
+    } else if (persona.voice_description || persona.raw_guidance_text) {
+      const desc = persona.voice_description ? `Author Voice:\n${persona.voice_description}` : ''
+      const guidance = persona.raw_guidance_text ? `Author Guidance:\n${persona.raw_guidance_text}` : ''
+      voiceSection = '\n\n' + [desc, guidance].filter(Boolean).join('\n\n')
+    }
+  }
+
+  // Story position context for the system message
+  const storyPositionNote = context.act && context.totalChapters
+    ? `Story position: Act ${context.act}, Chapter ${context.chapterNumber} of ${context.totalChapters}${context.beatSheetMapping ? ` (${context.beatSheetMapping})` : ''}.`
     : ''
 
   const systemMessage = `You are an expert novelist writing Chapter ${context.chapterNumber} of a ${identity.genre ?? 'literary fiction'} novel.
 
 Tone: ${identity.tone ?? 'engaging and immersive'}
 Setting: ${identity.setting ?? 'as established in the story'}
+${storyPositionNote}
 ${identity.narrativeVoiceNotes ? `Voice notes: ${identity.narrativeVoiceNotes}` : ''}
 
 Write in a consistent narrative voice that matches the established style. Focus on:
@@ -43,7 +58,7 @@ Formatting rules:
 - Use *italics* (single asterisks) for internal thoughts, overheard phone calls, letters, text messages, flashbacks, foreign words, and emphasis — just as a published novel would use italics.
 - Use **bold** (double asterisks) sparingly, only for extreme emphasis.
 - Separate paragraphs with blank lines.
-- Do not include chapter numbers or titles in the output — just the prose.${personaSection}${guidanceSection}`
+- Do not include chapter numbers or titles in the output — just the prose.${voiceSection}`
 
   // Build the user message with all context sections
   const sections: string[] = []

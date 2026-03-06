@@ -2,12 +2,11 @@
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
-import { buildVoiceAnalysisPrompt, type StylePreferences } from '@/lib/voice/prompt'
-import { VOICE_ANALYSIS_SCHEMA } from '@/lib/voice/schema'
+import { buildVoiceAnalysisPrompt } from '@/lib/voice/prompt'
+import { logPrompt } from '@/lib/logging/prompt-logger'
 
 interface VoiceAnalysisBody {
   samples: string[]
-  preferences: StylePreferences
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -36,7 +35,7 @@ export async function POST(request: Request): Promise<Response> {
     })
   }
 
-  const { samples, preferences } = body
+  const { samples } = body
   if (!samples || samples.length === 0) {
     return new Response(JSON.stringify({ error: 'No writing samples provided' }), {
       status: 400,
@@ -73,15 +72,24 @@ export async function POST(request: Request): Promise<Response> {
     .eq('task_type', 'editing')
     .single()
 
-  const modelId =
-    modelPref && typeof (modelPref as { model_id?: string }).model_id === 'string'
-      ? (modelPref as { model_id: string }).model_id
-      : 'anthropic/claude-sonnet-4-5'
+  // Voice analysis uses claude-sonnet-4 at temperature 0.
+  // Sonnet 4 routes through Anthropic directly (not Bedrock) and works reliably.
+  // temperature: 0 ensures consistent, deterministic measurements across runs
+  // (the variability in metrics like avg sentence length is stochastic, not analytical).
+  void modelPref
+  const modelId = 'anthropic/claude-sonnet-4'
 
   // 5. Build prompt
-  const { systemMessage, userMessage } = buildVoiceAnalysisPrompt(samples, preferences)
+  const { systemMessage, userMessage } = buildVoiceAnalysisPrompt(samples)
 
-  // 6. Call OpenRouter with structured JSON schema output + streaming
+  // 6. Call OpenRouter — streaming, json_object mode.
+  logPrompt({ userId: user.id, route: 'voice-analysis', model: modelId, messages: [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: userMessage },
+  ] })
+  // We use json_object (not json_schema) because Opus routes through Amazon Bedrock
+  // which rejects large compiled grammars. The system prompt already gives the model
+  // an exhaustive field-by-field spec, so schema enforcement is not needed.
   let orResponse: Response
   try {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -95,18 +103,11 @@ export async function POST(request: Request): Promise<Response> {
       body: JSON.stringify({
         model: modelId,
         stream: true,
+        temperature: 0,
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'author_persona',
-            strict: true,
-            schema: VOICE_ANALYSIS_SCHEMA,
-          },
-        },
       }),
     })
   } catch (err) {

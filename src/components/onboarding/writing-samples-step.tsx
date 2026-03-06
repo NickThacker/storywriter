@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useVoiceWizardStore } from '@/components/onboarding/onboarding-store-provider'
-import { ChevronLeft, ChevronRight, X, Upload, FileText } from 'lucide-react'
+import { ChevronRight, X, Upload, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 export function WritingSamplesStep() {
@@ -191,7 +191,7 @@ export function WritingSamplesStep() {
           disabled={!canProceed}
           className="gap-1"
         >
-          Next
+          Analyze My Writing
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

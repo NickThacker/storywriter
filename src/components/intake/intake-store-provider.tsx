@@ -12,14 +12,19 @@ import {
 type IntakeStoreContextValue = IntakeStore | null
 const IntakeStoreContext = createContext<IntakeStoreContextValue>(null)
 
+// Separate context for the locked flag (derived from server data, not editable)
+const IntakeLockedContext = createContext<boolean>(false)
+
 interface IntakeStoreProviderProps {
   children: ReactNode
   initialState?: Partial<IntakeState>
+  locked?: boolean
 }
 
 export function IntakeStoreProvider({
   children,
   initialState,
+  locked = false,
 }: IntakeStoreProviderProps) {
   // useRef ensures we create only one store instance per component mount
   const storeRef = useRef<IntakeStore | null>(null)
@@ -32,10 +37,16 @@ export function IntakeStoreProvider({
   }
 
   return (
-    <IntakeStoreContext.Provider value={storeRef.current}>
-      {children}
-    </IntakeStoreContext.Provider>
+    <IntakeLockedContext.Provider value={locked}>
+      <IntakeStoreContext.Provider value={storeRef.current}>
+        {children}
+      </IntakeStoreContext.Provider>
+    </IntakeLockedContext.Provider>
   )
+}
+
+export function useIntakeLocked(): boolean {
+  return useContext(IntakeLockedContext)
 }
 
 export function useIntakeStore<T>(selector: (state: IntakeState) => T): T {

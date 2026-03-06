@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { IMPACT_ANALYSIS_SCHEMA, buildImpactPrompt } from '@/lib/checkpoint/impact-prompt'
 import { flagAffectedChapters } from '@/actions/chapters'
 import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
+import { logPrompt } from '@/lib/logging/prompt-logger'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -218,6 +219,11 @@ export async function POST(request: Request): Promise<Response> {
   )
 
   // 9. Call OpenRouter with structured JSON response_format
+  logPrompt({ userId: user.id, route: 'analyze-impact', model: modelId, messages: [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: userMessage },
+  ] })
+
   let orResponse: Response
   try {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {

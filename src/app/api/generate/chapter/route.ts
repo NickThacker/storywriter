@@ -6,6 +6,7 @@ import { assembleChapterContext } from '@/lib/memory/context-assembly'
 import { buildChapterPrompt } from '@/lib/memory/chapter-prompt'
 import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
 import { createTokenInterceptStream } from '@/lib/billing/token-interceptor'
+import { logPrompt } from '@/lib/logging/prompt-logger'
 
 interface GenerateChapterBody {
   projectId: string
@@ -123,7 +124,7 @@ export async function POST(request: Request): Promise<Response> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any)
         .from('author_personas')
-        .select('voice_description, raw_guidance_text')
+        .select('voice_description, raw_guidance_text, style_descriptors')
         .eq('user_id', user.id)
         .maybeSingle(),
     ])
@@ -141,6 +142,11 @@ export async function POST(request: Request): Promise<Response> {
   const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments, personaData)
 
   // 8. Call OpenRouter with streaming
+  logPrompt({ userId: user.id, route: 'chapter', model: modelId, messages: [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: userMessage },
+  ] })
+
   let orResponse: Response
   try {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {

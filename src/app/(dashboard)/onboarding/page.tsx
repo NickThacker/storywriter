@@ -3,11 +3,10 @@
 import { useVoiceWizardStore } from '@/components/onboarding/onboarding-store-provider'
 import { TOTAL_VOICE_STEPS } from '@/lib/stores/voice-wizard-store'
 import { WritingSamplesStep } from '@/components/onboarding/writing-samples-step'
-import { StylePreferencesStep } from '@/components/onboarding/style-preferences-step'
 import { AnalysisResultsStep } from '@/components/onboarding/analysis-results-step'
 import { cn } from '@/lib/utils'
 
-const STEP_TITLES = ['Writing Samples', 'Style Preferences', 'Voice Analysis']
+const STEP_TITLES = ['Writing Samples', 'Voice Analysis']
 
 function VoiceProgressBar({ currentStep }: { currentStep: number }) {
   return (
@@ -90,8 +89,7 @@ export default function OnboardingPage() {
         Step {currentStep} of {TOTAL_VOICE_STEPS} &mdash; {STEP_TITLES[currentStep - 1]}
       </div>
       {currentStep === 1 && <WritingSamplesStep />}
-      {currentStep === 2 && <StylePreferencesStep />}
-      {currentStep === 3 && <AnalysisResultsStep />}
+      {currentStep === 2 && <AnalysisResultsStep />}
     </div>
   )
 }

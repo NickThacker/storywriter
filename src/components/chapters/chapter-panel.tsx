@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Loader2 } from 'lucide-react'
 import { useChapterStream } from '@/hooks/use-chapter-stream'
 import { saveChapterProse, updateProjectWordCount, approveChapter } from '@/actions/chapters'
 import { ChapterList } from '@/components/chapters/chapter-list'
@@ -58,6 +59,7 @@ export function ChapterPanel({
   const [generatingChapter, setGeneratingChapter] = useState<number | null>(null)
   const [rewriteOpen, setRewriteOpen] = useState(false)
   const [rewriteChapter, setRewriteChapter] = useState<number | null>(null)
+  const [analyzingEdit, setAnalyzingEdit] = useState(false)
 
   // Derive word count and chapters done from checkpointMap so they update
   // in realtime when chapters are edited, generated, or rewritten.
@@ -131,6 +133,22 @@ export function ChapterPanel({
       }
     })
   }
+
+  // ── Chapter analysis ─────────────────────────────────────────────────────
+
+  // Fire-and-forget analysis after generation. Silent background — no UI indicator.
+  const fireAnalysis = useCallback(
+    (chapterNumber: number, chapterText: string) => {
+      void fetch('/api/generate/analyze-chapter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, chapterNumber, chapterText }),
+      }).catch((err) => {
+        console.error('[chapter-panel] analyze-chapter fire-and-forget error:', err)
+      })
+    },
+    [projectId]
+  )
 
   // ── Generation flow ──────────────────────────────────────────────────────
 
@@ -229,6 +247,9 @@ export function ChapterPanel({
             toast.error(`Word count update failed: ${wordCountResult.error}`)
           }
 
+          // Fire background analysis — updates project_memory silently
+          fireAnalysis(chapterNumber, streamedText)
+
           // Show toast after checkpoint map is updated — with Review action button
           const idx = outlineChapters.findIndex((c) => c.number === chapterNumber)
           toast.success('Chapter ready — Review checkpoint', {
@@ -253,6 +274,7 @@ export function ChapterPanel({
 
   // ── Editor save handler ───────────────────────────────────────────────────
 
+  // Auto-save debounce target — saves prose only, no analysis.
   const handleEditorSave = useCallback(
     async (text: string) => {
       const chapterNumber = outlineChapters[selectedIndex]?.number
@@ -273,11 +295,34 @@ export function ChapterPanel({
     [projectId, selectedIndex, outlineChapters]
   )
 
-  // Sync DB word count when exiting editing mode
+  // "Done Editing" — save final text, analyze changes, then exit editor.
+  // Shows spinner (analyzingEdit) during analysis so user knows work is in progress.
   const handleDoneEditing = useCallback(async () => {
+    const chapterNumber = outlineChapters[selectedIndex]?.number
+    const checkpoint = chapterNumber ? checkpointMap.get(chapterNumber) : undefined
+    const text = checkpoint?.chapter_text ?? ''
+
+    if (chapterNumber && text.trim()) {
+      setAnalyzingEdit(true)
+      try {
+        // Ensure latest text is persisted before analysis
+        await saveChapterProse(projectId, chapterNumber, text)
+        // Run analysis and wait for it (spinner visible during this)
+        await fetch('/api/generate/analyze-chapter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, chapterNumber, chapterText: text }),
+        })
+      } catch (err) {
+        console.error('[chapter-panel] analyze on done-editing error:', err)
+      } finally {
+        setAnalyzingEdit(false)
+      }
+    }
+
     setEditingChapter(null)
     await updateProjectWordCount(projectId)
-  }, [projectId])
+  }, [projectId, selectedIndex, outlineChapters, checkpointMap])
 
   // ── Rewrite flow ─────────────────────────────────────────────────────────
 
@@ -511,9 +556,17 @@ export function ChapterPanel({
                     {editingChapter === selectedChapter?.number ? (
                       <button
                         onClick={handleDoneEditing}
-                        className="text-xs rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        disabled={analyzingEdit}
+                        className="flex items-center gap-1.5 text-xs rounded-md border border-border px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-60 disabled:cursor-wait"
                       >
-                        Done Editing
+                        {analyzingEdit ? (
+                          <>
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          'Done Editing'
+                        )}
                       </button>
                     ) : (
                       <>

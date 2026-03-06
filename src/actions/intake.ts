@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { intakeDataSchema, type IntakeData } from '@/lib/validations/intake'
+import { initializeMemory } from '@/actions/project-memory'
 
 /**
  * Save intake wizard data to the project's intake_data JSONB column.
@@ -60,6 +61,19 @@ export async function saveIntakeData(
 
   if (updateError) {
     return { error: updateError.message }
+  }
+
+  // Initialize project memory Layer 1 with intake identity data
+  const memoryResult = await initializeMemory(projectId, {
+    genre: parsed.data.genre,
+    themes: parsed.data.themes,
+    tone: parsed.data.tone,
+    setting: parsed.data.setting,
+    premise: parsed.data.premise,
+  })
+  if ('error' in memoryResult) {
+    // Log but don't fail — intake save already succeeded
+    console.error('Failed to initialize project memory:', memoryResult.error)
   }
 
   return { success: true }

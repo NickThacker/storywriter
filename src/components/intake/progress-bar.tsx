@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { useIntakeStore } from '@/components/intake/intake-store-provider'
+import { useIntakeStore, useIntakeLocked } from '@/components/intake/intake-store-provider'
 
 const STEP_LABELS = [
   'Path',
@@ -18,9 +18,10 @@ const VISIBLE_STEPS = STEP_LABELS.slice(1)
 
 export function ProgressBar() {
   const currentStep = useIntakeStore((s) => s.currentStep)
+  const locked = useIntakeLocked()
 
-  // Hide on step 0 (path selection)
-  if (currentStep === 0) return null
+  // Hide on step 0 (path selection) or when locked (read-only view)
+  if (currentStep === 0 || locked) return null
 
   // Map currentStep (1-6) to progress steps (0-5)
   const progressIndex = currentStep - 1

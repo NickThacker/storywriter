@@ -7,6 +7,7 @@ import { saveChapterCheckpoint } from '@/actions/project-memory'
 import type { ProjectMemoryRow } from '@/types/project-memory'
 import type { CompressionResult } from '@/types/project-memory'
 import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
+import { logPrompt } from '@/lib/logging/prompt-logger'
 
 interface CompressChapterBody {
   projectId: string
@@ -139,6 +140,11 @@ export async function POST(request: Request): Promise<Response> {
   )
 
   // 8. Call OpenRouter (non-streaming, structured JSON)
+  logPrompt({ userId: user.id, route: 'compress-chapter', model: modelId, messages: [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: userMessage },
+  ] })
+
   let orResponse: Response
   try {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {

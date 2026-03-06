@@ -6,6 +6,7 @@ import { OUTLINE_SCHEMA } from '@/lib/outline/schema'
 import { buildOutlinePrompt, buildRegeneratePrompt } from '@/lib/outline/prompt'
 import type { IntakeData } from '@/lib/validations/intake'
 import { checkTokenBudget } from '@/lib/billing/budget-check'
+import { logPrompt } from '@/lib/logging/prompt-logger'
 
 interface GenerateOutlineBody {
   projectId: string
@@ -97,7 +98,7 @@ export async function POST(request: Request): Promise<Response> {
       .single(),
     (supabase as any)
       .from('author_personas')
-      .select('voice_description, raw_guidance_text')
+      .select('voice_description, raw_guidance_text, style_descriptors')
       .eq('user_id', user.id)
       .maybeSingle(),
   ])
@@ -116,6 +117,11 @@ export async function POST(request: Request): Promise<Response> {
     : buildOutlinePrompt(intakeData, persona)
 
   // 6. Call OpenRouter directly with streaming and structured JSON schema output
+  logPrompt({ userId: user.id, route: 'outline', model: modelId, messages: [
+    { role: 'system', content: systemMessage },
+    { role: 'user', content: userMessage },
+  ] })
+
   let orResponse: Response
   try {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {

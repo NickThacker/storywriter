@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/actions/auth'
 import { VoiceOnboardingNudge } from '@/components/dashboard/voice-onboarding-nudge'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export default async function DashboardLayout({
   children,
@@ -24,7 +25,7 @@ export default async function DashboardLayout({
   const [{ data: settings }, { data: persona }] = await Promise.all([
     (supabase as any)
       .from('user_settings')
-      .select('openrouter_api_key, voice_onboarding_dismissed')
+      .select('openrouter_api_key, voice_onboarding_dismissed, is_admin')
       .eq('user_id', user.id)
       .single(),
     (supabase as any)
@@ -34,54 +35,50 @@ export default async function DashboardLayout({
       .maybeSingle(),
   ])
 
-  const isByok = Boolean((settings as { openrouter_api_key?: string | null } | null)?.openrouter_api_key)
-  const showVoiceNudge = !(settings as { voice_onboarding_dismissed?: boolean } | null)?.voice_onboarding_dismissed && !persona
+  const s = settings as { openrouter_api_key?: string | null; voice_onboarding_dismissed?: boolean; is_admin?: boolean } | null
+  const isByok = Boolean(s?.openrouter_api_key)
+  const isAdmin = Boolean(s?.is_admin)
+  const showVoiceNudge = !s?.voice_onboarding_dismissed && !persona
 
   return (
     <div className="min-h-screen bg-background">
       {/* Top navigation bar */}
-      <header className="border-b border-border bg-card">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 gap-8">
-          {/* App name — left */}
+      <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
+        <nav className="max-w-7xl mx-auto px-6 lg:px-8 flex items-center h-14 gap-8">
+          {/* Logo */}
           <Link
             href="/dashboard"
-            className="text-lg font-semibold text-foreground hover:text-primary transition-colors"
+            className="font-[family-name:var(--font-literata)] italic text-[color:var(--gold)] text-[1.05rem] tracking-[0.02em] shrink-0 hover:opacity-80 transition-opacity"
           >
             StoryWriter
           </Link>
 
-          {/* Navigation links — center-left */}
-          <div className="flex items-center gap-6">
-            <Link
-              href="/dashboard"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Dashboard
-            </Link>
-            {!isByok && (
+          {/* Nav links */}
+          <div className="flex items-center gap-5">
+            {[
+              { href: '/dashboard', label: 'Library' },
+              ...(!isByok ? [{ href: '/usage', label: 'Usage' }] : []),
+              { href: '/settings', label: 'Settings' },
+              ...(isAdmin ? [{ href: '/admin/prompt-logs', label: 'Admin' }] : []),
+            ].map(({ href, label }) => (
               <Link
-                href="/usage"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                key={href}
+                href={href}
+                className="text-[0.68rem] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground transition-colors"
               >
-                Usage
+                {label}
               </Link>
-            )}
-            <Link
-              href="/settings"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Settings
-            </Link>
+            ))}
           </div>
 
-          {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Sign out — right */}
+          <ThemeToggle />
+
           <form action={signOut}>
             <button
               type="submit"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="text-[0.68rem] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               Sign out
             </button>
@@ -90,7 +87,7 @@ export default async function DashboardLayout({
       </header>
 
       {/* Page content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
         {showVoiceNudge && <VoiceOnboardingNudge />}
         {children}
       </main>

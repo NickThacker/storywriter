@@ -1,6 +1,8 @@
 'use client'
 
+import { useMemo } from 'react'
 import { BEAT_SHEETS, getBeatSheetById } from '@/lib/data/beat-sheets'
+import type { Beat } from '@/lib/data/beat-sheets'
 import {
   Select,
   SelectContent,
@@ -17,8 +19,42 @@ interface BeatSheetOverlayProps {
 }
 
 /**
+ * Assign each chapter to the beat whose positionPercent is closest
+ * to the chapter's position in the story. Used when viewing a beat sheet
+ * different from the one used during generation.
+ */
+function buildPositionMapping(
+  chapters: OutlineChapter[],
+  beats: Beat[]
+): Map<string, OutlineChapter[]> {
+  const result = new Map<string, OutlineChapter[]>()
+  for (const beat of beats) result.set(beat.id, [])
+
+  for (let i = 0; i < chapters.length; i++) {
+    const chapterPos = chapters.length <= 1 ? 50 : (i / (chapters.length - 1)) * 100
+    let closestBeat = beats[0]
+    let closestDist = Infinity
+    for (const beat of beats) {
+      const dist = Math.abs(beat.positionPercent - chapterPos)
+      if (dist < closestDist) {
+        closestDist = dist
+        closestBeat = beat
+      }
+    }
+    result.get(closestBeat.id)!.push(chapters[i])
+  }
+
+  return result
+}
+
+/**
  * Shows how the current outline maps to the selected beat sheet structure.
  * Beat sheet is switchable for comparison — does NOT regenerate the outline.
+ *
+ * When viewing the beat sheet used for generation, name-based fuzzy matching
+ * connects chapters to beats via their beat_sheet_mapping field. When viewing
+ * a different beat sheet, position-based mapping assigns chapters to the
+ * nearest beat by story position.
  */
 export function BeatSheetOverlay({
   chapters,
@@ -39,21 +75,59 @@ export function BeatSheetOverlay({
     }
   })
 
-  // Check if a beat has matching chapters (fuzzy match on beat name)
-  function getMatchingChapters(beatName: string): OutlineChapter[] {
+  // Check if a beat has matching chapters (multi-level fuzzy match on beat name)
+  function getNameMatchedChapters(beatName: string): OutlineChapter[] {
     const normalizedBeat = beatName.toLowerCase()
-    // Check for direct key match
+    // 1. Exact match
     if (beatToChapters.has(normalizedBeat)) {
       return beatToChapters.get(normalizedBeat) ?? []
     }
-    // Fuzzy: check if any chapter's beat_sheet_mapping contains the beat name or vice versa
+    // 2. Substring match — beat name is contained in mapping or vice versa
     const matches: OutlineChapter[] = []
     for (const [key, chaps] of beatToChapters.entries()) {
       if (key.includes(normalizedBeat) || normalizedBeat.includes(key)) {
         matches.push(...chaps)
       }
     }
+    if (matches.length > 0) return matches
+    // 3. Word-overlap match — check if significant words overlap
+    const beatWords = normalizedBeat.split(/[\s/,·\-—]+/).filter((w) => w.length > 2)
+    for (const [key, chaps] of beatToChapters.entries()) {
+      const keyWords = key.split(/[\s/,·\-—]+/).filter((w) => w.length > 2)
+      const overlap = beatWords.filter((bw) =>
+        keyWords.some((kw) => kw.includes(bw) || bw.includes(kw))
+      )
+      if (overlap.length > 0) {
+        matches.push(...chaps)
+      }
+    }
     return matches
+  }
+
+  // Determine whether name-based matching covers enough chapters.
+  // If not, fall back to position-based mapping (viewing a different beat sheet).
+  const { usePositionMapping, positionMap } = useMemo(() => {
+    if (!beatSheet) return { usePositionMapping: false, positionMap: new Map<string, OutlineChapter[]>() }
+
+    const nameMatched = new Set<number>()
+    for (const beat of beatSheet.beats) {
+      for (const ch of getNameMatchedChapters(beat.name)) {
+        nameMatched.add(ch.number)
+      }
+    }
+    const shouldUsePosition = nameMatched.size < chapters.length / 2
+    const pMap = shouldUsePosition
+      ? buildPositionMapping(chapters, beatSheet.beats)
+      : new Map<string, OutlineChapter[]>()
+    return { usePositionMapping: shouldUsePosition, positionMap: pMap }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [beatSheetId, chapters])
+
+  function getMatchingChapters(beat: Beat): OutlineChapter[] {
+    if (usePositionMapping) {
+      return positionMap.get(beat.id) ?? []
+    }
+    return getNameMatchedChapters(beat.name)
   }
 
   return (
@@ -88,7 +162,7 @@ export function BeatSheetOverlay({
       {beatSheet ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {beatSheet.beats.map((beat) => {
-            const matchingChapters = getMatchingChapters(beat.name)
+            const matchingChapters = getMatchingChapters(beat)
             const hasMapping = matchingChapters.length > 0
 
             return (

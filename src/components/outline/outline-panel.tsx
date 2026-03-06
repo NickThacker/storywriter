@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useOutlineStream } from '@/hooks/use-outline-stream'
 import { saveOutline, updateOutlineChapter } from '@/actions/outline'
@@ -18,7 +18,10 @@ import type { OutlineRow, OutlineChapter, BeatSheetId } from '@/types/database'
 import type { IntakeData } from '@/lib/validations/intake'
 import type { GeneratedOutline } from '@/lib/outline/schema'
 import { toast } from 'sonner'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { BookOpen, Users, MapPin, ArrowRight } from 'lucide-react'
+
+// ─── Review tab types ────────────────────────────────────────────────────────
+type ReviewTab = 'chapters' | 'characters' | 'locations'
 
 interface OutlinePanelProps {
   projectId: string
@@ -36,7 +39,10 @@ export function OutlinePanel({
   const router = useRouter()
   const [outline, setOutline] = useState<OutlineRow | null>(initialOutline)
   const [selectedChapterIndex, setSelectedChapterIndex] = useState(0)
-  const [timelineCollapsed, setTimelineCollapsed] = useState(false)
+  // Review mode: show tabbed view after generation before the two-panel editor
+  // Starts false when loading an existing outline, set to true after fresh generation
+  const [reviewMode, setReviewMode] = useState(false)
+  const [reviewTab, setReviewTab] = useState<ReviewTab>('chapters')
   const [beatSheetId, setBeatSheetId] = useState<BeatSheetId>(
     initialOutline?.beat_sheet_id ?? (intakeData?.beatSheet as BeatSheetId | null) ?? 'three-act'
   )
@@ -44,7 +50,26 @@ export function OutlinePanel({
   const [approveOpen, setApproveOpen] = useState(false)
   // Stores the full GeneratedOutline (with characters + locations) from the most
   // recent stream — required for outline approval so characters/locations are seeded.
-  const [approveOutlineData, setApproveOutlineData] = useState<GeneratedOutline | null>(null)
+  // For pre-existing outlines, we reconstruct from stored data so approval isn't blocked.
+  const [approveOutlineData, setApproveOutlineData] = useState<GeneratedOutline | null>(() => {
+    if (initialOutline && initialOutline.status !== 'approved' && initialOutline.chapters?.length) {
+      // Extract unique character names from chapters' characters_featured
+      const charNames = new Set<string>()
+      for (const ch of initialOutline.chapters) {
+        if (ch.characters_featured) {
+          for (const name of ch.characters_featured) charNames.add(name)
+        }
+      }
+      return {
+        title: projectTitle,
+        premise: '',
+        chapters: initialOutline.chapters,
+        characters: Array.from(charNames).map(name => ({ name, role: 'supporting', one_line: '' })),
+        locations: [],
+      }
+    }
+    return null
+  })
 
   const { streamedContent, parsedOutline, isStreaming, error, startStream } =
     useOutlineStream(projectId)
@@ -73,14 +98,16 @@ export function OutlinePanel({
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
+    // Show the tabbed review view before the two-panel editor
+    setReviewMode(true)
   }, [parsedOutline, intakeData, projectId])
 
   // Watch for parsedOutline becoming available (stream complete) and save
-  useState(() => {
+  useEffect(() => {
     if (parsedOutline) {
       void handleSaveOutline()
     }
-  })
+  }, [parsedOutline, handleSaveOutline])
 
   // Optimistic local state update for chapter edits — no revalidatePath per plan pitfall 6
   const handleChapterUpdate = useCallback(
@@ -133,10 +160,21 @@ export function OutlinePanel({
     [intakeData, startStream, selectedChapterIndex]
   )
 
-  // Navigate to story bible after outline approval
+  // Navigate to chapters after outline approval
   const handleApproved = useCallback(() => {
-    router.push(`/projects/${projectId}/story-bible`)
+    router.push(`/projects/${projectId}/chapters`)
   }, [router, projectId])
+
+  // Timeline dot click — selects chapter, and in review mode also switches to chapters tab + scrolls
+  const handleTimelineSelect = useCallback((index: number) => {
+    setSelectedChapterIndex(index)
+    if (reviewMode) {
+      setReviewTab('chapters')
+      setTimeout(() => {
+        document.getElementById(`review-chapter-${index}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 50)
+    }
+  }, [reviewMode])
 
   const beatSheet = getBeatSheetById(beatSheetId)
 
@@ -194,6 +232,221 @@ export function OutlinePanel({
 
   const selectedChapter = outline.chapters[selectedChapterIndex]
 
+  // ── Review mode — three-tab view after generation ─────────────────────────
+  if (reviewMode && approveOutlineData) {
+    const reviewTabs: { key: ReviewTab; label: string; icon: typeof BookOpen; count: number }[] = [
+      { key: 'chapters', label: 'Chapters', icon: BookOpen, count: outline.chapters.length },
+      { key: 'characters', label: 'Characters', icon: Users, count: approveOutlineData.characters?.length ?? 0 },
+      { key: 'locations', label: 'Locations', icon: MapPin, count: approveOutlineData.locations?.length ?? 0 },
+    ]
+
+    const ACT_COLORS: Record<number, string> = {
+      1: 'text-[color:var(--gold)] border-[color:var(--gold)]/20 bg-[color:var(--gold)]/5',
+      2: 'text-rose-400 border-rose-400/20 bg-rose-400/5',
+      3: 'text-teal-400 border-teal-400/20 bg-teal-400/5',
+    }
+
+    return (
+      <div className="flex flex-col h-full min-h-screen">
+        {/* Header */}
+        <div className="px-6 py-4 border-b space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight">{outline.chapters.length > 0 ? projectTitle : 'Your Outline'}</h2>
+              {approveOutlineData.premise && (
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{approveOutlineData.premise}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {intakeData && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRegenerateOpen(true)}
+                >
+                  Regenerate
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={() => setReviewMode(false)}
+              >
+                Continue to Editor
+                <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline — always visible at top */}
+        <div className="border-b bg-muted/30">
+          <OutlineTimeline
+            chapters={outline.chapters}
+            beatSheetId={beatSheetId}
+            selectedIndex={selectedChapterIndex}
+            onSelect={handleTimelineSelect}
+          />
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b px-6">
+          {reviewTabs.map(({ key, label, icon: Icon, count }) => {
+            const isActive = reviewTab === key
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setReviewTab(key)}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                  isActive
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{label}</span>
+                {count > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Tab content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-6 py-8">
+            {reviewTab === 'chapters' && (
+              <div className="space-y-2">
+                {outline.chapters.map((ch, i) => {
+                  const actColor = ACT_COLORS[ch.act ?? 1] ?? ACT_COLORS[1]
+                  const isHighlighted = i === selectedChapterIndex
+                  return (
+                    <div
+                      key={ch.number ?? i}
+                      id={`review-chapter-${i}`}
+                      className={`rounded-lg border bg-card transition-colors ${
+                        isHighlighted ? 'ring-1 ring-[color:var(--gold)]/40' : ''
+                      }`}
+                    >
+                      {ch.beat_sheet_mapping && (
+                        <div className={`px-4 py-1.5 text-[11px] font-medium rounded-t-lg border-b ${actColor}`}>
+                          {ch.beat_sheet_mapping}
+                        </div>
+                      )}
+                      <div className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono text-muted-foreground shrink-0 w-6 text-right">
+                            {ch.number ?? i + 1}
+                          </span>
+                          <span className="font-semibold text-sm text-foreground flex-1">{ch.title}</span>
+                          {ch.act && (
+                            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${actColor}`}>
+                              Act {ch.act}
+                            </Badge>
+                          )}
+                        </div>
+                        {ch.summary && (
+                          <p className="text-sm text-muted-foreground leading-relaxed mt-2 pl-9">{ch.summary}</p>
+                        )}
+                        {ch.beats && ch.beats.length > 0 && (
+                          <ul className="mt-2 pl-9 space-y-0.5">
+                            {ch.beats.map((beat, bi) => (
+                              <li key={bi} className="flex items-start gap-2 text-xs text-muted-foreground">
+                                <span className="text-primary/60 mt-px shrink-0">-</span>
+                                <span>{beat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {ch.characters_featured && ch.characters_featured.length > 0 && (
+                          <div className="flex items-center gap-1.5 mt-2 pl-9 flex-wrap">
+                            <Users className="h-3 w-3 text-muted-foreground/60" />
+                            {ch.characters_featured.map((name, ci) => (
+                              <span key={ci} className="text-[11px] text-muted-foreground">
+                                {name}{ci < ch.characters_featured!.length - 1 ? ',' : ''}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {reviewTab === 'characters' && (
+              <div className="space-y-2">
+                {(approveOutlineData.characters ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">No characters found</p>
+                ) : (
+                  (approveOutlineData.characters ?? []).map((ch, i) => (
+                    <div key={i} className="rounded-lg border bg-card p-4 pb-5 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{ch.name}</span>
+                        {ch.role && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize">
+                            {ch.role}
+                          </Badge>
+                        )}
+                      </div>
+                      {ch.one_line && (
+                        <p className="text-sm text-muted-foreground">{ch.one_line}</p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {reviewTab === 'locations' && (
+              <div className="space-y-2">
+                {(approveOutlineData.locations ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">No locations found</p>
+                ) : (
+                  (approveOutlineData.locations ?? []).map((loc, i) => (
+                    <div key={i} className="rounded-lg border bg-card p-4 pb-5 space-y-1">
+                      <span className="font-semibold text-sm">{loc.name}</span>
+                      {loc.description && (
+                        <p className="text-sm text-muted-foreground">{loc.description}</p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom bar with beat sheet mapping */}
+        <div className="border-t">
+          <BeatSheetOverlay
+            chapters={outline.chapters}
+            beatSheetId={beatSheetId}
+            onChangeBeatSheet={(id) => setBeatSheetId(id as BeatSheetId)}
+          />
+        </div>
+
+        {/* Regeneration dialog */}
+        {intakeData && (
+          <RegenerateDialog
+            projectId={projectId}
+            intakeData={intakeData}
+            selectedChapterIndex={0}
+            open={regenerateOpen}
+            onOpenChange={setRegenerateOpen}
+            onRegenerate={handleRegenerate}
+          />
+        )}
+      </div>
+    )
+  }
+
   // ── Two-panel outline viewer/editor ──────────────────────────────────────
   return (
     <div className="flex flex-col min-h-screen">
@@ -238,6 +491,16 @@ export function OutlinePanel({
         </div>
       </div>
 
+      {/* Timeline — always visible at top */}
+      <div className="border-b bg-muted/30">
+        <OutlineTimeline
+          chapters={outline.chapters}
+          beatSheetId={beatSheetId}
+          selectedIndex={selectedChapterIndex}
+          onSelect={setSelectedChapterIndex}
+        />
+      </div>
+
       {/* Two-panel layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left panel — Chapter list (~35%) */}
@@ -246,6 +509,7 @@ export function OutlinePanel({
             chapters={outline.chapters}
             selectedIndex={selectedChapterIndex}
             onSelect={setSelectedChapterIndex}
+            projectId={projectId}
           />
         </div>
 
@@ -256,6 +520,7 @@ export function OutlinePanel({
               chapter={selectedChapter}
               chapterIndex={selectedChapterIndex}
               onUpdate={handleChapterUpdate}
+              projectId={projectId}
             />
           ) : (
             <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
@@ -265,37 +530,13 @@ export function OutlinePanel({
         </div>
       </div>
 
-      {/* Below panels: beat sheet overlay and timeline (collapsible) */}
+      {/* Beat sheet overlay */}
       <div className="border-t">
-        {/* Beat sheet overlay */}
         <BeatSheetOverlay
           chapters={outline.chapters}
           beatSheetId={beatSheetId}
           onChangeBeatSheet={(id) => setBeatSheetId(id as BeatSheetId)}
         />
-
-        {/* Timeline collapse toggle */}
-        <div className="border-t">
-          <button
-            onClick={() => setTimelineCollapsed((c) => !c)}
-            className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-          >
-            {timelineCollapsed ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronUp className="h-4 w-4" />
-            )}
-            {timelineCollapsed ? 'Show Timeline' : 'Hide Timeline'}
-          </button>
-          {!timelineCollapsed && (
-            <OutlineTimeline
-              chapters={outline.chapters}
-              beatSheetId={beatSheetId}
-              selectedIndex={selectedChapterIndex}
-              onSelect={setSelectedChapterIndex}
-            />
-          )}
-        </div>
       </div>
 
       {/* Regeneration dialog */}

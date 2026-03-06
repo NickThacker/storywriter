@@ -62,7 +62,7 @@ export function CheckpointStepApprove({
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Chapter Stats
         </h4>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           <StatCard label="Words" value={wordCount.toLocaleString()} />
           <StatCard label="Characters Featured" value={String(characterChanges)} />
           <StatCard label="Threads Advanced" value={String(threadsAdvanced)} />
@@ -76,15 +76,15 @@ export function CheckpointStepApprove({
 
       {/* Continuity notes detail */}
       {checkpoint.continuity_notes && checkpoint.continuity_notes.length > 0 && (
-        <div>
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
+        <div className="mt-3 rounded-lg border border-border bg-muted/20 p-4">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
             Continuity Notes
           </h4>
-          <ul className="space-y-1">
+          <ul className="space-y-2.5">
             {checkpoint.continuity_notes.map((note, i) => (
               <li
                 key={i}
-                className="text-xs text-foreground/80 leading-relaxed pl-3 border-l-2 border-muted"
+                className="text-xs text-foreground/80 leading-relaxed pl-4 border-l-2 border-muted-foreground/30"
               >
                 {note}
               </li>
@@ -106,7 +106,7 @@ export function CheckpointStepApprove({
       </div>
 
       {/* Soft approval note */}
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-xs text-muted-foreground text-center pt-1">
         Approval confirms direction. You can still edit the prose anytime.
       </p>
     </div>

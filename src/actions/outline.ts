@@ -6,6 +6,11 @@ import type { OutlineChapter, OutlineRow, BeatSheetId, NovelLength } from '@/typ
 import type { IntakeData } from '@/lib/validations/intake'
 import type { GeneratedOutline } from '@/lib/outline/schema'
 import { seedStoryBibleFromOutline } from '@/actions/story-bible'
+import {
+  updateMemoryIdentity,
+  seedPlotThreadsFromOutline as seedMemoryPlotThreads,
+  resetMemory,
+} from '@/actions/project-memory'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -113,6 +118,12 @@ export async function saveOutline(
     }
 
     outlineId = (updated as { id: string }).id
+
+    // Outline regenerated — reset Layer 2/3 memory (story has changed)
+    const resetResult = await resetMemory(projectId)
+    if ('error' in resetResult) {
+      console.error('Failed to reset project memory on regeneration:', resetResult.error)
+    }
   } else {
     // Insert new outline row
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,6 +165,18 @@ export async function saveOutline(
   if (projectUpdateError) {
     // Log but don't fail — the outline itself was saved successfully
     console.error('Failed to update project title/chapter_count:', projectUpdateError)
+  }
+
+  // Enrich memory identity with outline data (premise, cast, locations)
+  const castList = outlineData.characters.map((c) => c.name)
+  const locationList = outlineData.locations.map((l) => l.name)
+  const identityResult = await updateMemoryIdentity(projectId, {
+    premise: outlineData.premise,
+    castList,
+    locationList,
+  })
+  if ('error' in identityResult) {
+    console.error('Failed to enrich memory identity from outline:', identityResult.error)
   }
 
   revalidatePath(`/projects/${projectId}/outline`)
@@ -260,16 +283,18 @@ export async function updateOutlineChapter(
 
   // Save updated chapters array back to database
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateError } = await (supabase as any)
+  const { data: updated, error: updateError } = await (supabase as any)
     .from('outlines')
     .update({
       chapters: updatedChapters,
       updated_at: new Date().toISOString(),
     })
     .eq('project_id', projectId)
+    .select('id')
+    .single()
 
-  if (updateError) {
-    return { error: updateError.message }
+  if (updateError || !updated) {
+    return { error: updateError?.message ?? 'Failed to update chapter' }
   }
 
   revalidatePath(`/projects/${projectId}/outline`)
@@ -351,7 +376,20 @@ export async function approveOutline(
     console.error('Failed to update project status to writing:', projectUpdateError)
   }
 
-  // 4. Revalidate all affected paths
+  // 4. Finalize memory identity and seed plot threads from outline
+  const finalizeResult = await updateMemoryIdentity(projectId, {
+    storyBibleSummary: `Approved outline with ${outlineData.chapters.length} chapters`,
+  })
+  if ('error' in finalizeResult) {
+    console.error('Failed to finalize memory identity on approval:', finalizeResult.error)
+  }
+
+  const plotSeedResult = await seedMemoryPlotThreads(projectId, outlineData.chapters)
+  if ('error' in plotSeedResult) {
+    console.error('Failed to seed plot threads from outline:', plotSeedResult.error)
+  }
+
+  // 5. Revalidate all affected paths
   revalidatePath(`/projects/${projectId}/outline`)
   revalidatePath(`/projects/${projectId}/story-bible`)
   revalidatePath('/dashboard')
