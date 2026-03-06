@@ -11,6 +11,7 @@ import { ChapterReadingView } from '@/components/chapters/chapter-reading-view'
 import { RewriteDialog } from '@/components/chapters/rewrite-dialog'
 import { CheckpointPanel } from '@/components/chapters/checkpoint-panel'
 import { ProgressBar } from '@/components/chapters/progress-bar'
+import { ValidationReviewPanel } from '@/components/memory/validation-review-panel'
 import { useGenerationGuard } from '@/components/chapters/generation-guard-context'
 import { detectScenes } from '@/lib/checkpoint/scene-utils'
 import { toast } from 'sonner'
@@ -60,6 +61,10 @@ export function ChapterPanel({
   const [rewriteOpen, setRewriteOpen] = useState(false)
   const [rewriteChapter, setRewriteChapter] = useState<number | null>(null)
   const [analyzingEdit, setAnalyzingEdit] = useState(false)
+  const [pendingValidation, setPendingValidation] = useState<{
+    id: string
+    chapterNumber: number
+  } | null>(null)
 
   // Derive word count and chapters done from checkpointMap so they update
   // in realtime when chapters are edited, generated, or rewritten.
@@ -136,16 +141,27 @@ export function ChapterPanel({
 
   // ── Chapter analysis ─────────────────────────────────────────────────────
 
-  // Fire-and-forget analysis after generation. Silent background — no UI indicator.
+  // Background analysis after generation. Updates memory silently; shows validation panel
+  // if any changes are held for author review (confidence < 85).
   const fireAnalysis = useCallback(
     (chapterNumber: number, chapterText: string) => {
-      void fetch('/api/generate/analyze-chapter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, chapterNumber, chapterText }),
-      }).catch((err) => {
-        console.error('[chapter-panel] analyze-chapter fire-and-forget error:', err)
-      })
+      void (async () => {
+        try {
+          const res = await fetch('/api/generate/analyze-chapter', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId, chapterNumber, chapterText }),
+          })
+          if (res.ok) {
+            const data = (await res.json()) as { validationId?: string | null; pendingCount?: number }
+            if (data.validationId && (data.pendingCount ?? 0) > 0) {
+              setPendingValidation({ id: data.validationId, chapterNumber })
+            }
+          }
+        } catch (err) {
+          console.error('[chapter-panel] analyze-chapter error:', err)
+        }
+      })()
     },
     [projectId]
   )
@@ -308,11 +324,17 @@ export function ChapterPanel({
         // Ensure latest text is persisted before analysis
         await saveChapterProse(projectId, chapterNumber, text)
         // Run analysis and wait for it (spinner visible during this)
-        await fetch('/api/generate/analyze-chapter', {
+        const res = await fetch('/api/generate/analyze-chapter', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ projectId, chapterNumber, chapterText: text }),
         })
+        if (res.ok) {
+          const data = (await res.json()) as { validationId?: string | null; pendingCount?: number }
+          if (data.validationId && (data.pendingCount ?? 0) > 0) {
+            setPendingValidation({ id: data.validationId, chapterNumber })
+          }
+        }
       } catch (err) {
         console.error('[chapter-panel] analyze on done-editing error:', err)
       } finally {
@@ -655,6 +677,15 @@ export function ChapterPanel({
           </div>
         </div>
       </div>
+
+      {/* Validation review panel — appears when analysis holds changes for author approval */}
+      {pendingValidation && (
+        <ValidationReviewPanel
+          validationId={pendingValidation.id}
+          chapterNumber={pendingValidation.chapterNumber}
+          onResolved={() => setPendingValidation(null)}
+        />
+      )}
 
       {/* Rewrite dialog */}
       {rewriteChapterData && (

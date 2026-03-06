@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { buildChapterAnalysisPrompt } from '@/lib/memory/analysis-prompt'
 import type { ChapterAnalysis } from '@/lib/memory/analysis-prompt'
-import { applyAnalysisToMemory } from '@/lib/memory/memory-updater'
+import { validateAndApplyAnalysis } from '@/lib/memory/analysis-validator'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import type { ProjectMemoryRow } from '@/types/project-memory'
 import type { OutlineChapter } from '@/types/database'
@@ -193,18 +193,32 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 9. Apply analysis to project_memory and chapter_checkpoint
-  const applyResult = await applyAnalysisToMemory(projectId, chapterNumber, analysis)
-  if ('error' in applyResult) {
-    console.error('[analyze-chapter] applyAnalysisToMemory error:', applyResult.error)
+  // 9. Validate and apply analysis — Haiku scores each change, auto-applies 85+,
+  //    holds lower-confidence changes for author review.
+  try {
+    const validationResult = await validateAndApplyAnalysis(
+      projectId,
+      chapterNumber,
+      analysis,
+      memory,
+      apiKey,
+      user.id
+    )
     return new Response(
-      JSON.stringify({ error: applyResult.error }),
+      JSON.stringify({
+        success: true,
+        validationId: validationResult.validationId,
+        pendingCount: validationResult.pendingCount,
+        autoAppliedCount: validationResult.autoAppliedCount,
+        status: validationResult.status,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )
+  } catch (err) {
+    console.error('[analyze-chapter] validateAndApplyAnalysis error:', err)
+    return new Response(
+      JSON.stringify({ error: 'Failed to validate and apply analysis' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
-
-  return new Response(
-    JSON.stringify({ success: true }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } }
-  )
 }
