@@ -166,16 +166,30 @@ export function ValidationReviewPanel({
     }
   }, [validationId, decisions, pendingDecisions, onResolved])
 
+  const hasUnresolvedActions = actionableItems.length > 0 && pendingDecisions.length > 0
+
   const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen && !submitting) {
+      if (hasUnresolvedActions) {
+        // Block dismissal: force the author to make a decision
+        toast.warning(`Review required — ${pendingDecisions.length} memory change${pendingDecisions.length > 1 ? 's' : ''} still need a decision before this dialog can be closed.`)
+        return
+      }
       setOpen(false)
-      // Dismissing without resolving — don't call onResolved so the banner can re-open
+      if (actionableItems.length === 0) {
+        // No actionable items (all were auto-applied/flagged) — safe to resolve
+        onResolved()
+      }
     }
-  }, [submitting])
+  }, [submitting, hasUnresolvedActions, pendingDecisions.length, actionableItems.length, onResolved])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent
+        className="max-w-2xl max-h-[80vh] flex flex-col"
+        onEscapeKeyDown={(e) => { if (hasUnresolvedActions) e.preventDefault() }}
+        onInteractOutside={(e) => { if (hasUnresolvedActions) e.preventDefault() }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-orange-500" />

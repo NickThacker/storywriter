@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useChapterStream } from '@/hooks/use-chapter-stream'
 import { saveChapterProse, updateProjectWordCount, approveChapter } from '@/actions/chapters'
@@ -61,6 +61,8 @@ export function ChapterPanel({
   const [rewriteOpen, setRewriteOpen] = useState(false)
   const [rewriteChapter, setRewriteChapter] = useState<number | null>(null)
   const [analyzingEdit, setAnalyzingEdit] = useState(false)
+  const [saveMessageIdx, setSaveMessageIdx] = useState(0)
+  const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [pendingValidation, setPendingValidation] = useState<{
     id: string
     chapterNumber: number
@@ -113,6 +115,30 @@ export function ChapterPanel({
   useEffect(() => {
     return () => setGenerating(false)
   }, [setGenerating])
+
+  // ── Save status message rotation ─────────────────────────────────────────
+
+  const SAVE_MESSAGES = ['Saving...', 'Analyzing chapter...', 'Scoring changes...', 'Almost done...']
+
+  useEffect(() => {
+    if (!analyzingEdit) {
+      setSaveMessageIdx(0)
+      if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current)
+      return
+    }
+    const advance = (idx: number) => {
+      const next = Math.min(idx + 1, SAVE_MESSAGES.length - 1)
+      setSaveMessageIdx(next)
+      if (next < SAVE_MESSAGES.length - 1) {
+        saveMessageTimerRef.current = setTimeout(() => advance(next), 5000)
+      }
+    }
+    saveMessageTimerRef.current = setTimeout(() => advance(0), 3000)
+    return () => {
+      if (saveMessageTimerRef.current) clearTimeout(saveMessageTimerRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analyzingEdit])
 
   // ── Derive chapter list items ────────────────────────────────────────────
 
@@ -584,7 +610,7 @@ export function ChapterPanel({
                         {analyzingEdit ? (
                           <>
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            Saving...
+                            {SAVE_MESSAGES[saveMessageIdx]}
                           </>
                         ) : (
                           'Done Editing'
