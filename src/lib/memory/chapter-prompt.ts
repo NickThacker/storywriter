@@ -1,4 +1,4 @@
-import type { ChapterContextPackage } from '@/types/project-memory'
+import type { ChapterContextPackage, CharacterArc } from '@/types/project-memory'
 import type { AuthorPersona } from '@/types/database'
 import type { VoiceAnalysisResult } from '@/lib/voice/schema'
 import { buildVoiceContextBrief } from '@/lib/voice/context-brief'
@@ -15,7 +15,8 @@ export function buildChapterPrompt(
   context: ChapterContextPackage,
   adjustments?: string,
   persona?: AuthorPersona | null,
-  oracleOutput?: OracleOutput | null
+  oracleOutput?: OracleOutput | null,
+  characterArcs?: Record<string, CharacterArc> | null
 ): {
   systemMessage: string
   userMessage: string
@@ -104,12 +105,23 @@ Formatting rules:
 
   // Character states
   if (context.characterStates.length > 0) {
+    const arcsToUse = characterArcs ?? context.characterArcs ?? null
     const charLines = context.characterStates
       .map((c) => {
         const relLines = Object.entries(c.relationships)
           .map(([name, rel]) => `  - ${name}: ${rel}`)
           .join('\n')
-        return `### ${c.name}\n- Emotional state: ${c.emotionalState}\n- Physical state: ${c.physicalState}\n- Location: ${c.location}\n- Key knowledge: ${c.knowledge.slice(-5).join('; ')}\n- Relationships:\n${relLines}`
+        let arcLines = ''
+        if (arcsToUse) {
+          const arc = arcsToUse[c.name]
+          if (arc) {
+            arcLines += `\n- Arc so far: ${arc.arc_summary}`
+            if (arc.unresolved_threads.length > 0) {
+              arcLines += `\n- Unresolved character threads: ${arc.unresolved_threads.join('; ')}`
+            }
+          }
+        }
+        return `### ${c.name}\n- Emotional state: ${c.emotionalState}\n- Physical state: ${c.physicalState}\n- Location: ${c.location}\n- Key knowledge: ${c.knowledge.slice(-5).join('; ')}\n- Relationships:\n${relLines}${arcLines}`
       })
       .join('\n\n')
     sections.push(`## Character States\n${charLines}`)

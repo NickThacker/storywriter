@@ -213,6 +213,35 @@ export interface CompressionResult {
 }
 
 // ─────────────────────────────────────────────────────
+// Arc Synthesizer Types
+// ─────────────────────────────────────────────────────
+
+export interface ArcTrajectoryPoint {
+  chapter: number
+  state: string
+  pivot_description: string
+}
+
+export interface ArcKeyMoment {
+  chapter: number
+  description: string
+}
+
+export interface CharacterArc {
+  id: string
+  project_id: string
+  character_name: string
+  arc_summary: string
+  arc_trajectory: ArcTrajectoryPoint[]
+  key_moments: ArcKeyMoment[]
+  unresolved_threads: string[]
+  synthesized_through_chapter: number
+  model_used: string
+  created_at: string
+  updated_at: string
+}
+
+// ─────────────────────────────────────────────────────
 // Context Assembly (assembled for chapter generation)
 // ─────────────────────────────────────────────────────
 
@@ -243,4 +272,6 @@ export interface ChapterContextPackage {
   recentThematicDevelopment: ThematicEntry[]
   // Timeline so far
   timeline: TimelineEntry[]
+  // Character arcs for featured characters (optional — populated after arc synthesis)
+  characterArcs?: Record<string, CharacterArc> | null
 }

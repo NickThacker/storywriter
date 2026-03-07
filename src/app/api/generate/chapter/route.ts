@@ -149,8 +149,8 @@ export async function POST(request: Request): Promise<Response> {
     console.error('[chapter] Oracle query failed (continuing without):', err)
   }
 
-  // 7b. Build prompt — pass persona + oracle output
-  const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments, personaData, oracleOutput)
+  // 7b. Build prompt — pass persona + oracle output + character arcs
+  const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments, personaData, oracleOutput, context.characterArcs ?? null)
 
   // 8. Call OpenRouter with streaming
   logPrompt({ userId: user.id, route: 'chapter', model: modelId, messages: [

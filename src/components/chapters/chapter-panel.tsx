@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ShieldCheck } from 'lucide-react'
 import { useChapterStream } from '@/hooks/use-chapter-stream'
 import { saveChapterProse, updateProjectWordCount, approveChapter } from '@/actions/chapters'
 import { ChapterList } from '@/components/chapters/chapter-list'
@@ -68,6 +68,8 @@ export function ChapterPanel({
     id: string
     chapterNumber: number
   } | null>(null)
+  const [validationPanelOpen, setValidationPanelOpen] = useState(false)
+  const [analysisRunningFor, setAnalysisRunningFor] = useState<number | null>(null)
 
   // Derive word count and chapters done from checkpointMap so they update
   // in realtime when chapters are edited, generated, or rewritten.
@@ -172,6 +174,7 @@ export function ChapterPanel({
   // if any changes are held for author review (confidence < 85).
   const fireAnalysis = useCallback(
     (chapterNumber: number, chapterText: string) => {
+      setAnalysisRunningFor(chapterNumber)
       void (async () => {
         try {
           const res = await fetch('/api/generate/analyze-chapter', {
@@ -187,6 +190,8 @@ export function ChapterPanel({
           }
         } catch (err) {
           console.error('[chapter-panel] analyze-chapter error:', err)
+        } finally {
+          setAnalysisRunningFor(null)
         }
       })()
     },
@@ -294,6 +299,15 @@ export function ChapterPanel({
           // Fire background analysis — updates project_memory silently
           fireAnalysis(chapterNumber, streamedText)
 
+          // Trigger arc synthesis every 5 chapters (fire-and-forget)
+          if (chapterNumber % 5 === 0) {
+            void fetch(`/api/arc/${projectId}/synthesize`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chapterNumber }),
+            }).catch((err) => console.error('[chapter-panel] arc synthesis error:', err))
+          }
+
           // Show toast after checkpoint map is updated — with Review action button
           const idx = outlineChapters.findIndex((c) => c.number === chapterNumber)
           toast.success('Chapter ready — Review checkpoint', {
@@ -369,6 +383,7 @@ export function ChapterPanel({
         setAnalyzingEdit(false)
       }
     }
+    // Always close editor before potentially showing the review button
 
     setEditingChapter(null)
     await updateProjectWordCount(projectId)
@@ -472,6 +487,7 @@ export function ChapterPanel({
     setSelectedIndex(index)
     setEditingChapter(null)
     setFocusMode(false)
+    setValidationPanelOpen(false)
   }, [])
 
   const selectedChapter = outlineChapters[selectedIndex]
@@ -621,6 +637,22 @@ export function ChapterPanel({
                       </button>
                     ) : (
                       <>
+                        {/* Memory analysis indicator — shown while analysis runs or when review is ready */}
+                        {analysisRunningFor === selectedChapter?.number && (
+                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Analyzing memory...
+                          </span>
+                        )}
+                        {pendingValidation?.chapterNumber === selectedChapter?.number && analysisRunningFor === null && (
+                          <button
+                            onClick={() => setValidationPanelOpen(true)}
+                            className="flex items-center gap-1.5 text-xs rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-amber-700 hover:bg-amber-100 transition-colors"
+                          >
+                            <ShieldCheck className="h-3 w-3" />
+                            Review memory changes
+                          </button>
+                        )}
                         <button
                           onClick={() => setFocusMode((p) => !p)}
                           className={`text-xs rounded-md border px-2.5 py-1 transition-colors ${focusMode ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'}`}
@@ -707,12 +739,15 @@ export function ChapterPanel({
         </div>
       </div>
 
-      {/* Validation review panel — appears when analysis holds changes for author approval */}
-      {pendingValidation && (
+      {/* Validation review panel — opened manually via the "Review memory changes" button */}
+      {pendingValidation && validationPanelOpen && (
         <ValidationReviewPanel
           validationId={pendingValidation.id}
           chapterNumber={pendingValidation.chapterNumber}
-          onResolved={() => setPendingValidation(null)}
+          onResolved={() => {
+            setPendingValidation(null)
+            setValidationPanelOpen(false)
+          }}
         />
       )}
 

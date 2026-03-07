@@ -4,6 +4,7 @@ import type {
   ChapterCheckpointRow,
   ChapterContextPackage,
   CharacterState,
+  CharacterArc,
 } from '@/types/project-memory'
 import type { OutlineChapter } from '@/types/database'
 
@@ -21,7 +22,7 @@ export async function assembleChapterContext(
   const supabase = await createClient()
 
   // Fetch all needed data in parallel
-  const [memoryResult, outlineResult, prevCheckpointResult] = await Promise.all([
+  const [memoryResult, outlineResult, prevCheckpointResult, arcResult] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('project_memory')
@@ -43,6 +44,11 @@ export async function assembleChapterContext(
           .eq('chapter_number', chapterNumber - 1)
           .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from('character_arcs')
+      .select('*')
+      .eq('project_id', projectId),
   ])
 
   const memory = memoryResult.data as ProjectMemoryRow | null
@@ -51,9 +57,21 @@ export async function assembleChapterContext(
     ChapterCheckpointRow,
     'summary' | 'chapter_text'
   > | null
+  const arcRows = (arcResult.data ?? []) as CharacterArc[]
 
   // Get this chapter's outline info
   const chapterOutline = outline?.chapters.find((c) => c.number === chapterNumber)
+
+  // Build featured character names (needed for arc filtering, resolved later)
+  const featuredCharactersEarly = chapterOutline?.characters_featured ?? []
+
+  // Build characterArcs map filtered to featured characters only
+  const characterArcs: Record<string, CharacterArc> = {}
+  for (const arc of arcRows) {
+    if (featuredCharactersEarly.includes(arc.character_name)) {
+      characterArcs[arc.character_name] = arc
+    }
+  }
 
   // Build the context package with smart filtering
   const identity = memory?.identity ?? {
@@ -68,7 +86,7 @@ export async function assembleChapterContext(
     narrativeVoiceNotes: null,
   }
 
-  const featuredCharacters = chapterOutline?.characters_featured ?? []
+  const featuredCharacters = featuredCharactersEarly
 
   // Filter character states to only those featured in this chapter
   const characterStates: CharacterState[] = featuredCharacters
@@ -119,5 +137,6 @@ export async function assembleChapterContext(
     unresolvedForeshadowing,
     recentThematicDevelopment,
     timeline: memory?.timeline ?? [],
+    characterArcs: Object.keys(characterArcs).length > 0 ? characterArcs : null,
   }
 }

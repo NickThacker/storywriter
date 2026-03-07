@@ -9,6 +9,7 @@ import { CharacterCard } from '@/components/story-bible/character-card'
 import { LocationCard } from '@/components/story-bible/location-card'
 import { WorldFactsList } from '@/components/story-bible/world-facts-list'
 import { AddEntityDialog } from '@/components/story-bible/add-entity-dialog'
+import { CharacterArcsTab } from '@/components/story-bible/character-arcs-tab'
 import type { CharacterRow, LocationRow, WorldFactRow } from '@/types/database'
 
 interface BibleTabsProps {
@@ -67,6 +68,9 @@ export function BibleTabs({ projectId, characters, locations, worldFacts }: Bibl
                 {otherFacts.length}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="arc">
+            Arc
           </TabsTrigger>
         </TabsList>
 
@@ -163,6 +167,10 @@ export function BibleTabs({ projectId, characters, locations, worldFacts }: Bibl
               projectId={projectId}
             />
           </div>
+        </TabsContent>
+        {/* Arc Tab */}
+        <TabsContent value="arc">
+          <CharacterArcsTab projectId={projectId} />
         </TabsContent>
       </Tabs>
 
