@@ -254,7 +254,7 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
           <span>Memory</span>
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden flex flex-col" style={{ maxHeight: '80vh' }}>
         <DialogHeader className="px-4 pt-5 pb-4 border-b border-border shrink-0">
           <DialogTitle className="text-sm font-semibold">Story Memory</DialogTitle>
           <DialogDescription className="text-xs">
@@ -262,7 +262,7 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(80vh - 80px)' }}>
           {loading && (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
