@@ -4,7 +4,7 @@ import type { ProjectMemoryRow } from '@/types/project-memory'
 import { applyAnalysisToMemory } from './memory-updater'
 
 // Haiku for fast, cheap scoring. Check user_model_preferences for 'validation' task type first.
-const DEFAULT_VALIDATION_MODEL = 'anthropic/claude-haiku-4-5-20251001'
+const DEFAULT_VALIDATION_MODEL = 'anthropic/claude-haiku-4.5'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -118,7 +118,8 @@ async function scoreChanges(
   memory: ProjectMemoryRow,
   chapterNumber: number,
   apiKey: string,
-  modelId: string
+  modelId: string,
+  chapterText: string
 ): Promise<ScoredChange[]> {
   if (items.length === 0) return []
 
@@ -150,7 +151,10 @@ Scoring guide:
 
 Output ONLY raw JSON, no markdown code fences.`
 
-  const userPrompt = `## Current Memory State
+  const userPrompt = `## Chapter ${chapterNumber} Text
+${chapterText.slice(0, 8000)}
+
+## Current Memory State
 ${JSON.stringify(memoryContext, null, 2)}
 
 ## Proposed Changes (${items.length} items)
@@ -231,7 +235,8 @@ export async function validateAndApplyAnalysis(
   analysis: ChapterAnalysis,
   memory: ProjectMemoryRow,
   apiKey: string,
-  userId: string
+  userId: string,
+  chapterText: string
 ): Promise<ValidationResult> {
   const supabase = await createClient()
 
@@ -254,7 +259,7 @@ export async function validateAndApplyAnalysis(
 
   let scored: ScoredChange[]
   try {
-    scored = await scoreChanges(items, memory, chapterNumber, apiKey, modelId)
+    scored = await scoreChanges(items, memory, chapterNumber, apiKey, modelId, chapterText)
   } catch (err) {
     // Fail-open: if Haiku scoring fails, apply everything directly (same as old behavior)
     console.error('[analysis-validator] Scoring failed, falling back to direct apply:', err)
@@ -289,7 +294,7 @@ export async function validateAndApplyAnalysis(
 
   // Always store a record (for auditability); only return validationId when pending
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: validationRow } = await (supabase as any)
+  const { data: validationRow, error: validationInsertError } = await (supabase as any)
     .from('analysis_validations')
     .insert({
       project_id: projectId,
@@ -300,6 +305,10 @@ export async function validateAndApplyAnalysis(
     })
     .select('id')
     .single()
+
+  if (validationInsertError) {
+    console.error('[analysis-validator] Failed to insert validation record:', validationInsertError.message)
+  }
 
   const validationId = (validationRow as { id: string } | null)?.id ?? null
 

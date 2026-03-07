@@ -202,7 +202,8 @@ export async function POST(request: Request): Promise<Response> {
       analysis,
       memory,
       apiKey,
-      user.id
+      user.id,
+      chapterText
     )
     return new Response(
       JSON.stringify({

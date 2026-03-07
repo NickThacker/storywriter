@@ -101,7 +101,8 @@ export async function POST(request: Request): Promise<Response> {
       proposedChanges,
       memory,
       apiKey,
-      user.id
+      user.id,
+      ''  // no chapter text available in re-validation context
     )
     return new Response(JSON.stringify(result), {
       status: 200,

@@ -59,7 +59,7 @@ function DecisionBadge({ decision }: { decision: ChangeDecision }) {
     return (
       <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 gap-1">
         <ShieldAlert className="h-3 w-3" />
-        Applied (low confidence)
+        Auto-applied
       </Badge>
     )
   }
@@ -186,7 +186,7 @@ export function ValidationReviewPanel({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="max-w-2xl max-h-[80vh] flex flex-col"
+        className="max-w-2xl max-h-[85vh] flex flex-col overflow-hidden"
         onEscapeKeyDown={(e) => { if (hasUnresolvedActions) e.preventDefault() }}
         onInteractOutside={(e) => { if (hasUnresolvedActions) e.preventDefault() }}
       >
@@ -201,7 +201,7 @@ export function ValidationReviewPanel({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -278,7 +278,7 @@ export function ValidationReviewPanel({
               {flaggedItems.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Applied with Low Confidence ({flaggedItems.length})
+                    Auto-applied — verify if needed ({flaggedItems.length})
                   </p>
                   <div className="rounded-lg border border-amber-100 bg-amber-50/40 divide-y divide-amber-100">
                     {flaggedItems.map((item) => (
@@ -295,7 +295,7 @@ export function ValidationReviewPanel({
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    These were applied automatically. You can re-run analysis to correct them if needed.
+                    These changes were written to memory. No action needed — they're shown for your awareness.
                   </p>
                 </div>
               )}

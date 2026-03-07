@@ -3,7 +3,7 @@ import { assembleManuscript } from './assemble-manuscript'
 import { hashOutline } from './outline-hash'
 import type { OutlineChapter } from '@/types/database'
 
-const DEFAULT_ORACLE_MODEL = 'google/gemini-1.5-pro'
+const DEFAULT_ORACLE_MODEL = 'google/gemini-3-flash-preview'
 
 export interface OracleOutput {
   callbacks: string[]
@@ -172,7 +172,7 @@ Each array should contain 2–5 specific, concrete strings referencing actual co
 
   // Cache the result (upsert in case of race)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any)
+  const { error: cacheWriteError } = await (supabase as any)
     .from('oracle_cache')
     .upsert(
       {
@@ -184,6 +184,10 @@ Each array should contain 2–5 specific, concrete strings referencing actual co
       },
       { onConflict: 'project_id,chapter_number,outline_hash' }
     )
+
+  if (cacheWriteError) {
+    console.error('[oracle] Failed to cache oracle result:', cacheWriteError.message)
+  }
 
   return { oracleOutput, cached: false, chaptersAnalyzed: chaptersIncluded }
 }
