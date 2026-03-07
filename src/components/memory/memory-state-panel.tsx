@@ -3,13 +3,13 @@
 import { useState, useCallback } from 'react'
 import { Brain, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import type { ProjectMemoryRow, PlotThread } from '@/types/project-memory'
 
@@ -218,7 +218,6 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchMemory = useCallback(async () => {
-    if (memory) return // already loaded
     setLoading(true)
     setError(null)
     try {
@@ -234,7 +233,7 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
     } finally {
       setLoading(false)
     }
-  }, [projectId, memory])
+  }, [projectId])
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -245,8 +244,8 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
   )
 
   return (
-    <Sheet onOpenChange={handleOpenChange}>
-      <SheetTrigger asChild>
+    <Dialog onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
         <button
           className="flex items-center gap-1.5 rounded-md px-3 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
           title="View story memory"
@@ -254,16 +253,16 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
           <Brain className="h-3.5 w-3.5 shrink-0" />
           <span>Memory</span>
         </button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-[420px] sm:w-[480px] p-0 flex flex-col">
-        <SheetHeader className="px-4 py-4 border-b border-border shrink-0">
-          <SheetTitle className="text-sm font-semibold">Story Memory</SheetTitle>
-          <SheetDescription className="text-xs">
+      </DialogTrigger>
+      <DialogContent className="max-w-xl max-h-[80vh] flex flex-col p-0">
+        <DialogHeader className="px-4 pt-5 pb-4 border-b border-border shrink-0">
+          <DialogTitle className="text-sm font-semibold">Story Memory</DialogTitle>
+          <DialogDescription className="text-xs">
             AI-maintained state — updates automatically after each chapter.
-          </SheetDescription>
-        </SheetHeader>
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {loading && (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -276,7 +275,7 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
           )}
           {memory && <MemoryContent memory={memory} />}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   )
 }
