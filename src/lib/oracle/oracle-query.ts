@@ -3,7 +3,7 @@ import { assembleManuscript } from './assemble-manuscript'
 import { hashOutline } from './outline-hash'
 import type { OutlineChapter } from '@/types/database'
 
-const DEFAULT_ORACLE_MODEL = 'google/gemini-pro-1.5'
+const DEFAULT_ORACLE_MODEL = 'google/gemini-1.5-pro'
 
 export interface OracleOutput {
   callbacks: string[]
