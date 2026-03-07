@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { ClipboardList, FileText, BookOpen, PenTool, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useGenerationGuard } from '@/components/chapters/generation-guard-context'
+import { MemoryStatePanel } from '@/components/memory/memory-state-panel'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -76,7 +77,7 @@ export function PhaseNav({ projectId, currentPhase }: PhaseNavProps) {
 
   return (
     <nav className="border-b border-border bg-background">
-      <div className="flex items-center px-4 py-2 overflow-x-auto">
+      <div className="flex items-center px-4 py-2 overflow-x-auto gap-1">
         {PHASES.map((phase, index) => {
           const isActive = phase.id === currentPhase
           const isCompleted = index < currentIndex
@@ -117,6 +118,11 @@ export function PhaseNav({ projectId, currentPhase }: PhaseNavProps) {
             </div>
           )
         })}
+
+        {/* Memory panel — right-aligned, only shown when on chapters or beyond */}
+        <div className="ml-auto shrink-0">
+          <MemoryStatePanel projectId={projectId} />
+        </div>
       </div>
     </nav>
   )

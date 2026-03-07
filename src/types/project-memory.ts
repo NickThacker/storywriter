@@ -274,4 +274,10 @@ export interface ChapterContextPackage {
   timeline: TimelineEntry[]
   // Character arcs for featured characters (optional — populated after arc synthesis)
   characterArcs?: Record<string, CharacterArc> | null
+  // Thread closing pressure — active in Act 3 / climax beats
+  closingPressure: {
+    active: boolean
+    chaptersRemaining: number
+    overdueThreads: PlotThread[]  // sorted by openedChapter ascending (most overdue first)
+  } | null
 }

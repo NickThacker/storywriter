@@ -108,6 +108,32 @@ export async function assembleChapterContext(
     (t) => t.status !== 'resolved'
   )
 
+  // Closing pressure — auto-activate in Act 3 / climax beats
+  const beatStr = (chapterOutline?.beat_sheet_mapping ?? '').toLowerCase()
+  const isClosingBeat =
+    (chapterOutline?.act ?? 0) >= 3 ||
+    beatStr.includes('act 3') ||
+    beatStr.includes('act iii') ||
+    beatStr.includes('climax') ||
+    beatStr.includes('falling action') ||
+    beatStr.includes('resolution') ||
+    beatStr.includes('denouement') ||
+    beatStr.includes('third act')
+
+  const totalChaptersForPressure = outline?.chapter_count ?? outline?.chapters.length ?? 0
+  const chaptersRemaining = Math.max(0, totalChaptersForPressure - chapterNumber)
+
+  // Sort by earliest chapter reference (most overdue = opened earliest)
+  const overdueThreads = isClosingBeat
+    ? [...activePlotThreads].sort(
+        (a, b) => (a.chapterReferences[0] ?? 0) - (b.chapterReferences[0] ?? 0)
+      )
+    : []
+
+  const closingPressure = isClosingBeat
+    ? { active: true, chaptersRemaining, overdueThreads }
+    : null
+
   // Last 5 thematic entries for recency
   const recentThematicDevelopment = (memory?.thematic_development ?? []).slice(-5)
 
@@ -117,7 +143,7 @@ export async function assembleChapterContext(
     previousChapterText = '...' + previousChapterText.slice(-3000)
   }
 
-  const totalChapters = outline?.chapter_count ?? outline?.chapters.length ?? 0
+  const totalChapters = totalChaptersForPressure
 
   return {
     identity,
@@ -138,5 +164,6 @@ export async function assembleChapterContext(
     recentThematicDevelopment,
     timeline: memory?.timeline ?? [],
     characterArcs: Object.keys(characterArcs).length > 0 ? characterArcs : null,
+    closingPressure,
   }
 }

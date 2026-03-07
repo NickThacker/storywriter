@@ -3,13 +3,12 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { buildChapterAnalysisPrompt } from '@/lib/memory/analysis-prompt'
 import type { ChapterAnalysis } from '@/lib/memory/analysis-prompt'
-import { validateAndApplyAnalysis } from '@/lib/memory/analysis-validator'
+import { applyAnalysisToMemory } from '@/lib/memory/memory-updater'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import type { ProjectMemoryRow } from '@/types/project-memory'
 import type { OutlineChapter } from '@/types/database'
 
 // Fixed model for chapter analysis — always Sonnet regardless of user's model preference.
-// This ensures consistent, high-quality story state extraction.
 const ANALYSIS_MODEL = 'anthropic/claude-sonnet-4-5'
 
 interface AnalyzeChapterBody {
@@ -193,33 +192,19 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 9. Validate and apply analysis — Haiku scores each change, auto-applies 85+,
-  //    holds lower-confidence changes for author review.
-  try {
-    const validationResult = await validateAndApplyAnalysis(
-      projectId,
-      chapterNumber,
-      analysis,
-      memory,
-      apiKey,
-      user.id,
-      chapterText
-    )
+  // 9. Apply analysis directly to project memory — no validation layer
+  const applyResult = await applyAnalysisToMemory(projectId, chapterNumber, analysis)
+
+  if ('error' in applyResult) {
+    console.error('[analyze-chapter] applyAnalysisToMemory error:', applyResult.error)
     return new Response(
-      JSON.stringify({
-        success: true,
-        validationId: validationResult.validationId,
-        pendingCount: validationResult.pendingCount,
-        autoAppliedCount: validationResult.autoAppliedCount,
-        status: validationResult.status,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    )
-  } catch (err) {
-    console.error('[analyze-chapter] validateAndApplyAnalysis error:', err)
-    return new Response(
-      JSON.stringify({ error: 'Failed to validate and apply analysis' }),
+      JSON.stringify({ error: applyResult.error }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
+
+  return new Response(
+    JSON.stringify({ success: true }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } }
+  )
 }

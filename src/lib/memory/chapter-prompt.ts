@@ -92,8 +92,20 @@ Formatting rules:
     )
   }
 
-  // Active plot threads
-  if (context.activePlotThreads.length > 0) {
+  // Closing pressure — Act 3 thread urgency (takes priority over the standard thread list)
+  if (context.closingPressure?.active && context.closingPressure.overdueThreads.length > 0) {
+    const { chaptersRemaining, overdueThreads } = context.closingPressure
+    const urgencyLines = overdueThreads
+      .map(
+        (t) =>
+          `- **${t.name}** (open since Ch${t.chapterReferences[0] ?? '?'}, ${t.status}): ${t.description}`
+      )
+      .join('\n')
+    sections.push(
+      `## URGENT: Unresolved Story Threads\nYou are in Act 3. **${chaptersRemaining} chapter${chaptersRemaining === 1 ? '' : 's'} remain${chaptersRemaining === 1 ? 's' : ''}** in this novel. These open threads need resolution soon — listed most overdue first:\n\n${urgencyLines}\n\nPrioritize advancing or resolving these threads in this chapter where the beats allow.`
+    )
+  } else if (context.activePlotThreads.length > 0) {
+    // Standard thread list for non-pressure chapters
     const threadLines = context.activePlotThreads
       .map(
         (t) =>

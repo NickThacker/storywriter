@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Loader2, ShieldCheck } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useChapterStream } from '@/hooks/use-chapter-stream'
 import { saveChapterProse, updateProjectWordCount, approveChapter } from '@/actions/chapters'
 import { ChapterList } from '@/components/chapters/chapter-list'
@@ -11,7 +11,6 @@ import { ChapterReadingView } from '@/components/chapters/chapter-reading-view'
 import { RewriteDialog } from '@/components/chapters/rewrite-dialog'
 import { CheckpointPanel } from '@/components/chapters/checkpoint-panel'
 import { ProgressBar } from '@/components/chapters/progress-bar'
-import { ValidationReviewPanel } from '@/components/memory/validation-review-panel'
 import { useGenerationGuard } from '@/components/chapters/generation-guard-context'
 import { detectScenes } from '@/lib/checkpoint/scene-utils'
 import { toast } from 'sonner'
@@ -64,11 +63,6 @@ export function ChapterPanel({
   const [saveMessageIdx, setSaveMessageIdx] = useState(0)
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [oracleStatus, setOracleStatus] = useState<OracleStatus>('idle')
-  const [pendingValidation, setPendingValidation] = useState<{
-    id: string
-    chapterNumber: number
-  } | null>(null)
-  const [validationPanelOpen, setValidationPanelOpen] = useState(false)
   const [analysisRunningFor, setAnalysisRunningFor] = useState<number | null>(null)
 
   // Derive word count and chapters done from checkpointMap so they update
@@ -121,7 +115,7 @@ export function ChapterPanel({
 
   // ── Save status message rotation ─────────────────────────────────────────
 
-  const SAVE_MESSAGES = ['Saving...', 'Analyzing chapter...', 'Scoring changes...', 'Almost done...']
+  const SAVE_MESSAGES = ['Saving...', 'Analyzing chapter...', 'Updating memory...', 'Almost done...']
 
   useEffect(() => {
     if (!analyzingEdit) {
@@ -170,24 +164,17 @@ export function ChapterPanel({
 
   // ── Chapter analysis ─────────────────────────────────────────────────────
 
-  // Background analysis after generation. Updates memory silently; shows validation panel
-  // if any changes are held for author review (confidence < 85).
+  // Background analysis after generation — updates memory silently.
   const fireAnalysis = useCallback(
     (chapterNumber: number, chapterText: string) => {
       setAnalysisRunningFor(chapterNumber)
       void (async () => {
         try {
-          const res = await fetch('/api/generate/analyze-chapter', {
+          await fetch('/api/generate/analyze-chapter', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ projectId, chapterNumber, chapterText }),
           })
-          if (res.ok) {
-            const data = (await res.json()) as { validationId?: string | null; pendingCount?: number }
-            if (data.validationId && (data.pendingCount ?? 0) > 0) {
-              setPendingValidation({ id: data.validationId, chapterNumber })
-            }
-          }
         } catch (err) {
           console.error('[chapter-panel] analyze-chapter error:', err)
         } finally {
@@ -353,8 +340,7 @@ export function ChapterPanel({
     [projectId, selectedIndex, outlineChapters]
   )
 
-  // "Done Editing" — save final text, analyze changes, then exit editor.
-  // Shows spinner (analyzingEdit) during analysis so user knows work is in progress.
+  // "Done Editing" — save final text, run memory analysis (with spinner), then exit editor.
   const handleDoneEditing = useCallback(async () => {
     const chapterNumber = outlineChapters[selectedIndex]?.number
     const checkpoint = chapterNumber ? checkpointMap.get(chapterNumber) : undefined
@@ -363,27 +349,18 @@ export function ChapterPanel({
     if (chapterNumber && text.trim()) {
       setAnalyzingEdit(true)
       try {
-        // Ensure latest text is persisted before analysis
         await saveChapterProse(projectId, chapterNumber, text)
-        // Run analysis and wait for it (spinner visible during this)
-        const res = await fetch('/api/generate/analyze-chapter', {
+        await fetch('/api/generate/analyze-chapter', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ projectId, chapterNumber, chapterText: text }),
         })
-        if (res.ok) {
-          const data = (await res.json()) as { validationId?: string | null; pendingCount?: number }
-          if (data.validationId && (data.pendingCount ?? 0) > 0) {
-            setPendingValidation({ id: data.validationId, chapterNumber })
-          }
-        }
       } catch (err) {
         console.error('[chapter-panel] analyze on done-editing error:', err)
       } finally {
         setAnalyzingEdit(false)
       }
     }
-    // Always close editor before potentially showing the review button
 
     setEditingChapter(null)
     await updateProjectWordCount(projectId)
@@ -487,7 +464,6 @@ export function ChapterPanel({
     setSelectedIndex(index)
     setEditingChapter(null)
     setFocusMode(false)
-    setValidationPanelOpen(false)
   }, [])
 
   const selectedChapter = outlineChapters[selectedIndex]
@@ -644,15 +620,6 @@ export function ChapterPanel({
                             Analyzing memory...
                           </span>
                         )}
-                        {pendingValidation?.chapterNumber === selectedChapter?.number && analysisRunningFor === null && (
-                          <button
-                            onClick={() => setValidationPanelOpen(true)}
-                            className="flex items-center gap-1.5 text-xs rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-amber-700 hover:bg-amber-100 transition-colors"
-                          >
-                            <ShieldCheck className="h-3 w-3" />
-                            Review memory changes
-                          </button>
-                        )}
                         <button
                           onClick={() => setFocusMode((p) => !p)}
                           className={`text-xs rounded-md border px-2.5 py-1 transition-colors ${focusMode ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'}`}
@@ -738,18 +705,6 @@ export function ChapterPanel({
           </div>
         </div>
       </div>
-
-      {/* Validation review panel — opened manually via the "Review memory changes" button */}
-      {pendingValidation && validationPanelOpen && (
-        <ValidationReviewPanel
-          validationId={pendingValidation.id}
-          chapterNumber={pendingValidation.chapterNumber}
-          onResolved={() => {
-            setPendingValidation(null)
-            setValidationPanelOpen(false)
-          }}
-        />
-      )}
 
       {/* Rewrite dialog */}
       {rewriteChapterData && (
