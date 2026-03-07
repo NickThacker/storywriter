@@ -60,9 +60,11 @@ export async function queryOracle(
   // Compute outline hash for cache key
   const outlineHash = hashOutline(outlineChapters)
 
+  console.log(`[oracle] project=${projectId} chapter=${chapterNumber} model=${modelId}`)
+
   // Check cache
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: cached } = await (supabase as any)
+  const { data: cached, error: cacheError } = await (supabase as any)
     .from('oracle_cache')
     .select('oracle_output, model_used')
     .eq('project_id', projectId)
@@ -70,7 +72,13 @@ export async function queryOracle(
     .eq('outline_hash', outlineHash)
     .maybeSingle()
 
+  if (cacheError) {
+    console.error('[oracle] oracle_cache query error (table may not exist):', cacheError.message)
+    throw new Error(`oracle_cache query failed: ${cacheError.message}`)
+  }
+
   if (cached) {
+    console.log(`[oracle] cache hit for chapter ${chapterNumber}`)
     const row = cached as OracleCacheRow
     return {
       oracleOutput: row.oracle_output,
@@ -82,8 +90,11 @@ export async function queryOracle(
   // Cache miss — assemble manuscript and call Gemini
   const { text: manuscriptText, chaptersIncluded } = await assembleManuscript(projectId, chapterNumber)
 
+  console.log(`[oracle] manuscript assembled: ${chaptersIncluded} chapters, ${manuscriptText.length} chars`)
+
   if (!manuscriptText) {
     // Chapter 1 or no prior text — return empty oracle
+    console.log('[oracle] no prior manuscript text — skipping Gemini call')
     const empty: OracleOutput = {
       callbacks: [],
       contradictionRisks: [],
