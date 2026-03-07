@@ -2,17 +2,20 @@ import type { ChapterContextPackage } from '@/types/project-memory'
 import type { AuthorPersona } from '@/types/database'
 import type { VoiceAnalysisResult } from '@/lib/voice/schema'
 import { buildVoiceContextBrief } from '@/lib/voice/context-brief'
+import type { OracleOutput } from '@/lib/oracle/oracle-query'
 
 /**
  * Build the system + user messages for chapter generation.
  * Converts the assembled ChapterContextPackage into clearly labeled
  * prompt sections that the AI uses to write the chapter.
  * Optionally accepts an AuthorPersona to inject voice context into the system message.
+ * Optionally accepts OracleOutput to inject long-range manuscript context.
  */
 export function buildChapterPrompt(
   context: ChapterContextPackage,
   adjustments?: string,
-  persona?: AuthorPersona | null
+  persona?: AuthorPersona | null,
+  oracleOutput?: OracleOutput | null
 ): {
   systemMessage: string
   userMessage: string
@@ -148,6 +151,29 @@ Formatting rules:
       .map((t) => `- Ch${t.chapterNumber} [${t.storyTime}]: ${t.event}`)
       .join('\n')
     sections.push(`## Recent Timeline\n${tlLines}`)
+  }
+
+  // Oracle long-range context
+  if (oracleOutput) {
+    const oLines: string[] = []
+    if (oracleOutput.callbacks?.length) {
+      oLines.push(`**Callbacks worth echoing:**\n${oracleOutput.callbacks.map((c) => `- ${c}`).join('\n')}`)
+    }
+    if (oracleOutput.contradictionRisks?.length) {
+      oLines.push(`**Contradiction risks:**\n${oracleOutput.contradictionRisks.map((r) => `- ${r}`).join('\n')}`)
+    }
+    if (oracleOutput.unresolvedMotifs?.length) {
+      oLines.push(`**Unresolved motifs:**\n${oracleOutput.unresolvedMotifs.map((m) => `- ${m}`).join('\n')}`)
+    }
+    if (oracleOutput.setupPayoffs?.length) {
+      oLines.push(`**Setup/payoff opportunities:**\n${oracleOutput.setupPayoffs.map((s) => `- ${s}`).join('\n')}`)
+    }
+    if (oracleOutput.characterMoments?.length) {
+      oLines.push(`**Character history relevant to this chapter:**\n${oracleOutput.characterMoments.map((m) => `- ${m}`).join('\n')}`)
+    }
+    if (oLines.length > 0) {
+      sections.push(`## Manuscript Oracle — Long-Range Context\n${oLines.join('\n\n')}`)
+    }
   }
 
   let userMessage = sections.join('\n\n---\n\n')

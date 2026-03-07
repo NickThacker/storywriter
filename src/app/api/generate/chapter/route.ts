@@ -4,9 +4,11 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { assembleChapterContext } from '@/lib/memory/context-assembly'
 import { buildChapterPrompt } from '@/lib/memory/chapter-prompt'
+import { queryOracle } from '@/lib/oracle/oracle-query'
 import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
 import { createTokenInterceptStream } from '@/lib/billing/token-interceptor'
 import { logPrompt } from '@/lib/logging/prompt-logger'
+import type { OracleOutput } from '@/lib/oracle/oracle-query'
 
 interface GenerateChapterBody {
   projectId: string
@@ -138,8 +140,17 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 7. Build prompt — pass persona for voice injection (fail-open: null persona is fine)
-  const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments, personaData)
+  // 7. Query oracle for long-range manuscript context (fail-open)
+  let oracleOutput: OracleOutput | null = null
+  try {
+    const oracleResult = await queryOracle(projectId, chapterNumber, apiKey, user.id)
+    oracleOutput = oracleResult.oracleOutput
+  } catch (err) {
+    console.error('[chapter] Oracle query failed (continuing without):', err)
+  }
+
+  // 7b. Build prompt — pass persona + oracle output
+  const { systemMessage, userMessage } = buildChapterPrompt(context, adjustments, personaData, oracleOutput)
 
   // 8. Call OpenRouter with streaming
   logPrompt({ userId: user.id, route: 'chapter', model: modelId, messages: [

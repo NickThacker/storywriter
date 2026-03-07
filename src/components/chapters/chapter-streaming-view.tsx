@@ -40,6 +40,8 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
 // Types
 // ──────────────────────────────────────────────────────────────────────────────
 
+export type OracleStatus = 'idle' | 'loading' | 'ready' | 'cached' | 'unavailable'
+
 interface ChapterStreamingViewProps {
   chapterNumber: number
   chapterTitle: string
@@ -49,11 +51,20 @@ interface ChapterStreamingViewProps {
   error: string | null
   onStop: () => void
   onRetry: () => void
+  oracleStatus?: OracleStatus
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 // ChapterStreamingView
 // ──────────────────────────────────────────────────────────────────────────────
+
+const ORACLE_LABELS: Record<OracleStatus, string> = {
+  idle: '',
+  loading: 'Oracle: Analyzing manuscript...',
+  ready: 'Oracle: Ready',
+  cached: 'Oracle: Ready (cached)',
+  unavailable: 'Oracle: Unavailable',
+}
 
 export function ChapterStreamingView({
   chapterNumber,
@@ -64,6 +75,7 @@ export function ChapterStreamingView({
   error,
   onStop,
   onRetry,
+  oracleStatus,
 }: ChapterStreamingViewProps) {
   const sentinelRef = useRef<HTMLDivElement>(null)
   const proseContainerRef = useRef<HTMLDivElement>(null)
@@ -97,6 +109,16 @@ export function ChapterStreamingView({
         </div>
 
         <div className="ml-3 flex shrink-0 items-center gap-2">
+          {/* Oracle status */}
+          {oracleStatus && oracleStatus !== 'idle' && (
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              oracleStatus === 'loading' ? 'bg-muted text-muted-foreground animate-pulse' :
+              oracleStatus === 'unavailable' ? 'bg-muted text-muted-foreground/60' :
+              'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`}>
+              {ORACLE_LABELS[oracleStatus]}
+            </span>
+          )}
           {/* Live word count badge */}
           {hasText && (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">

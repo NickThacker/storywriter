@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { useChapterStream } from '@/hooks/use-chapter-stream'
 import { saveChapterProse, updateProjectWordCount, approveChapter } from '@/actions/chapters'
 import { ChapterList } from '@/components/chapters/chapter-list'
-import { ChapterStreamingView } from '@/components/chapters/chapter-streaming-view'
+import { ChapterStreamingView, type OracleStatus } from '@/components/chapters/chapter-streaming-view'
 import { ChapterEditor } from '@/components/chapters/chapter-editor'
 import { ChapterReadingView } from '@/components/chapters/chapter-reading-view'
 import { RewriteDialog } from '@/components/chapters/rewrite-dialog'
@@ -63,6 +63,7 @@ export function ChapterPanel({
   const [analyzingEdit, setAnalyzingEdit] = useState(false)
   const [saveMessageIdx, setSaveMessageIdx] = useState(0)
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [oracleStatus, setOracleStatus] = useState<OracleStatus>('idle')
   const [pendingValidation, setPendingValidation] = useState<{
     id: string
     chapterNumber: number
@@ -101,7 +102,7 @@ export function ChapterPanel({
 
   useEffect(() => {
     setGenerating(isStreaming)
-
+    if (isStreaming && oracleStatus === 'loading') setOracleStatus('ready')
     if (!isStreaming) return
 
     const handler = (e: BeforeUnloadEvent) => {
@@ -206,6 +207,7 @@ export function ChapterPanel({
 
       setGeneratingChapter(chapterNumber)
       setCompressionTriggered(false)
+      setOracleStatus('loading')
       void startStream(projectId, chapterNumber, fullAdjustments || undefined)
     },
     [projectId, startStream, checkpointMap]
@@ -580,6 +582,7 @@ export function ChapterPanel({
                   error={error}
                   onStop={stop}
                   onRetry={handleRetry}
+                  oracleStatus={oracleStatus}
                 />
                 {/* Rewrite button in streaming view footer (visible for chapters with existing text) */}
                 {checkpointMap.has(generatingChapter) && !isStreaming && (

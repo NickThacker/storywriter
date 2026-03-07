@@ -93,7 +93,8 @@
       "Bash(grep -r \"story idea\\\\|project idea\\\\|generate.*idea\\\\|idea.*generator\" /Users/nickthacker/storywriter/src --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -20)",
       "Bash(grep -r \"openai/gpt\\\\|openrouter\\\\|model.*chat\" /Users/nickthacker/storywriter/src/app/api --include=\"*.ts\" 2>/dev/null | grep -v node_modules)",
       "Bash(grep -r \"suggestion\\\\|inspiration\\\\|starter\\\\|sample\" /Users/nickthacker/storywriter/src --include=\"*.ts\" --include=\"*.tsx\" 2>/dev/null | head -30)",
-      "WebFetch(domain:www.meridianwrite.com)"
+      "WebFetch(domain:www.meridianwrite.com)",
+      "Bash(git add -A && git commit -m \"feat: Manuscript Oracle — Gemini long-range context for chapter generation\n\nFeeds full accumulated manuscript to Gemini 1.5 Pro before each chapter.\nExtracts callbacks, contradiction risks, unresolved motifs, setup/payoffs,\nand character moments. Injected as new section in chapter prompt.\nResults cached by \\(project_id, chapter_number, outline_hash\\).\n\n- 00010_manuscript_oracle.sql — oracle_cache table\n- src/lib/oracle/assemble-manuscript.ts — plain-text chapter concatenation\n- src/lib/oracle/outline-hash.ts — SHA-256 cache key\n- src/lib/oracle/oracle-query.ts — Gemini call with cache logic\n- POST /api/oracle/[projectId]/query — on-demand oracle endpoint\n- chapter-prompt.ts — OracleOutput injected as new prompt section\n- chapter/route.ts — oracle queried before prompt build, fail-open\n- ChapterStreamingView — oracle status indicator in header\" && git push origin main 2>&1)"
     ]
   }
 }
