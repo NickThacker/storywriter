@@ -254,7 +254,7 @@ export function MemoryStatePanel({ projectId }: MemoryStatePanelProps) {
           <span>Memory</span>
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[80vh] flex flex-col p-0">
+      <DialogContent className="max-w-xl max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="px-4 pt-5 pb-4 border-b border-border shrink-0">
           <DialogTitle className="text-sm font-semibold">Story Memory</DialogTitle>
           <DialogDescription className="text-xs">
