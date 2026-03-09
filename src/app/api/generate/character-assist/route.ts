@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 
 interface CharacterAssistRequest {
   action: 'suggest-names' | 'flesh-out' | 'suggest-cast'
@@ -142,8 +143,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       ? null
       : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
 
-  // 4a. No API key — return mock data
-  if (!apiKey) {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+
+  // 4a. No API key available — return mock data
+  if (!resolvedKey) {
     switch (action) {
       case 'suggest-names':
         return NextResponse.json(MOCK_NAMES)
@@ -191,7 +194,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resolvedKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://storywriter.app',
         'X-Title': 'StoryWriter',

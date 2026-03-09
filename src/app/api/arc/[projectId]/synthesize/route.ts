@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { synthesizeAllArcs } from '@/lib/arc/arc-synthesizer'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 import type { CharacterArc } from '@/types/project-memory'
 
 interface RouteParams {
@@ -52,9 +53,10 @@ export async function POST(request: Request, { params }: RouteParams): Promise<R
       ? null
       : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
 
-  if (!apiKey) {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+  if (!resolvedKey) {
     return new Response(
-      JSON.stringify({ error: 'No OpenRouter API key configured. Add your key in Settings.' }),
+      JSON.stringify({ error: 'No API key available. Contact support.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     )
   }
@@ -72,7 +74,7 @@ export async function POST(request: Request, { params }: RouteParams): Promise<R
 
   // 5. Run synthesis
   try {
-    const result = await synthesizeAllArcs(projectId, chapterNumber, apiKey, user.id)
+    const result = await synthesizeAllArcs(projectId, chapterNumber, resolvedKey, user.id)
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

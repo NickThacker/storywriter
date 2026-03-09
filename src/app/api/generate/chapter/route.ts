@@ -8,12 +8,15 @@ import { queryOracle } from '@/lib/oracle/oracle-query'
 import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
 import { createTokenInterceptStream } from '@/lib/billing/token-interceptor'
 import { logPrompt } from '@/lib/logging/prompt-logger'
+import { getModelForRole } from '@/lib/models/registry'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 import type { OracleOutput } from '@/lib/oracle/oracle-query'
 
 interface GenerateChapterBody {
   projectId: string
   chapterNumber: number
   adjustments?: string  // Style/tone adjustments for rewrite
+  force?: boolean       // Bypass continuity conflict block
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -42,7 +45,7 @@ export async function POST(request: Request): Promise<Response> {
     })
   }
 
-  const { projectId, chapterNumber, adjustments } = body
+  const { projectId, chapterNumber, adjustments, force } = body
 
   if (!projectId || !chapterNumber || chapterNumber < 1) {
     return new Response(
@@ -80,9 +83,10 @@ export async function POST(request: Request): Promise<Response> {
       ? null
       : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
 
-  if (!apiKey) {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+  if (!resolvedKey) {
     return new Response(
-      JSON.stringify({ error: 'No OpenRouter API key configured. Add your key in Settings.' }),
+      JSON.stringify({ error: 'No API key available. Contact support.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     )
   }
@@ -103,18 +107,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // 5. Retrieve user's preferred prose model
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: modelPref } = await (supabase as any)
-    .from('user_model_preferences')
-    .select('model_id')
-    .eq('user_id', user.id)
-    .eq('task_type', 'prose')
-    .single()
-
-  const modelId =
-    modelPref && typeof (modelPref as { model_id?: string }).model_id === 'string'
-      ? (modelPref as { model_id: string }).model_id
-      : 'anthropic/claude-sonnet-4-5'
+  const modelId = await getModelForRole(user.id, 'prose')
 
   // 6. Assemble context from project memory and fetch persona in parallel
   let context
@@ -140,13 +133,21 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 7. Query oracle for long-range manuscript context (fail-open)
+  // 6b. Oracle query — 30s timeout, fail-open. This sends the full manuscript to Gemini
+  // for long-range coherence. If it times out, generation proceeds without it.
   let oracleOutput: OracleOutput | null = null
   try {
-    const oracleResult = await queryOracle(projectId, chapterNumber, apiKey, user.id)
-    oracleOutput = oracleResult.oracleOutput
+    const oraclePromise = queryOracle(projectId, chapterNumber, resolvedKey, user.id)
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 30000))
+    const result = await Promise.race([oraclePromise, timeoutPromise])
+    if (result) {
+      oracleOutput = result.oracleOutput
+      console.log(`[chapter] Oracle enriched chapter ${chapterNumber} (${result.chaptersAnalyzed} chapters analyzed)`)
+    } else {
+      console.log('[chapter] Oracle timed out after 30s — proceeding without')
+    }
   } catch (err) {
-    console.error('[chapter] Oracle query failed (continuing without):', err)
+    console.error('[chapter] Oracle failed (proceeding without):', err)
   }
 
   // 7b. Build prompt — pass persona + oracle output + character arcs
@@ -163,7 +164,7 @@ export async function POST(request: Request): Promise<Response> {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resolvedKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
         'X-Title': 'StoryWriter',
@@ -175,6 +176,8 @@ export async function POST(request: Request): Promise<Response> {
           { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
+        // No max_tokens cap — let the model write to the target naturally.
+        // The system prompt already instructs the target word count.
       }),
     })
   } catch (err) {

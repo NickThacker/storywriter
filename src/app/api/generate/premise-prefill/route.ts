@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 
 interface PrefillResult {
   genre: string | null
@@ -67,8 +68,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       ? null
       : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
 
-  // 4a. No API key — return mock prefill for local development
-  if (!apiKey) {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+
+  // 4a. No API key available — return mock prefill for local development
+  if (!resolvedKey) {
     return NextResponse.json(MOCK_PREFILL)
   }
 
@@ -103,7 +106,7 @@ Return ONLY valid JSON. Do not include explanations or markdown.`
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${resolvedKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': 'https://storywriter.app',
           'X-Title': 'StoryWriter',

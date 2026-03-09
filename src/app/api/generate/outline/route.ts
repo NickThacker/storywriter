@@ -2,11 +2,12 @@
 export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
-import { OUTLINE_SCHEMA } from '@/lib/outline/schema'
 import { buildOutlinePrompt, buildRegeneratePrompt } from '@/lib/outline/prompt'
 import type { IntakeData } from '@/lib/validations/intake'
 import { checkTokenBudget } from '@/lib/billing/budget-check'
 import { logPrompt } from '@/lib/logging/prompt-logger'
+import { getModelForRole } from '@/lib/models/registry'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 
 interface GenerateOutlineBody {
   projectId: string
@@ -62,9 +63,10 @@ export async function POST(request: Request): Promise<Response> {
       ? null
       : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
 
-  if (!apiKey) {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+  if (!resolvedKey) {
     return new Response(
-      JSON.stringify({ error: 'No OpenRouter API key configured. Add your key in Settings.' }),
+      JSON.stringify({ error: 'No API key available. Contact support.' }),
       {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -89,24 +91,15 @@ export async function POST(request: Request): Promise<Response> {
 
   // 4. Retrieve user's preferred outline model and persona in parallel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [{ data: modelPref }, { data: personaData }] = await Promise.all([
-    (supabase as any)
-      .from('user_model_preferences')
-      .select('model_id')
-      .eq('user_id', user.id)
-      .eq('task_type', 'outline')
-      .single(),
+  const [modelId, { data: personaData }] = await Promise.all([
+    getModelForRole(user.id, 'planner'),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('author_personas')
       .select('voice_description, raw_guidance_text, style_descriptors')
       .eq('user_id', user.id)
       .maybeSingle(),
   ])
-
-  const modelId =
-    modelPref && typeof (modelPref as { model_id?: string }).model_id === 'string'
-      ? (modelPref as { model_id: string }).model_id
-      : 'anthropic/claude-sonnet-4-5'
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const persona = (personaData as any) ?? null
@@ -127,7 +120,7 @@ export async function POST(request: Request): Promise<Response> {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resolvedKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
         'X-Title': 'StoryWriter',
@@ -139,10 +132,7 @@ export async function POST(request: Request): Promise<Response> {
           { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: { name: 'novel_outline', strict: true, schema: OUTLINE_SCHEMA },
-        },
+        response_format: { type: 'json_object' },
       }),
     })
   } catch (err) {

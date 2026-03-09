@@ -5,11 +5,10 @@ import { buildChapterAnalysisPrompt } from '@/lib/memory/analysis-prompt'
 import type { ChapterAnalysis } from '@/lib/memory/analysis-prompt'
 import { applyAnalysisToMemory } from '@/lib/memory/memory-updater'
 import { logPrompt } from '@/lib/logging/prompt-logger'
+import { getModelForRole } from '@/lib/models/registry'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 import type { ProjectMemoryRow } from '@/types/project-memory'
 import type { OutlineChapter } from '@/types/database'
-
-// Fixed model for chapter analysis — always Sonnet regardless of user's model preference.
-const ANALYSIS_MODEL = 'anthropic/claude-sonnet-4-5'
 
 interface AnalyzeChapterBody {
   projectId: string
@@ -81,9 +80,10 @@ export async function POST(request: Request): Promise<Response> {
       ? null
       : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
 
-  if (!apiKey) {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+  if (!resolvedKey) {
     return new Response(
-      JSON.stringify({ error: 'No OpenRouter API key configured.' }),
+      JSON.stringify({ error: 'No API key available. Contact support.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     )
   }
@@ -123,11 +123,13 @@ export async function POST(request: Request): Promise<Response> {
     memory
   )
 
+  const analysisModel = await getModelForRole(user.id, 'summarizer')
+
   // 7. Call OpenRouter (non-streaming, raw JSON output)
   logPrompt({
     userId: user.id,
     route: 'analyze-chapter',
-    model: ANALYSIS_MODEL,
+    model: analysisModel,
     messages: [
       { role: 'system', content: system },
       { role: 'user', content: userMessage },
@@ -139,13 +141,13 @@ export async function POST(request: Request): Promise<Response> {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resolvedKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
         'X-Title': 'StoryWriter',
       },
       body: JSON.stringify({
-        model: ANALYSIS_MODEL,
+        model: analysisModel,
         stream: false,
         temperature: 0,
         messages: [

@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createClient } from '@/lib/supabase/server'
 import { queryOracle } from '@/lib/oracle/oracle-query'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 
 export async function POST(
   request: Request,
@@ -64,15 +65,16 @@ export async function POST(
     .single()
 
   const apiKey = (settings as { openrouter_api_key: string | null } | null)?.openrouter_api_key ?? null
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'No OpenRouter API key configured.' }), {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+  if (!resolvedKey) {
+    return new Response(JSON.stringify({ error: 'No API key available. Contact support.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
   try {
-    const result = await queryOracle(projectId, chapterNumber, apiKey, user.id)
+    const result = await queryOracle(projectId, chapterNumber, resolvedKey, user.id)
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

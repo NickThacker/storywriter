@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { buildVoiceAnalysisPrompt } from '@/lib/voice/prompt'
 import { logPrompt } from '@/lib/logging/prompt-logger'
+import { getModelForRole } from '@/lib/models/registry'
+import { getOpenRouterApiKey } from '@/lib/api-key'
 
 interface VoiceAnalysisBody {
   samples: string[]
@@ -56,28 +58,16 @@ export async function POST(request: Request): Promise<Response> {
       ? null
       : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
 
-  if (!apiKey) {
+  const resolvedKey = getOpenRouterApiKey(apiKey)
+  if (!resolvedKey) {
     return new Response(
-      JSON.stringify({ error: 'No OpenRouter API key configured. Add your key in Settings.' }),
+      JSON.stringify({ error: 'No API key available. Contact support.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     )
   }
 
-  // 4. Get model preference (use 'editing' task_type — closest semantic fit for voice analysis)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: modelPref } = await (supabase as any)
-    .from('user_model_preferences')
-    .select('model_id')
-    .eq('user_id', user.id)
-    .eq('task_type', 'editing')
-    .single()
-
-  // Voice analysis uses claude-sonnet-4 at temperature 0.
-  // Sonnet 4 routes through Anthropic directly (not Bedrock) and works reliably.
-  // temperature: 0 ensures consistent, deterministic measurements across runs
-  // (the variability in metrics like avg sentence length is stochastic, not analytical).
-  void modelPref
-  const modelId = 'anthropic/claude-sonnet-4'
+  // 4. Get reviewer model preference for voice analysis
+  const modelId = await getModelForRole(user.id, 'reviewer')
 
   // 5. Build prompt
   const { systemMessage, userMessage } = buildVoiceAnalysisPrompt(samples)
@@ -95,7 +85,7 @@ export async function POST(request: Request): Promise<Response> {
     orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${resolvedKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
         'X-Title': 'StoryWriter',
