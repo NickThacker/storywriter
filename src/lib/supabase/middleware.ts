@@ -31,14 +31,21 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Redirect unauthenticated users to /login for protected routes
-  // Public routes: /login, /auth/confirm, /api/health (health check endpoint)
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth/confirm') &&
-    !request.nextUrl.pathname.startsWith('/api/health')
-  ) {
+  // Redirect unauthenticated users to /login for protected routes.
+  // Public routes are defined in PUBLIC_PATHS below. Any path starting with one
+  // of these prefixes is accessible without authentication.
+  const PUBLIC_PATHS = [
+    '/login',
+    '/auth/confirm',
+    '/auth/verify',
+    '/auth/reset-password',
+    '/api/health',
+    '/api/webhooks', // Covers /api/webhooks/stripe and future webhook providers
+  ]
+
+  const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))
+
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
