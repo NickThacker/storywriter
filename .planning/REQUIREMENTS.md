@@ -131,7 +131,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Complete |
+| AUTH-01 | Phase 1, Phase 8 | Complete |
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
@@ -173,24 +173,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPT-01 | Phase 5 | Complete |
 | EXPT-02 | Phase 5 | Complete |
 | EXPT-03 | Phase 5 | Complete |
-| BILL-01 | Phase 5 | Complete |
-| BILL-02 | Phase 5 | Complete |
-| BILL-03 | Phase 5 | Complete |
-| BILL-04 | Phase 5 | Complete |
-| VOIC-01 | Phase 6, Phase 8 | Pending |
-| VOIC-02 | Phase 6, Phase 8 | Pending |
-| VOIC-03 | Phase 6, Phase 8 | Pending |
-| VOIC-04 | Phase 6, Phase 8 | Pending |
-| VOIC-05 | Phase 6, Phase 8 | Pending |
-| VOIC-06 | Phase 6, Phase 8 | Pending |
-| VOIC-07 | Phase 6, Phase 8 | Pending |
+| BILL-01 | Phase 5, Phase 8 | Complete |
+| BILL-02 | Phase 5, Phase 8 | Complete |
+| BILL-03 | Phase 5, Phase 8 | Complete |
+| BILL-04 | Phase 5, Phase 8 | Complete |
+| VOIC-01 | Phase 6, Phase 8 | Complete |
+| VOIC-02 | Phase 6, Phase 8 | Complete |
+| VOIC-03 | Phase 6, Phase 8 | Complete |
+| VOIC-04 | Phase 6, Phase 8 | Complete |
+| VOIC-05 | Phase 6, Phase 8 | Complete |
+| VOIC-06 | Phase 6, Phase 8 | Complete |
+| VOIC-07 | Phase 6, Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements: 53 total (46 prior + 7 Phase 6)
 - Mapped to phases: 53
 - Unmapped: 0
-- Pending verification: 7 (VOIC-01..07 — Phase 8 gap closure)
+- Pending verification: 0
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-03-04 after Phase 6 planning*
+*Last updated: 2026-03-09 after Phase 8 gap closure verification*
