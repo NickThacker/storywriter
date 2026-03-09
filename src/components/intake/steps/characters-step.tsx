@@ -1,217 +1,469 @@
 'use client'
 
-import { useState } from 'react'
-import { User, Skull, HeartHandshake, GraduationCap, Users, X } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import {
+  User,
+  Plus,
+  Sparkles,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Wand2,
+  Users,
+  Loader2,
+  AlertTriangle,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIntakeStore } from '@/components/intake/intake-store-provider'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import type { IntakeCharacter } from '@/lib/stores/intake-store'
 
-interface RoleDefinition {
-  role: string
-  archetype: string
-  label: string
-  description: string
-  Icon: React.ElementType
-}
-
-const ROLES: RoleDefinition[] = [
-  {
-    role: 'protagonist',
-    archetype: 'hero',
-    label: 'Protagonist',
-    description: 'The main character at the heart of the story',
-    Icon: User,
-  },
-  {
-    role: 'antagonist',
-    archetype: 'villain',
-    label: 'Antagonist',
-    description: 'The opposing force challenging the protagonist',
-    Icon: Skull,
-  },
-  {
-    role: 'love-interest',
-    archetype: 'love-interest',
-    label: 'Love Interest',
-    description: 'A romantic connection for the protagonist',
-    Icon: HeartHandshake,
-  },
-  {
-    role: 'mentor',
-    archetype: 'mentor',
-    label: 'Mentor',
-    description: 'A guide who offers wisdom and support',
-    Icon: GraduationCap,
-  },
-  {
-    role: 'sidekick',
-    archetype: 'ally',
-    label: 'Sidekick',
-    description: "A loyal companion on the protagonist's journey",
-    Icon: Users,
-  },
-]
+type LoadingAction = 'suggest-names' | `flesh-out-${number}` | 'suggest-cast' | null
 
 export function CharactersStep() {
   const characters = useIntakeStore((s) => s.characters)
   const addCharacter = useIntakeStore((s) => s.addCharacter)
   const removeCharacter = useIntakeStore((s) => s.removeCharacter)
+  const updateCharacter = useIntakeStore((s) => s.updateCharacter)
+  const setCharacters = useIntakeStore((s) => s.setCharacters)
+  const genre = useIntakeStore((s) => s.genre)
+  const setting = useIntakeStore((s) => s.setting)
+  const tone = useIntakeStore((s) => s.tone)
+  const themes = useIntakeStore((s) => s.themes)
 
-  // Track name inputs per role (keyed by role id)
-  const [nameInputs, setNameInputs] = useState<Record<string, string>>({})
-  // Track which role cards are expanded (selected)
-  const [selectedRoles, setSelectedRoles] = useState<Set<string>>(() => {
-    return new Set(characters.map((c) => c.role))
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set())
+  const [loadingAction, setLoadingAction] = useState<LoadingAction>(null)
+  const [suggestedNames, setSuggestedNames] = useState<string[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [touchedNames, setTouchedNames] = useState<Set<number>>(new Set())
+
+  // Ref for auto-focusing newly added character name inputs
+  const newCardRef = useRef<HTMLInputElement | null>(null)
+  const shouldFocusNew = useRef(false)
+
+  useEffect(() => {
+    if (shouldFocusNew.current && newCardRef.current) {
+      newCardRef.current.focus()
+      shouldFocusNew.current = false
+    }
   })
 
-  const isRoleSelected = (role: string) => selectedRoles.has(role)
+  const toggleExpand = useCallback((index: number) => {
+    setExpandedCards((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+      return next
+    })
+  }, [])
 
-  const toggleRole = (roleDef: RoleDefinition) => {
-    if (isRoleSelected(roleDef.role)) {
-      // Deselect: remove from store and local state
-      const index = characters.findIndex((c) => c.role === roleDef.role)
-      if (index !== -1) removeCharacter(index)
-      setSelectedRoles((prev) => {
-        const next = new Set(prev)
-        next.delete(roleDef.role)
+  const handleAddCharacter = useCallback(() => {
+    addCharacter({ name: '' })
+    shouldFocusNew.current = true
+  }, [addCharacter])
+
+  const handleRemoveCharacter = useCallback(
+    (index: number) => {
+      removeCharacter(index)
+      setExpandedCards((prev) => {
+        const next = new Set<number>()
+        for (const i of prev) {
+          if (i < index) next.add(i)
+          else if (i > index) next.add(i - 1)
+        }
         return next
       })
-    } else {
-      // Select: add to store with optional name from input
-      const name = nameInputs[roleDef.role]?.trim() || undefined
-      addCharacter({ role: roleDef.role, archetype: roleDef.archetype, name })
-      setSelectedRoles((prev) => new Set([...prev, roleDef.role]))
-    }
-  }
+      setTouchedNames((prev) => {
+        const next = new Set<number>()
+        for (const i of prev) {
+          if (i < index) next.add(i)
+          else if (i > index) next.add(i - 1)
+        }
+        return next
+      })
+    },
+    [removeCharacter]
+  )
 
-  const handleNameChange = (role: string, value: string) => {
-    setNameInputs((prev) => ({ ...prev, [role]: value }))
-    // Update store entry if already added
-    const index = characters.findIndex((c) => c.role === role)
-    if (index !== -1) {
-      // Re-add: remove old, add new (Zustand has no updateCharacter)
-      removeCharacter(index)
-      const roleDef = ROLES.find((r) => r.role === role)!
-      addCharacter({ role, archetype: roleDef.archetype, name: value.trim() || undefined })
+  const callCharacterAssist = useCallback(
+    async (body: Record<string, unknown>) => {
+      setError(null)
+      const res = await fetch('/api/generate/character-assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null)
+        throw new Error(errData?.error || `Request failed (${res.status})`)
+      }
+      return res.json()
+    },
+    []
+  )
+
+  const handleSuggestNames = useCallback(async () => {
+    setLoadingAction('suggest-names')
+    setSuggestedNames(null)
+    try {
+      const data = await callCharacterAssist({
+        action: 'suggest-names',
+        genre,
+        setting,
+        tone,
+        themes,
+        existingCharacters: characters.map((c) => c.name),
+        count: 5,
+      })
+      setSuggestedNames(data.names)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to suggest names')
+    } finally {
+      setLoadingAction(null)
     }
-  }
+  }, [callCharacterAssist, genre, setting, tone, themes, characters])
+
+  const handleFleshOut = useCallback(
+    async (index: number) => {
+      const char = characters[index]
+      if (!char?.name.trim()) return
+      setLoadingAction(`flesh-out-${index}`)
+      try {
+        const data = await callCharacterAssist({
+          action: 'flesh-out',
+          genre,
+          setting,
+          tone,
+          themes,
+          character: {
+            name: char.name,
+            appearance: char.appearance,
+            personality: char.personality,
+          },
+        })
+        updateCharacter(index, {
+          appearance: data.appearance,
+          personality: data.personality,
+          backstory: data.backstory,
+          arc: data.arc,
+        })
+        setExpandedCards((prev) => new Set([...prev, index]))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to flesh out character')
+      } finally {
+        setLoadingAction(null)
+      }
+    },
+    [callCharacterAssist, characters, genre, setting, tone, themes, updateCharacter]
+  )
+
+  const handleSuggestCast = useCallback(async () => {
+    setLoadingAction('suggest-cast')
+    try {
+      const data = await callCharacterAssist({
+        action: 'suggest-cast',
+        genre,
+        setting,
+        tone,
+        themes,
+        existingCharacters: characters.map((c) => c.name),
+      })
+      if (data.characters?.length) {
+        setCharacters([...characters, ...data.characters])
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to suggest cast')
+    } finally {
+      setLoadingAction(null)
+    }
+  }, [callCharacterAssist, genre, setting, tone, themes, characters, setCharacters])
+
+  const handleAddSuggestedName = useCallback(
+    (name: string) => {
+      addCharacter({ name })
+      setSuggestedNames((prev) => prev?.filter((n) => n !== name) ?? null)
+    },
+    [addCharacter]
+  )
+
+  const isLoading = loadingAction !== null
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Header */}
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-foreground">
           Who are the key players?
         </h2>
         <p className="mt-1 text-muted-foreground">
-          Select the character roles that will appear in your story. Add optional names.
+          Name your characters and optionally add details. AI can help fill in the rest.
         </p>
       </div>
 
-      {/* Role cards */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {ROLES.map((roleDef) => {
-          const selected = isRoleSelected(roleDef.role)
-          return (
-            <div key={roleDef.role} className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => toggleRole(roleDef)}
-                aria-pressed={selected}
-                className={cn(
-                  'relative flex items-start gap-3 rounded-lg border p-4 text-left transition-colors',
-                  selected
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/50 hover:bg-muted/30'
-                )}
-              >
-                <roleDef.Icon
-                  className={cn(
-                    'mt-0.5 h-5 w-5 shrink-0',
-                    selected ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                  aria-hidden="true"
-                />
-                <div className="flex flex-col">
-                  <span className="font-medium">{roleDef.label}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {roleDef.description}
-                  </span>
-                </div>
-                {selected && (
-                  <span
-                    className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground"
-                    aria-hidden="true"
-                  >
-                    <svg
-                      className="h-3 w-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={3}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </span>
-                )}
-              </button>
+      {/* Warning banner at 8+ characters */}
+      {characters.length >= 8 && (
+        <div className="flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-700 dark:text-yellow-400">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>Having too many characters can dilute your story. Consider focusing on fewer, deeper characters.</span>
+        </div>
+      )}
 
-              {/* Name input — shown when role is selected */}
-              {selected && (
-                <input
-                  type="text"
-                  placeholder={`${roleDef.label} name (optional)`}
-                  value={nameInputs[roleDef.role] ?? ''}
-                  onChange={(e) => handleNameChange(roleDef.role, e.target.value)}
-                  className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              )}
-            </div>
-          )
-        })}
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="shrink-0 text-destructive hover:text-destructive/80"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleAddCharacter}
+        >
+          <Plus className="mr-1.5 h-4 w-4" />
+          Add Character
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleSuggestCast}
+          disabled={isLoading}
+        >
+          {loadingAction === 'suggest-cast' ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Sparkles className="mr-1.5 h-4 w-4" />
+          )}
+          Suggest Cast
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleSuggestNames}
+          disabled={isLoading}
+        >
+          {loadingAction === 'suggest-names' ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Wand2 className="mr-1.5 h-4 w-4" />
+          )}
+          Suggest Names
+        </Button>
       </div>
 
-      {/* Selected characters summary */}
-      {characters.length > 0 && (
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Selected characters ({characters.length})
-          </h3>
-          <ul className="flex flex-col gap-2">
-            {characters.map((char, index) => (
-              <li
-                key={`${char.role}-${index}`}
-                className="flex items-center justify-between gap-2"
+      {/* Suggested names panel */}
+      {suggestedNames && suggestedNames.length > 0 && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+          <p className="mb-2 text-sm font-medium text-foreground">
+            Suggested names — click to add:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {suggestedNames.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => handleAddSuggestedName(name)}
+                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-background px-3 py-1 text-sm text-foreground transition-colors hover:border-primary hover:bg-primary/10"
               >
-                <span className="text-sm">
-                  <span className="font-medium capitalize">{char.role}</span>
-                  {char.name && (
-                    <span className="ml-1 text-muted-foreground">— {char.name}</span>
-                  )}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    removeCharacter(index)
-                    setSelectedRoles((prev) => {
-                      const next = new Set(prev)
-                      next.delete(char.role)
-                      return next
-                    })
-                  }}
-                  className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                  aria-label={`Remove ${char.role}`}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </li>
+                <Plus className="h-3 w-3" />
+                {name}
+              </button>
             ))}
-          </ul>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuggestedNames(null)}
+            className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            Dismiss
+          </button>
         </div>
+      )}
+
+      {/* Empty state */}
+      {characters.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
+          <User className="h-10 w-10 text-muted-foreground/50" />
+          <div>
+            <p className="font-medium text-foreground">No characters yet</p>
+            <p className="text-sm text-muted-foreground">
+              Add at least one character to continue.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAddCharacter}
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add Character
+          </Button>
+        </div>
+      )}
+
+      {/* Character cards grid */}
+      {characters.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {characters.map((char, index) => {
+            const isExpanded = expandedCards.has(index)
+            const isFleshingOut = loadingAction === `flesh-out-${index}`
+            const isTouched = touchedNames.has(index)
+            const hasEmptyName = !char.name.trim()
+            const isLastCard = index === characters.length - 1
+
+            return (
+              <div
+                key={index}
+                className="rounded-lg border border-border bg-card p-4"
+              >
+                {/* Card header: name input + actions */}
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <Input
+                    ref={isLastCard ? newCardRef : undefined}
+                    type="text"
+                    placeholder="Character name"
+                    value={char.name}
+                    onChange={(e) => updateCharacter(index, { name: e.target.value })}
+                    onBlur={() =>
+                      setTouchedNames((prev) => new Set([...prev, index]))
+                    }
+                    className={cn(
+                      'h-8 flex-1',
+                      isTouched && hasEmptyName && 'border-destructive focus-visible:ring-destructive'
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFleshOut(index)}
+                    disabled={isLoading || hasEmptyName}
+                    className="h-8 px-2 text-muted-foreground hover:text-primary"
+                    title="Flesh out with AI"
+                  >
+                    {isFleshingOut ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleExpand(index)}
+                    className="h-8 px-2 text-muted-foreground"
+                    title={isExpanded ? 'Collapse details' : 'Expand details'}
+                  >
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveCharacter(index)}
+                    className="h-8 px-2 text-muted-foreground hover:text-destructive"
+                    title="Remove character"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Expanded details section */}
+                {isExpanded && (
+                  <div className="mt-3 flex flex-col gap-3 rounded-md bg-muted/30 p-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Appearance
+                      </label>
+                      <Textarea
+                        rows={2}
+                        placeholder="What do they look like? (hair, build, distinguishing features)"
+                        value={char.appearance ?? ''}
+                        onChange={(e) =>
+                          updateCharacter(index, { appearance: e.target.value })
+                        }
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Personality
+                      </label>
+                      <Textarea
+                        rows={2}
+                        placeholder="How do they act? Their voice, mannerisms, temperament"
+                        value={char.personality ?? ''}
+                        onChange={(e) =>
+                          updateCharacter(index, { personality: e.target.value })
+                        }
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Backstory
+                      </label>
+                      <Textarea
+                        rows={2}
+                        placeholder="Where did they come from? Key life events"
+                        value={char.backstory ?? ''}
+                        onChange={(e) =>
+                          updateCharacter(index, { backstory: e.target.value })
+                        }
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        Arc
+                      </label>
+                      <Textarea
+                        rows={2}
+                        placeholder="How should they change over the course of the story?"
+                        value={char.arc ?? ''}
+                        onChange={(e) =>
+                          updateCharacter(index, { arc: e.target.value })
+                        }
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Footer count */}
+      {characters.length > 0 && (
+        <p className="text-sm text-muted-foreground">
+          {characters.length} character{characters.length !== 1 ? 's' : ''} defined
+        </p>
       )}
     </div>
   )
