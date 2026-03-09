@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 07-character-creator
 current_plan: 07-03
-status: in-progress
-last_updated: "2026-03-09T20:21:40Z"
+status: complete
+last_updated: "2026-03-09T20:24:05Z"
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 41
-  completed_plans: 40
+  completed_plans: 41
 ---
 
 # Session State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md
 
 **Milestone:** v1.0 milestone
 **Current phase:** 07-character-creator
-**Current plan:** 07-03 (next)
-**Status:** In Progress
+**Current plan:** 07-03 (complete)
+**Status:** Complete
 
 ## Session Log
 
@@ -47,6 +47,7 @@ See: .planning/PROJECT.md
 - 2026-03-05: Completed 06-05 — Voice integration: first-login nudge, Voice Profile settings tab, persona injection into outline and chapter generation prompts
 - 2026-03-09: Completed 07-01 — IntakeCharacter type system, backward-compat normalization, character-assist API route (suggest-names, flesh-out, suggest-cast)
 - 2026-03-09: Completed 07-02 — Card-based character creator UI with AI assist (Suggest Names, Flesh Out, Suggest Cast)
+- 2026-03-09: Completed 07-03 — Character enforcement pipeline: name-based premise prefill, outline CHARACTER RULES, chapter character lock, preseedIntakeCharacters in story bible
 
 ## Decisions
 
@@ -101,3 +102,6 @@ See: .planning/PROJECT.md
 - [Phase 07-01]: Mock data returned when no API key configured (consistent with premise-prefill pattern)
 - [Phase 07-02]: Suggested names shown as pill buttons with + to add (dismissible panel)
 - [Phase 07-02]: Empty name validation via touched-state tracking (red border on blur)
+- [Phase 07-03]: Character lock allows unnamed functional characters but blocks new named characters
+- [Phase 07-03]: preseedIntakeCharacters uses ilike for case-insensitive duplicate detection
+- [Phase 07-03]: Pre-seed runs before outline merge so manual source is preserved by seedStoryBibleFromOutline
