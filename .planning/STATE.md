@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 06-author-onboarding-and-voice-analysis
-current_plan: 06-05
-status: completed
-last_updated: "2026-03-05T01:01:02Z"
+current_phase: 07-character-creator
+current_plan: 07-01
+status: in-progress
+last_updated: "2026-03-09T20:20:32Z"
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 39
-  completed_plans: 38
+  total_plans: 41
+  completed_plans: 39
 ---
 
 # Session State
@@ -22,9 +22,9 @@ See: .planning/PROJECT.md
 ## Position
 
 **Milestone:** v1.0 milestone
-**Current phase:** 06-author-onboarding-and-voice-analysis
-**Current plan:** 06-05 (complete)
-**Status:** Completed
+**Current phase:** 07-character-creator
+**Current plan:** 07-02 (next)
+**Status:** In Progress
 
 ## Session Log
 
@@ -45,6 +45,7 @@ See: .planning/PROJECT.md
 - 2026-03-05: Completed 06-03 — 3-step onboarding wizard UI at /onboarding (writing samples, style preferences, SSE analysis display with PDF download)
 - 2026-03-05: Completed 06-04 — Three API routes: /api/voice-upload (multipart → text extraction), /api/voice-analysis (SSE streaming AI analysis), /api/voice-report (PDF download)
 - 2026-03-05: Completed 06-05 — Voice integration: first-login nudge, Voice Profile settings tab, persona injection into outline and chapter generation prompts
+- 2026-03-09: Completed 07-01 — IntakeCharacter type system, backward-compat normalization, character-assist API route (suggest-names, flesh-out, suggest-cast)
 
 ## Decisions
 
@@ -95,3 +96,5 @@ See: .planning/PROJECT.md
 - [Phase 06-05]: Partial persona select (voice_description, raw_guidance_text) cast as any in routes — prompt builders only read these two fields at runtime; full AuthorPersonaRow shape not needed
 - [Phase 06-05]: Persona fetch in chapter route parallelized with assembleChapterContext to avoid latency increase
 - [Phase 06-05]: Tabs component (Radix) already existed in component library — no new install needed
+- [Phase 07-01]: No role/archetype fields per user decision -- AI infers roles from context
+- [Phase 07-01]: Mock data returned when no API key configured (consistent with premise-prefill pattern)
