@@ -177,18 +177,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BILL-02 | Phase 5 | Complete |
 | BILL-03 | Phase 5 | Complete |
 | BILL-04 | Phase 5 | Complete |
-| VOIC-01 | Phase 6 | Planned |
-| VOIC-02 | Phase 6 | Planned |
-| VOIC-03 | Phase 6 | Planned |
-| VOIC-04 | Phase 6 | Planned |
-| VOIC-05 | Phase 6 | Planned |
-| VOIC-06 | Phase 6 | Planned |
-| VOIC-07 | Phase 6 | Planned |
+| VOIC-01 | Phase 6, Phase 8 | Pending |
+| VOIC-02 | Phase 6, Phase 8 | Pending |
+| VOIC-03 | Phase 6, Phase 8 | Pending |
+| VOIC-04 | Phase 6, Phase 8 | Pending |
+| VOIC-05 | Phase 6, Phase 8 | Pending |
+| VOIC-06 | Phase 6, Phase 8 | Pending |
+| VOIC-07 | Phase 6, Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 53 total (46 prior + 7 Phase 6)
 - Mapped to phases: 53
 - Unmapped: 0
+- Pending verification: 7 (VOIC-01..07 — Phase 8 gap closure)
 
 ---
 *Requirements defined: 2026-02-28*

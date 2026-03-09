@@ -18,7 +18,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, human-in-the-loop checkpoints (completed 2026-03-03)
 - [x] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness (completed 2026-03-04)
 - [ ] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context
-- [ ] **Phase 7: Character Creator** - Pre-outline character definition with AI name suggestions, detail expansion, and strict enforcement through outline and chapter generation
+- [x] **Phase 7: Character Creator** - Pre-outline character definition with AI name suggestions, detail expansion, and strict enforcement through outline and chapter generation (completed 2026-03-09)
+- [ ] **Phase 8: Milestone Fixes** - Middleware allow-list fixes (Stripe webhook, auth verify, landing page), Phase 6 verification, stale copy fix
 
 ## Phase Details
 
@@ -125,7 +126,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -135,8 +136,9 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Chapter Generation | 5/5 | Complete   | 2026-03-03 |
 | 4. Creative Checkpoints | 5/5 | Complete    | 2026-03-03 |
 | 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
-| 6. Author Onboarding & Voice Analysis | 5/6 | In Progress|  |
-| 7. Character Creator | 0/3 | Not Started |  |
+| 6. Author Onboarding & Voice Analysis | 5/6 | Complete   | 2026-03-04 |
+| 7. Character Creator | 3/3 | Complete    | 2026-03-09 |
+| 8. Milestone Fixes | 0/1 | Not Started |  |
 
 ### Phase 6: Author Onboarding and Voice Analysis
 
@@ -171,3 +173,19 @@ Plans:
   3. Premise-path users see AI-extracted characters pre-filled from their premise text
   4. Outline generation uses all user-defined characters (can add minor ones); user fields are canonical and never overwritten by AI
   5. Chapter generation strictly enforces story bible characters — no invented named characters in prose
+
+### Phase 8: Milestone Fixes
+
+**Goal:** Close all blocking gaps from v1.0 milestone audit — fix middleware allow-list so Stripe webhooks and auth verification paths work in production, run formal verification on Phase 6, fix stale copy, and update tracking artifacts.
+**Requirements**: BILL-01, BILL-02, BILL-03, BILL-04, AUTH-01, VOIC-01, VOIC-02, VOIC-03, VOIC-04, VOIC-05, VOIC-06, VOIC-07
+**Gap Closure:** Closes gaps from v1.0-MILESTONE-AUDIT.md
+**Depends on:** All prior phases
+**Plans:** 0
+
+**Success Criteria** (what must be TRUE):
+  1. Stripe webhook at /api/webhooks/stripe is reachable by unauthenticated POST requests (not blocked by middleware)
+  2. /auth/verify and /auth/reset-password paths are accessible to unauthenticated users
+  3. Landing page at / renders for unauthenticated visitors (not redirected to /login)
+  4. Phase 6 has a VERIFICATION.md confirming all VOIC-01..07 requirements
+  5. api-key-form.tsx copy no longer says "stored encrypted"
+  6. REQUIREMENTS.md traceability table shows all VOIC requirements as "Complete"
