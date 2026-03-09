@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness (completed 2026-03-04)
 - [ ] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context
 - [x] **Phase 7: Character Creator** - Pre-outline character definition with AI name suggestions, detail expansion, and strict enforcement through outline and chapter generation (completed 2026-03-09)
-- [ ] **Phase 8: Milestone Fixes** - Middleware allow-list fixes (Stripe webhook, auth verify, landing page), Phase 6 verification, stale copy fix
+- [ ] **Phase 8: Milestone Fixes** - Middleware allow-list fixes, BYOK removal + platform key, Phase 6 verification, traceability update
 
 ## Phase Details
 
@@ -138,7 +138,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 
 | 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
 | 6. Author Onboarding & Voice Analysis | 5/6 | Complete   | 2026-03-04 |
 | 7. Character Creator | 3/3 | Complete    | 2026-03-09 |
-| 8. Milestone Fixes | 0/1 | Not Started |  |
+| 8. Milestone Fixes | 0/2 | Not Started |  |
 
 ### Phase 6: Author Onboarding and Voice Analysis
 
@@ -176,16 +176,20 @@ Plans:
 
 ### Phase 8: Milestone Fixes
 
-**Goal:** Close all blocking gaps from v1.0 milestone audit — fix middleware allow-list so Stripe webhooks and auth verification paths work in production, run formal verification on Phase 6, fix stale copy, and update tracking artifacts.
+**Goal:** Close all blocking gaps from v1.0 milestone audit — fix middleware allow-list so Stripe webhooks and auth verification paths work in production, remove BYOK UI and add platform API key fallback, run formal verification on Phase 6, and update tracking artifacts.
 **Requirements**: BILL-01, BILL-02, BILL-03, BILL-04, AUTH-01, VOIC-01, VOIC-02, VOIC-03, VOIC-04, VOIC-05, VOIC-06, VOIC-07
 **Gap Closure:** Closes gaps from v1.0-MILESTONE-AUDIT.md
 **Depends on:** All prior phases
-**Plans:** 0
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Middleware allow-list fix, BYOK UI removal, platform API key fallback in all generation routes (Wave 1)
+- [ ] 08-02-PLAN.md — Phase 6 formal verification (VOIC-01..07 code audit) and REQUIREMENTS.md traceability update (Wave 1)
 
 **Success Criteria** (what must be TRUE):
   1. Stripe webhook at /api/webhooks/stripe is reachable by unauthenticated POST requests (not blocked by middleware)
   2. /auth/verify and /auth/reset-password paths are accessible to unauthenticated users
-  3. Landing page at / renders for unauthenticated visitors (not redirected to /login)
-  4. Phase 6 has a VERIFICATION.md confirming all VOIC-01..07 requirements
-  5. api-key-form.tsx copy no longer says "stored encrypted"
+  3. All generation routes fall back to platform OPENROUTER_API_KEY when no user key is set
+  4. Settings page no longer shows API Key tab or BYOK setup banner
+  5. Phase 6 has a VERIFICATION.md confirming all VOIC-01..07 requirements
   6. REQUIREMENTS.md traceability table shows all VOIC requirements as "Complete"
