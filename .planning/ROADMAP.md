@@ -18,6 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, human-in-the-loop checkpoints (completed 2026-03-03)
 - [x] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness (completed 2026-03-04)
 - [ ] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context
+- [ ] **Phase 7: Character Creator** - Pre-outline character definition with AI name suggestions, detail expansion, and strict enforcement through outline and chapter generation
 
 ## Phase Details
 
@@ -124,7 +125,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -135,6 +136,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5
 | 4. Creative Checkpoints | 5/5 | Complete    | 2026-03-03 |
 | 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
 | 6. Author Onboarding & Voice Analysis | 5/6 | In Progress|  |
+| 7. Character Creator | 0/3 | Not Started |  |
 
 ### Phase 6: Author Onboarding and Voice Analysis
 
@@ -150,3 +152,22 @@ Plans:
 - [ ] 06-04-PLAN.md — Three API routes: /api/voice-upload, /api/voice-analysis (SSE), /api/voice-report (PDF) (Wave 3)
 - [ ] 06-05-PLAN.md — First-login nudge, Voice Profile settings tab, persona injection into outline + chapter generation prompts (Wave 3)
 - [ ] 06-06-PLAN.md — End-to-end verification checkpoint (Wave 4)
+
+### Phase 7: Character Creator
+
+**Goal:** Replace intake Step 3 (role/archetype placeholders) with a full character creator where users define named characters with optional details before outline generation. AI assists with name suggestions and character expansion. Characters become canonical — locked after outline approval, strictly enforced during chapter generation.
+**Requirements**: None (enhancement to existing intake flow)
+**Depends on:** Phase 2 (intake wizard must exist)
+**Plans:** 3 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Intake store type upgrade (IntakeCharacter), validation schema, character-assist API route (Wave 1)
+- [ ] 07-02-PLAN.md — Card-based character creator UI with AI assistance (suggest names, flesh out, suggest cast) (Wave 2)
+- [ ] 07-03-PLAN.md — Premise prefill upgrade, review screen update, outline/chapter prompt enforcement, story bible pre-seeding (Wave 2)
+
+**Success Criteria** (what must be TRUE):
+  1. User can create named characters with optional detail fields (appearance, personality, backstory, arc) via card-based UI in intake Step 3
+  2. AI can suggest genre-appropriate names and flesh out character details on demand; bulk "Suggest cast" generates multiple characters at once
+  3. Premise-path users see AI-extracted characters pre-filled from their premise text
+  4. Outline generation uses all user-defined characters (can add minor ones); user fields are canonical and never overwritten by AI
+  5. Chapter generation strictly enforces story bible characters — no invented named characters in prose
