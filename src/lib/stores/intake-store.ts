@@ -5,13 +5,21 @@ export type NovelLength = 'short' | 'standard' | 'epic'
 
 export const TOTAL_STEPS = 7
 
+export interface IntakeCharacter {
+  name: string           // REQUIRED -- only mandatory field
+  appearance?: string    // optional
+  personality?: string   // optional (covers personality + voice)
+  backstory?: string     // optional
+  arc?: string           // optional
+}
+
 export interface IntakeState {
   // Path selection
   path: 'wizard' | 'premise' | null
   // Step data
   genre: string | null
   themes: string[]
-  characters: { role: string; archetype: string; name?: string }[]
+  characters: IntakeCharacter[]
   setting: string | null
   tone: string | null
   beatSheet: BeatSheetId | null
@@ -24,8 +32,10 @@ export interface IntakeState {
   setPath: (path: 'wizard' | 'premise') => void
   setGenre: (genre: string) => void
   setThemes: (themes: string[]) => void
-  addCharacter: (character: { role: string; archetype: string; name?: string }) => void
+  addCharacter: (character: IntakeCharacter) => void
   removeCharacter: (index: number) => void
+  updateCharacter: (index: number, updates: Partial<IntakeCharacter>) => void
+  setCharacters: (characters: IntakeCharacter[]) => void
   setSetting: (setting: string) => void
   setTone: (tone: string) => void
   setBeatSheet: (id: BeatSheetId) => void
@@ -43,7 +53,7 @@ const defaultState = {
   path: null as 'wizard' | 'premise' | null,
   genre: null as string | null,
   themes: [] as string[],
-  characters: [] as { role: string; archetype: string; name?: string }[],
+  characters: [] as IntakeCharacter[],
   setting: null as string | null,
   tone: null as string | null,
   beatSheet: null as BeatSheetId | null,
@@ -71,6 +81,13 @@ export const createIntakeStore = () =>
         characters: state.characters.filter((_, i) => i !== index),
       })),
 
+    updateCharacter: (index, updates) =>
+      set((state) => ({
+        characters: state.characters.map((c, i) => i === index ? { ...c, ...updates } : c),
+      })),
+
+    setCharacters: (characters) => set({ characters }),
+
     setSetting: (setting) => set({ setting }),
 
     setTone: (tone) => set({ tone }),
@@ -85,7 +102,28 @@ export const createIntakeStore = () =>
     setPremise: (text) => set({ premise: text }),
 
     hydrateFromPrefill: (prefill) =>
-      set((state) => ({ ...state, ...prefill })),
+      set((state) => {
+        const normalized = { ...state, ...prefill }
+        // Normalize old { role, archetype, name? } format to new { name, ... }
+        if (Array.isArray(normalized.characters)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          normalized.characters = normalized.characters.map((c: any) => {
+            if ('role' in c && !('name' in c && c.name)) {
+              // Old format: use role as placeholder name
+              return { name: c.name || c.role || 'Unnamed' }
+            }
+            // Already new format or has name
+            return {
+              name: c.name,
+              appearance: c.appearance,
+              personality: c.personality,
+              backstory: c.backstory,
+              arc: c.arc,
+            }
+          })
+        }
+        return normalized
+      }),
 
     goToStep: (step) =>
       set({ currentStep: Math.max(0, Math.min(step, TOTAL_STEPS - 1)) }),
@@ -105,7 +143,7 @@ export const createIntakeStore = () =>
         path: null,
         genre: null,
         themes: [],
-        characters: [],
+        characters: [] as IntakeCharacter[],
         setting: null,
         tone: null,
         beatSheet: null,

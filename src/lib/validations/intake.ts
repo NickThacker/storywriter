@@ -6,9 +6,11 @@ export const intakeDataSchema = z.object({
   themes: z.array(z.string()),
   characters: z.array(
     z.object({
-      role: z.string(),
-      archetype: z.string(),
-      name: z.string().optional(),
+      name: z.string().min(1, 'Character name is required'),
+      appearance: z.string().optional(),
+      personality: z.string().optional(),
+      backstory: z.string().optional(),
+      arc: z.string().optional(),
     })
   ),
   setting: z.string().nullable(),
