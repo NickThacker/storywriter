@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness (completed 2026-03-04)
 - [ ] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context
 - [x] **Phase 7: Character Creator** - Pre-outline character definition with AI name suggestions, detail expansion, and strict enforcement through outline and chapter generation (completed 2026-03-09)
-- [ ] **Phase 8: Milestone Fixes** - Middleware allow-list fixes, BYOK removal + platform key, Phase 6 verification, traceability update
+- [x] **Phase 8: Milestone Fixes** - Middleware allow-list fixes, BYOK removal + platform key, Phase 6 verification, traceability update (completed 2026-03-09)
 
 ## Phase Details
 
@@ -138,7 +138,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 
 | 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
 | 6. Author Onboarding & Voice Analysis | 5/6 | Complete   | 2026-03-04 |
 | 7. Character Creator | 3/3 | Complete    | 2026-03-09 |
-| 8. Milestone Fixes | 0/2 | Not Started |  |
+| 8. Milestone Fixes | 2/2 | Complete   | 2026-03-09 |
 
 ### Phase 6: Author Onboarding and Voice Analysis
 
@@ -180,7 +180,7 @@ Plans:
 **Requirements**: BILL-01, BILL-02, BILL-03, BILL-04, AUTH-01, VOIC-01, VOIC-02, VOIC-03, VOIC-04, VOIC-05, VOIC-06, VOIC-07
 **Gap Closure:** Closes gaps from v1.0-MILESTONE-AUDIT.md
 **Depends on:** All prior phases
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 08-01-PLAN.md — Middleware allow-list fix, BYOK UI removal, platform API key fallback in all generation routes (Wave 1)
