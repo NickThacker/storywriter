@@ -44,7 +44,7 @@ export function PremiseInput() {
         themes?: string[]
         setting?: string | null
         tone?: string | null
-        characters?: { role: string; archetype: string; name?: string }[]
+        characters?: { name: string; appearance?: string; personality?: string; backstory?: string }[]
       }
 
       // Hydrate the store with AI-inferred values

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { OutlineChapter, OutlineRow, BeatSheetId, NovelLength } from '@/types/database'
 import type { IntakeData } from '@/lib/validations/intake'
 import type { GeneratedOutline } from '@/lib/outline/schema'
-import { seedStoryBibleFromOutline } from '@/actions/story-bible'
+import { seedStoryBibleFromOutline, preseedIntakeCharacters } from '@/actions/story-bible'
 import {
   updateMemoryIdentity,
   seedPlotThreadsFromOutline as seedMemoryPlotThreads,
@@ -354,7 +354,21 @@ export async function approveOutline(
     return { error: (approveError as { message?: string }).message ?? 'Failed to approve outline' }
   }
 
-  // 2. Seed story bible from outline data (OUTL-05)
+  // 2a. Pre-seed intake characters as source:'manual' before outline merge
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: projectData } = await (supabase as any)
+    .from('projects')
+    .select('intake_data')
+    .eq('id', projectId)
+    .single()
+
+  const intakeData = (projectData as { intake_data: Record<string, unknown> | null } | null)?.intake_data
+  const intakeCharacters = intakeData?.characters as { name: string; appearance?: string; personality?: string; backstory?: string; arc?: string }[] | undefined
+  if (intakeCharacters?.length) {
+    await preseedIntakeCharacters(projectId, intakeCharacters)
+  }
+
+  // 2b. Seed story bible from outline data (OUTL-05)
   const seedResult = await seedStoryBibleFromOutline(projectId, outlineData)
   if ('error' in seedResult) {
     return { error: `Failed to populate story bible: ${seedResult.error}` }

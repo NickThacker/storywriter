@@ -7,6 +7,47 @@ import type { GeneratedOutline } from '@/lib/outline/schema'
 import { syncStoryBibleToMemory } from '@/lib/memory/memory-updater'
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Pre-seed intake characters
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pre-seed intake wizard characters as source:'manual' rows in the characters table.
+ * Must be called BEFORE seedStoryBibleFromOutline so that the merge logic
+ * correctly preserves user-entered fields as canonical.
+ */
+export async function preseedIntakeCharacters(
+  projectId: string,
+  intakeCharacters: { name: string; appearance?: string; personality?: string; backstory?: string; arc?: string }[]
+): Promise<void> {
+  const supabase = await createClient()
+
+  for (const char of intakeCharacters) {
+    // Check if character already exists (e.g., from a previous approval cycle)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existing } = await (supabase as any)
+      .from('characters')
+      .select('id')
+      .eq('project_id', projectId)
+      .ilike('name', char.name)
+      .maybeSingle()
+
+    if (!existing) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).from('characters').insert({
+        project_id: projectId,
+        name: char.name,
+        appearance: char.appearance ?? null,
+        backstory: char.backstory ?? null,
+        personality: char.personality ?? null,
+        arc: char.arc ?? null,
+        source: 'manual',
+        changelog: [{ at: new Date().toISOString(), by: 'user', note: 'Created from intake wizard' }],
+      })
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Character actions
 // ──────────────────────────────────────────────────────────────────────────────
 

@@ -17,7 +17,7 @@ function useNextDisabled(
   currentStep: number,
   genre: string | null,
   themes: string[],
-  characters: { role: string; archetype: string; name?: string }[],
+  characters: { name: string; appearance?: string; personality?: string; backstory?: string; arc?: string }[],
   setting: string | null,
   tone: string | null,
   beatSheet: string | null

@@ -42,11 +42,15 @@ export function buildChapterPrompt(
     ? `Story position: Act ${context.act}, Chapter ${context.chapterNumber} of ${context.totalChapters}${context.beatSheetMapping ? ` (${context.beatSheetMapping})` : ''}.`
     : ''
 
+  const wordCountInstruction = context.targetWordCount
+    ? `\nTarget length: ${context.targetWordCount.toLocaleString()} words. This is a hard target — write approximately ${context.targetWordCount.toLocaleString()} words for this chapter. Do not significantly exceed this. Wrap up the scene naturally as you approach the target.`
+    : ''
+
   const systemMessage = `You are an expert novelist writing Chapter ${context.chapterNumber} of a ${identity.genre ?? 'literary fiction'} novel.
 
 Tone: ${identity.tone ?? 'engaging and immersive'}
 Setting: ${identity.setting ?? 'as established in the story'}
-${storyPositionNote}
+${storyPositionNote}${wordCountInstruction}
 ${identity.narrativeVoiceNotes ? `Voice notes: ${identity.narrativeVoiceNotes}` : ''}
 
 Write in a consistent narrative voice that matches the established style. Focus on:
@@ -56,13 +60,19 @@ Write in a consistent narrative voice that matches the established style. Focus 
 - Seamless continuity with previous chapters
 - Advancing the plot threads assigned to this chapter
 
+IMPORTANT -- Character rules:
+- Use ONLY named characters from the story bible / character states listed below.
+- Do NOT introduce new named characters that are not in the story bible.
+- Unnamed functional characters (e.g., "the waiter", "a security guard", "a passerby") are acceptable for scene needs.
+- Character names, appearances, and personalities must match their story bible entries exactly.
+
 You must maintain perfect continuity with all established facts. If a character was injured in a previous chapter, they're still injured unless healed. If an object was placed somewhere, it's still there unless moved. Time must flow consistently.
 
 Formatting rules:
 - Use *italics* (single asterisks) for internal thoughts, overheard phone calls, letters, text messages, flashbacks, foreign words, and emphasis — just as a published novel would use italics.
 - Use **bold** (double asterisks) sparingly, only for extreme emphasis.
 - Separate paragraphs with blank lines.
-- Do not include chapter numbers or titles in the output — just the prose.${voiceSection}`
+- CRITICAL: Do NOT start with a chapter heading, title, or "## Chapter N" — begin immediately with the first sentence of prose. No headers, no preamble.${voiceSection}`
 
   // Build the user message with all context sections
   const sections: string[] = []
@@ -160,21 +170,36 @@ Formatting rules:
     sections.push(`## Unresolved Foreshadowing\n${fLines}`)
   }
 
-  // Recent thematic development
-  if (context.recentThematicDevelopment.length > 0) {
-    const tLines = context.recentThematicDevelopment
-      .map((t) => `- Ch${t.chapterNumber} — ${t.theme}: ${t.development}`)
-      .join('\n')
-    sections.push(`## Recent Thematic Development\n${tLines}`)
+  // Recent thematic development (tiered)
+  if (context.recentThematicDevelopment.length > 0 || context.compressedMidThematic.length > 0) {
+    const parts: string[] = []
+    if (context.recentThematicDevelopment.length > 0) {
+      parts.push(
+        context.recentThematicDevelopment
+          .map((t) => `- Ch${t.chapterNumber} — ${t.theme}: ${t.development}`)
+          .join('\n')
+      )
+    }
+    if (context.compressedMidThematic.length > 0) {
+      parts.push(`Older thematic history (compressed):\n${context.compressedMidThematic.map((l) => `- ${l}`).join('\n')}`)
+    }
+    sections.push(`## Thematic Development\n${parts.join('\n\n')}`)
   }
 
-  // Timeline
-  if (context.timeline.length > 0) {
-    const tlLines = context.timeline
-      .slice(-10) // last 10 events for recency
-      .map((t) => `- Ch${t.chapterNumber} [${t.storyTime}]: ${t.event}`)
-      .join('\n')
-    sections.push(`## Recent Timeline\n${tlLines}`)
+  // Timeline (tiered)
+  if (context.timeline.length > 0 || context.compressedMidTimeline.length > 0) {
+    const parts: string[] = []
+    if (context.timeline.length > 0) {
+      parts.push(
+        context.timeline
+          .map((t) => `- Ch${t.chapterNumber} [${t.storyTime}]: ${t.event}`)
+          .join('\n')
+      )
+    }
+    if (context.compressedMidTimeline.length > 0) {
+      parts.push(`Older timeline (compressed):\n${context.compressedMidTimeline.map((l) => `- ${l}`).join('\n')}`)
+    }
+    sections.push(`## Timeline\n${parts.join('\n\n')}`)
   }
 
   // Oracle long-range context

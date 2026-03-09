@@ -1,5 +1,6 @@
 import type { IntakeData } from '@/lib/validations/intake'
 import { getBeatSheetById } from '@/lib/data/beat-sheets'
+import { LENGTH_PRESETS } from '@/lib/data/lengths'
 import type { AuthorPersona } from '@/types/database'
 import type { VoiceAnalysisResult } from '@/lib/voice/schema'
 import { buildVoiceContextBrief } from '@/lib/voice/context-brief'
@@ -31,10 +32,24 @@ export function buildOutlinePrompt(intakeData: IntakeData, persona?: AuthorPerso
 } {
   const characterLines = intakeData.characters
     .map((c) => {
-      const namePart = c.name ? ` named "${c.name}"` : ''
-      return `- ${c.role}${namePart} (${c.archetype})`
+      const details: string[] = []
+      if (c.appearance) details.push(`Appearance: ${c.appearance}`)
+      if (c.personality) details.push(`Personality: ${c.personality}`)
+      if (c.backstory) details.push(`Backstory: ${c.backstory}`)
+      if (c.arc) details.push(`Arc: ${c.arc}`)
+      const detailStr = details.length > 0 ? `\n  ${details.join('\n  ')}` : ''
+      return `- ${c.name}${detailStr}`
     })
     .join('\n')
+
+  const characterEnforcement = intakeData.characters.length > 0
+    ? `\n\nCHARACTER RULES:
+- You MUST include ALL characters listed above in the outline. Do not rename, merge, or omit any.
+- User-provided details (appearance, personality, backstory) are CANONICAL -- reflect them faithfully.
+- You MAY add additional minor/incidental characters as the story requires.
+- For each user-defined character, preserve their name exactly as written.
+- For each character (user-defined and AI-added), generate a one_line summary and arc trajectory.`
+    : ''
 
   const themesLine = intakeData.themes.join(', ')
 
@@ -58,19 +73,47 @@ No author premise was provided — you must invent the story concept entirely. O
     ? beatSheet.beats.map((b) => `"${b.name}"`).join(', ')
     : ''
 
+  // Calculate target words per chapter from the length preset
+  const preset = LENGTH_PRESETS.find((p) => p.id === intakeData.targetLength)
+  const totalWordCount = preset?.wordCount ?? 80000
+  const wordsPerChapter = Math.round(totalWordCount / intakeData.chapterCount)
+
   const userMessage = `Create a detailed novel outline with the following parameters:
 Genre: ${intakeData.genre ?? 'Not specified'}
 Themes: ${themesLine || 'Not specified'}
 Tone: ${intakeData.tone ?? 'Not specified'}
 Setting: ${intakeData.setting ?? 'Not specified'}
 Beat sheet structure: ${beatSheet?.name ?? beatSheetId}
-Target length: ${intakeData.targetLength} (${intakeData.chapterCount} chapters)
+Target length: ${intakeData.targetLength} (~${totalWordCount.toLocaleString()} words across ${intakeData.chapterCount} chapters, ~${wordsPerChapter.toLocaleString()} words per chapter)
 Characters requested:
-${characterLines || '- No specific characters requested'}${premiseLine}${originalityBlock}
+${characterLines || '- No specific characters requested'}${characterEnforcement}${premiseLine}${originalityBlock}
 
-Generate exactly ${intakeData.chapterCount} chapters. Include 3-5 plot beats per chapter. Identify featured characters and primary location for each chapter. Create compelling character arcs that span the full novel.
+Generate exactly ${intakeData.chapterCount} chapters. Each chapter should be designed to produce approximately ${wordsPerChapter.toLocaleString()} words of prose. Include 3-5 plot beats per chapter. Identify featured characters and primary location for each chapter. Create compelling character arcs that span the full novel.
 
-IMPORTANT — beat_sheet_mapping: For each chapter's beat_sheet_mapping field, you MUST use EXACTLY one of these beat names (copy the name verbatim): ${beatNameList}. Every beat must be assigned to at least one chapter. Do NOT paraphrase or invent beat names — use only the exact names from this list.`
+IMPORTANT — beat_sheet_mapping: For each chapter's beat_sheet_mapping field, you MUST use EXACTLY one of these beat names (copy the name verbatim): ${beatNameList}. Every beat must be assigned to at least one chapter. Do NOT paraphrase or invent beat names — use only the exact names from this list.
+
+Output ONLY valid JSON matching this structure (no markdown, no commentary):
+{
+  "title": "string",
+  "premise": "string",
+  "chapters": [
+    {
+      "number": 1,
+      "title": "string",
+      "summary": "string",
+      "beats": ["string"],
+      "characters_featured": ["string"],
+      "beat_sheet_mapping": "string",
+      "act": 1
+    }
+  ],
+  "characters": [
+    { "name": "string", "role": "protagonist|antagonist|supporting|minor", "one_line": "string", "arc": "string" }
+  ],
+  "locations": [
+    { "name": "string", "description": "string" }
+  ]
+}`
 
   let voiceSection = ''
   if (persona) {
