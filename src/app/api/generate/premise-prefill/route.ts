@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logPrompt } from '@/lib/logging/prompt-logger'
+import { getModelForRole } from '@/lib/models/registry'
 
 interface PrefillResult {
   genre: string | null
   themes: string[]
   setting: string | null
   tone: string | null
-  characters: { role: string; archetype: string; name?: string }[]
+  characters: { name: string; appearance?: string; personality?: string; backstory?: string }[]
 }
 
 const MOCK_PREFILL: PrefillResult = {
@@ -15,7 +16,7 @@ const MOCK_PREFILL: PrefillResult = {
   themes: ['identity'],
   setting: 'urban-modern',
   tone: 'lyrical',
-  characters: [{ role: 'protagonist', archetype: 'Protagonist' }],
+  characters: [{ name: 'Unnamed protagonist' }],
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -77,15 +78,22 @@ export async function POST(request: Request): Promise<NextResponse> {
 - themes: an array of 1-3 thematic keywords (e.g. ["identity", "redemption"])
 - setting: the primary setting category (e.g. "medieval-fantasy", "urban-modern", "space-opera", "contemporary")
 - tone: the narrative tone (e.g. "lyrical", "dark", "humorous", "suspenseful", "romantic")
-- characters: an array of key characters, each with role ("protagonist", "antagonist", "supporting") and archetype (e.g. "Hero", "Mentor", "Trickster")
+- characters: an array of key characters mentioned or implied in the premise, each with:
+  - name: the character's actual name if mentioned, or a descriptive placeholder like "unnamed detective" if only a role is described
+  - appearance: brief physical description if mentioned in the premise (optional)
+  - personality: personality traits if evident from the premise (optional)
+  - backstory: relevant background if mentioned (optional)
 
 Return ONLY valid JSON. Do not include explanations or markdown.`
 
   try {
-    const controller = new AbortController()
+    const [prefillModel, controller] = await Promise.all([
+      getModelForRole(user.id, 'planner'),
+      Promise.resolve(new AbortController()),
+    ])
     const timeoutId = setTimeout(() => controller.abort(), 30_000)
 
-    logPrompt({ userId: user.id, route: 'premise-prefill', model: 'openai/gpt-4o-mini', messages: [
+    logPrompt({ userId: user.id, route: 'premise-prefill', model: prefillModel, messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: `Infer story details from this premise:\n\n${premise}` },
     ] })
@@ -101,7 +109,7 @@ Return ONLY valid JSON. Do not include explanations or markdown.`
           'X-Title': 'StoryWriter',
         },
         body: JSON.stringify({
-          model: 'openai/gpt-4o-mini',
+          model: prefillModel,
           messages: [
             { role: 'system', content: systemPrompt },
             {
@@ -142,7 +150,11 @@ Return ONLY valid JSON. Do not include explanations or markdown.`
 
     let prefill: Partial<PrefillResult>
     try {
-      prefill = JSON.parse(content) as Partial<PrefillResult>
+      let cleaned = content.trim()
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+      }
+      prefill = JSON.parse(cleaned) as Partial<PrefillResult>
     } catch {
       return NextResponse.json(
         { error: 'Invalid JSON from AI' },
@@ -159,11 +171,11 @@ Return ONLY valid JSON. Do not include explanations or markdown.`
       tone: typeof prefill.tone === 'string' ? prefill.tone : null,
       characters: Array.isArray(prefill.characters)
         ? (prefill.characters as unknown[]).filter(
-            (c): c is { role: string; archetype: string; name?: string } =>
+            (c): c is { name: string; appearance?: string; personality?: string; backstory?: string } =>
               c !== null &&
               typeof c === 'object' &&
-              'role' in (c as object) &&
-              'archetype' in (c as object)
+              'name' in (c as object) &&
+              typeof (c as Record<string, unknown>).name === 'string'
           )
         : [],
     }

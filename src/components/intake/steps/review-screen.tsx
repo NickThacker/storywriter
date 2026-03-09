@@ -457,21 +457,25 @@ export function ReviewScreen() {
               onEdit={() => goToStep(STEP_CHARACTERS)}
               locked={locked}
               missing={characters.length === 0}
-              missingLabel="Add at least one character role."
+              missingLabel="Add at least one character."
               left={
                 <div className="flex flex-col gap-1.5">
                   {characters.map((char, i) => (
                     <div key={i} className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5">
                       <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="text-xs font-medium capitalize text-foreground">{char.role}</span>
-                      {char.name && <span className="text-xs text-muted-foreground">— {char.name}</span>}
+                      <span className="text-xs font-medium text-foreground">{char.name}</span>
+                      {(char.appearance || char.personality || char.backstory || char.arc) && (
+                        <span className="text-xs text-muted-foreground">
+                          ({[char.appearance && 'appearance', char.personality && 'personality', char.backstory && 'backstory', char.arc && 'arc'].filter(Boolean).join(', ')})
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
               }
               right={
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Character roles seed arc templates — protagonist gets transformation arc, antagonist gets escalating opposition logic. Named characters carry state across chapters.
+                  Named characters are enforced throughout generation. The AI must include all listed characters in the outline and cannot invent new named characters during chapter writing.
                 </p>
               }
             />
