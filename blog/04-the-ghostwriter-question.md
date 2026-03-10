@@ -14,6 +14,8 @@ Presidential memoirs are written by ghostwriters. Speeches are written by teams.
 
 So when someone asks me whether using AI to help write a novel makes them "not really the author," I think about Patterson. Because the question isn't new — only the technology is.
 
+![The Authorship Parallel — traditional ghostwriting and AI-assisted writing share the same structure: author directs, tool produces](assets/ghostwriter-vs-ai.svg)
+
 ## The Division of Labor
 
 Here's what a traditional ghostwriting arrangement looks like: the credited author provides the creative direction. The concept. The characters. The world. The emotional arc. The ghostwriter provides the prose — thousands of words shaped around the author's vision, in a voice that approximates the author's own.
