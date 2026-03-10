@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" font-family="Georgia, serif">
+  <rect width="800" height="350" fill="#0e0d0b"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" fill="#b8935a" font-size="11" letter-spacing="3" opacity="0.7">MULTI-MODEL PIPELINE — WRITER vs. REVIEWER</text>
+
+  <!-- Writer Model Box -->
+  <rect x="55" y="60" width="300" height="220" rx="2" fill="none" stroke="#b8935a" stroke-width="1.2" opacity="0.6"/>
+  <rect x="55" y="60" width="300" height="36" fill="#b8935a" opacity="0.08"/>
+  <text x="205" y="83" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2">WRITER MODEL</text>
+
+  <!-- Writer inputs -->
+  <text x="78" y="118" fill="#f5f1ea" font-size="10" opacity="0.5" font-style="italic">Inputs:</text>
+  <g fill="#f5f1ea" font-size="10" opacity="0.4">
+    <text x="90" y="140">Voice DNA / Style Anchor</text>
+    <text x="90" y="158">Structural plan</text>
+    <text x="90" y="176">Novel Bible</text>
+    <text x="90" y="194">Continuity Ledger</text>
+    <text x="90" y="212">Recent chapter text</text>
+    <text x="90" y="230">Chapter summaries</text>
+  </g>
+
+  <!-- Writer focus -->
+  <text x="78" y="260" fill="#d4aa72" font-size="10" opacity="0.55" font-style="italic">Focus: Best possible prose</text>
+
+  <!-- Arrow from Writer to output -->
+  <line x1="358" y1="170" x2="395" y2="170" stroke="#b8935a" stroke-width="0.8" opacity="0.3"/>
+  <polygon points="395,170 389,167 389,173" fill="#b8935a" opacity="0.35"/>
+
+  <!-- Chapter output (center) -->
+  <rect x="398" y="140" width="100" height="60" rx="2" fill="#b8935a" opacity="0.06" stroke="#b8935a" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="448" y="165" text-anchor="middle" fill="#f5f1ea" font-size="11" font-style="italic" opacity="0.6">Chapter</text>
+  <text x="448" y="182" text-anchor="middle" fill="#f5f1ea" font-size="11" font-style="italic" opacity="0.6">Draft</text>
+
+  <!-- Arrow from output to Reviewer -->
+  <line x1="501" y1="170" x2="538" y2="170" stroke="#b8935a" stroke-width="0.8" opacity="0.3"/>
+  <polygon points="538,170 532,167 532,173" fill="#b8935a" opacity="0.35"/>
+
+  <!-- Reviewer Model Box -->
+  <rect x="541" y="60" width="210" height="220" rx="2" fill="none" stroke="#b8935a" stroke-width="1.2" opacity="0.7"/>
+  <rect x="541" y="60" width="210" height="36" fill="#b8935a" opacity="0.1"/>
+  <text x="646" y="83" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2">REVIEWER MODEL</text>
+
+  <!-- Reviewer checks -->
+  <text x="564" y="118" fill="#f5f1ea" font-size="10" opacity="0.5" font-style="italic">Checks:</text>
+  <g fill="#f5f1ea" font-size="10" opacity="0.4">
+    <text x="576" y="140">Voice fidelity</text>
+    <text x="576" y="158">Continuity errors</text>
+    <text x="576" y="176">Pacing &amp; structure</text>
+    <text x="576" y="194">Narrative promises</text>
+    <text x="576" y="212">Repetitive patterns</text>
+  </g>
+
+  <!-- Reviewer focus -->
+  <text x="564" y="260" fill="#d4aa72" font-size="10" opacity="0.55" font-style="italic">Focus: Quality assurance</text>
+
+  <!-- Revision loop arrow -->
+  <path d="M 646 282 L 646 300 Q 646 310, 636 310 L 448 310 Q 438 310, 438 300 L 438 285" fill="none" stroke="#b8935a" stroke-width="0.8" opacity="0.3"/>
+  <polygon points="438,285 435,291 441,291" fill="#b8935a" opacity="0.35"/>
+  <text x="542" y="326" text-anchor="middle" fill="#b8935a" font-size="9" letter-spacing="1" opacity="0.3" font-style="italic">Revision loop if issues found</text>
+
+  <!-- Key insight -->
+  <text x="205" y="306" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.25" font-style="italic">No shared state between models —</text>
+  <text x="205" y="320" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.25" font-style="italic">the Reviewer sees only the output</text>
+</svg>

@@ -1,0 +1,46 @@
+name: Publish Blog Posts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'blog/[0-9]*.md'
+      - 'blog/assets/**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Restore publish tracking
+        uses: actions/cache@v4
+        with:
+          path: |
+            blog/.published.json
+            blog/.media-cache.json
+          key: blog-published-${{ github.sha }}
+          restore-keys: blog-published-
+
+      - name: Publish new posts
+        env:
+          WP_SITE: ${{ secrets.WP_SITE }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+        run: python blog/publish.py --all --publish
+
+      - name: Save tracking file
+        if: always()
+        run: |
+          cd blog
+          if [ -f .published.json ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .published.json .media-cache.json 2>/dev/null
+            git diff --cached --quiet || git commit -m "chore: update blog publish tracking"
+            git push
+          fi

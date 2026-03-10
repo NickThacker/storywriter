@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" font-family="Georgia, serif">
+  <rect width="800" height="320" fill="#0e0d0b"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" fill="#b8935a" font-size="11" letter-spacing="3" opacity="0.7">PUBLISHER STANCES ON AI-ASSISTED WORK</text>
+
+  <!-- Spectrum bar -->
+  <rect x="70" y="70" width="660" height="3" rx="1" fill="#b8935a" opacity="0.15"/>
+
+  <!-- Position markers and labels -->
+
+  <!-- Explicit ban (leftmost, few) -->
+  <circle cx="120" cy="71" r="5" fill="#0e0d0b" stroke="#f5f1ea" stroke-width="0.8" opacity="0.3"/>
+  <text x="120" y="100" text-anchor="middle" fill="#f5f1ea" font-size="11" font-style="italic" opacity="0.35">Explicit Ban</text>
+  <text x="120" y="116" text-anchor="middle" fill="#f5f1ea" font-size="8" opacity="0.2">Very few publishers</text>
+
+  <!-- Disclosure required -->
+  <circle cx="290" cy="71" r="6" fill="#b8935a" opacity="0.15" stroke="#b8935a" stroke-width="0.8"/>
+  <text x="290" y="100" text-anchor="middle" fill="#b8935a" font-size="11" font-style="italic" opacity="0.6">Disclosure</text>
+  <text x="290" y="116" text-anchor="middle" fill="#b8935a" font-size="11" font-style="italic" opacity="0.6">Required</text>
+  <text x="290" y="134" text-anchor="middle" fill="#f5f1ea" font-size="8" opacity="0.25">Growing number</text>
+
+  <!-- Cautious / evolving (center, largest cluster) -->
+  <circle cx="440" cy="71" r="8" fill="#b8935a" opacity="0.2" stroke="#d4aa72" stroke-width="1"/>
+  <text x="440" y="100" text-anchor="middle" fill="#d4aa72" font-size="12" font-style="italic" opacity="0.8">Cautious but</text>
+  <text x="440" y="117" text-anchor="middle" fill="#d4aa72" font-size="12" font-style="italic" opacity="0.8">Open</text>
+  <text x="440" y="136" text-anchor="middle" fill="#f5f1ea" font-size="8" opacity="0.35">Most major publishers</text>
+
+  <!-- Quality-focused -->
+  <circle cx="590" cy="71" r="6" fill="#b8935a" opacity="0.15" stroke="#b8935a" stroke-width="0.8"/>
+  <text x="590" y="100" text-anchor="middle" fill="#b8935a" font-size="11" font-style="italic" opacity="0.6">Quality Is</text>
+  <text x="590" y="116" text-anchor="middle" fill="#b8935a" font-size="11" font-style="italic" opacity="0.6">What Matters</text>
+  <text x="590" y="134" text-anchor="middle" fill="#f5f1ea" font-size="8" opacity="0.25">Many agents</text>
+
+  <!-- Self-pub (rightmost) -->
+  <circle cx="700" cy="71" r="5" fill="#b8935a" opacity="0.1" stroke="#b8935a" stroke-width="0.8" opacity="0.4"/>
+  <text x="700" y="100" text-anchor="middle" fill="#f5f1ea" font-size="11" font-style="italic" opacity="0.4">No Restrictions</text>
+  <text x="700" y="116" text-anchor="middle" fill="#f5f1ea" font-size="8" opacity="0.2">Self-publishing</text>
+
+  <!-- Divider -->
+  <line x1="100" y1="165" x2="700" y2="165" stroke="#b8935a" stroke-width="0.5" opacity="0.1"/>
+
+  <!-- Key insight box -->
+  <rect x="140" y="185" width="520" height="80" rx="2" fill="#b8935a" opacity="0.04" stroke="#b8935a" stroke-width="0.8" stroke-opacity="0.25"/>
+  <text x="400" y="210" text-anchor="middle" fill="#f5f1ea" font-size="11" opacity="0.5" font-style="italic">The common thread across all positions:</text>
+  <text x="400" y="235" text-anchor="middle" fill="#d4aa72" font-size="13" opacity="0.7" font-style="italic">"Substantial creative effort by the credited author"</text>
+  <text x="400" y="255" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.3">Process matters less than result. Quality is the gatekeeper.</text>
+
+  <!-- Bottom labels -->
+  <text x="100" y="300" fill="#f5f1ea" font-size="9" opacity="0.15" font-style="italic">more restrictive</text>
+  <text x="700" y="300" text-anchor="end" fill="#f5f1ea" font-size="9" opacity="0.15" font-style="italic">more permissive</text>
+</svg>

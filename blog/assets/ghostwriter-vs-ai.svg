@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340" font-family="Georgia, serif">
+  <rect width="800" height="340" fill="#0e0d0b"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" fill="#b8935a" font-size="11" letter-spacing="3" opacity="0.7">THE AUTHORSHIP PARALLEL</text>
+
+  <!-- Left: Traditional Ghostwriting -->
+  <rect x="45" y="55" width="330" height="230" rx="2" fill="none" stroke="#b8935a" stroke-width="1" opacity="0.5"/>
+  <rect x="45" y="55" width="330" height="36" fill="#b8935a" opacity="0.08"/>
+  <text x="210" y="78" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2">TRADITIONAL GHOSTWRITING</text>
+
+  <!-- Author box -->
+  <rect x="75" y="110" width="120" height="60" rx="2" fill="#b8935a" opacity="0.08" stroke="#b8935a" stroke-width="0.8" stroke-opacity="0.4"/>
+  <text x="135" y="137" text-anchor="middle" fill="#f5f1ea" font-size="12" font-style="italic" opacity="0.7">Author</text>
+  <text x="135" y="155" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.35">Creative vision</text>
+
+  <!-- Arrow -->
+  <line x1="198" y1="140" x2="225" y2="140" stroke="#b8935a" stroke-width="0.8" opacity="0.3"/>
+  <polygon points="225,140 220,137 220,143" fill="#b8935a" opacity="0.35"/>
+
+  <!-- Ghostwriter box -->
+  <rect x="228" y="110" width="120" height="60" rx="2" fill="#b8935a" opacity="0.04" stroke="#b8935a" stroke-width="0.8" stroke-opacity="0.3"/>
+  <text x="288" y="137" text-anchor="middle" fill="#f5f1ea" font-size="12" font-style="italic" opacity="0.5">Ghostwriter</text>
+  <text x="288" y="155" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.25">Prose production</text>
+
+  <!-- Labels underneath -->
+  <g fill="#f5f1ea" font-size="9" opacity="0.35">
+    <text x="75" y="200">Concept &amp; characters</text>
+    <text x="75" y="216">Plot direction</text>
+    <text x="75" y="232">Review &amp; approval</text>
+    <text x="75" y="248">Final authority</text>
+  </g>
+  <g fill="#f5f1ea" font-size="9" opacity="0.2">
+    <text x="228" y="200">Writes the prose</text>
+    <text x="228" y="216">Own interpretation</text>
+    <text x="228" y="232">Human instincts</text>
+  </g>
+
+  <!-- Right: AI-Assisted -->
+  <rect x="425" y="55" width="330" height="230" rx="2" fill="none" stroke="#b8935a" stroke-width="1.2" opacity="0.7"/>
+  <rect x="425" y="55" width="330" height="36" fill="#b8935a" opacity="0.1"/>
+  <text x="590" y="78" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2">AI-ASSISTED WRITING</text>
+
+  <!-- Author box -->
+  <rect x="455" y="110" width="120" height="60" rx="2" fill="#b8935a" opacity="0.1" stroke="#d4aa72" stroke-width="0.8" stroke-opacity="0.5"/>
+  <text x="515" y="137" text-anchor="middle" fill="#d4aa72" font-size="12" font-style="italic" opacity="0.85">Author</text>
+  <text x="515" y="155" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.45">Creative vision</text>
+
+  <!-- Arrow -->
+  <line x1="578" y1="140" x2="605" y2="140" stroke="#b8935a" stroke-width="0.8" opacity="0.4"/>
+  <polygon points="605,140 600,137 600,143" fill="#b8935a" opacity="0.4"/>
+
+  <!-- AI box -->
+  <rect x="608" y="110" width="120" height="60" rx="2" fill="#b8935a" opacity="0.04" stroke="#b8935a" stroke-width="0.8" stroke-opacity="0.3"/>
+  <text x="668" y="137" text-anchor="middle" fill="#f5f1ea" font-size="12" font-style="italic" opacity="0.5">AI Pipeline</text>
+  <text x="668" y="155" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.25">Prose production</text>
+
+  <!-- Labels underneath -->
+  <g fill="#d4aa72" font-size="9" opacity="0.5">
+    <text x="455" y="200">Concept &amp; characters</text>
+    <text x="455" y="216">Plot direction</text>
+    <text x="455" y="232">Review &amp; approval</text>
+    <text x="455" y="248">Final authority</text>
+  </g>
+  <g fill="#f5f1ea" font-size="9" opacity="0.2">
+    <text x="608" y="200">Writes the prose</text>
+    <text x="608" y="216">No interpretation</text>
+    <text x="608" y="232">Your voice profile</text>
+  </g>
+
+  <!-- Equals sign between -->
+  <text x="400" y="148" text-anchor="middle" fill="#b8935a" font-size="22" opacity="0.25">=</text>
+
+  <!-- Bottom note -->
+  <text x="400" y="318" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="1.5" opacity="0.35" font-style="italic">Same principle. Different tool. Author remains the creative authority.</text>
+</svg>

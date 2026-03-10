@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" font-family="Georgia, serif">
+  <rect width="800" height="420" fill="#0e0d0b"/>
+
+  <!-- Title -->
+  <text x="400" y="32" text-anchor="middle" fill="#b8935a" font-size="11" letter-spacing="3" opacity="0.7">VOICE DNA — THREE-PASS ANALYSIS</text>
+
+  <!-- Pass 1: Computational -->
+  <rect x="38" y="55" width="225" height="310" rx="2" fill="none" stroke="#b8935a" stroke-width="1.2" opacity="0.6"/>
+  <rect x="38" y="55" width="225" height="38" fill="#b8935a" opacity="0.08"/>
+  <text x="150" y="75" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2">PASS 1</text>
+  <text x="150" y="88" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.5">Computational</text>
+  <g fill="#f5f1ea" font-size="11" opacity="0.55">
+    <text x="60" y="120">Sentence length distribution</text>
+    <text x="60" y="142">Punctuation frequency</text>
+    <text x="60" y="164">Paragraph density</text>
+    <text x="60" y="186">Clause patterns</text>
+    <text x="60" y="208">Dialogue-to-narration ratio</text>
+    <text x="60" y="230">Fragment frequency</text>
+  </g>
+  <!-- Sketched waveform -->
+  <path d="M 58 295 Q 72 275, 88 290 Q 105 310, 122 280 Q 138 255, 155 288 Q 170 315, 188 282 Q 205 255, 222 290 Q 235 310, 245 288" fill="none" stroke="#b8935a" stroke-width="1" opacity="0.3"/>
+  <g fill="#b8935a" opacity="0.3">
+    <circle cx="88" cy="290" r="2"/><circle cx="122" cy="280" r="2"/><circle cx="155" cy="288" r="2"/>
+    <circle cx="188" cy="282" r="2"/><circle cx="222" cy="290" r="2"/>
+  </g>
+
+  <!-- Pass 2: Linguistic -->
+  <rect x="288" y="55" width="225" height="310" rx="2" fill="none" stroke="#b8935a" stroke-width="1.2" opacity="0.7"/>
+  <rect x="288" y="55" width="225" height="38" fill="#b8935a" opacity="0.1"/>
+  <text x="400" y="75" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2">PASS 2</text>
+  <text x="400" y="88" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.5">Linguistic</text>
+  <g fill="#f5f1ea" font-size="11" opacity="0.55">
+    <text x="310" y="120">Word choice patterns</text>
+    <text x="310" y="142">Metaphor density</text>
+    <text x="310" y="164">Tonal range</text>
+    <text x="310" y="186">Emotional vocabulary</text>
+    <text x="310" y="208">Transition handling</text>
+    <text x="310" y="230">Chapter openings/closings</text>
+  </g>
+  <!-- Radar shape -->
+  <g transform="translate(400, 310)" opacity="0.3">
+    <line x1="0" y1="-32" x2="0" y2="32" stroke="#b8935a" stroke-width="0.5"/>
+    <line x1="-32" y1="0" x2="32" y2="0" stroke="#b8935a" stroke-width="0.5"/>
+    <line x1="-22" y1="-22" x2="22" y2="22" stroke="#b8935a" stroke-width="0.5"/>
+    <line x1="22" y1="-22" x2="-22" y2="22" stroke="#b8935a" stroke-width="0.5"/>
+    <polygon points="0,-26 20,-10 28,7 14,23 -9,20 -26,4 -16,-16" fill="#b8935a" opacity="0.15" stroke="#b8935a" stroke-width="1"/>
+  </g>
+
+  <!-- Pass 3: Mimic Test -->
+  <rect x="538" y="55" width="225" height="310" rx="2" fill="none" stroke="#b8935a" stroke-width="1.2" opacity="0.8"/>
+  <rect x="538" y="55" width="225" height="38" fill="#b8935a" opacity="0.12"/>
+  <text x="650" y="75" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2">PASS 3</text>
+  <text x="650" y="88" text-anchor="middle" fill="#f5f1ea" font-size="9" opacity="0.5">Mimic Test</text>
+  <g fill="#f5f1ea" font-size="11" opacity="0.55">
+    <text x="560" y="120">Generate test passage</text>
+    <text x="560" y="142">Compare to originals</text>
+    <text x="560" y="164">Identify gaps</text>
+    <text x="560" y="186">Refine profile</text>
+    <text x="560" y="208">Validate across scene types</text>
+  </g>
+  <!-- Before/After comparison -->
+  <text x="560" y="260" fill="#f5f1ea" font-size="8" letter-spacing="1" opacity="0.4">ORIGINAL</text>
+  <g stroke="#f5f1ea" stroke-width="0.8" opacity="0.2">
+    <line x1="560" y1="272" x2="738" y2="272"/><line x1="560" y1="284" x2="712" y2="284"/><line x1="560" y1="296" x2="725" y2="296"/>
+  </g>
+  <text x="560" y="320" fill="#b8935a" font-size="8" letter-spacing="1" opacity="0.4">GENERATED</text>
+  <g stroke="#b8935a" stroke-width="0.8" opacity="0.2">
+    <line x1="560" y1="332" x2="738" y2="332"/><line x1="560" y1="344" x2="710" y2="344"/><line x1="560" y1="356" x2="722" y2="356"/>
+  </g>
+
+  <!-- Arrows between passes -->
+  <polygon points="270,210 278,207 278,213" fill="#b8935a" opacity="0.35"/>
+  <polygon points="520,210 528,207 528,213" fill="#b8935a" opacity="0.35"/>
+
+  <!-- Output label -->
+  <text x="400" y="405" text-anchor="middle" fill="#b8935a" font-size="10" letter-spacing="2" opacity="0.4" font-style="italic">&#8594; Output: Style Anchor document &#8592;</text>
+</svg>
