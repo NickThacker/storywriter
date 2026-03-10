@@ -2,8 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { collectCharacterHistory } from '@/lib/arc/collect-character-history'
 import type { CharacterArc, ArcTrajectoryPoint, ArcKeyMoment, ProjectMemoryRow } from '@/types/project-memory'
 
+import { MODEL_DEFAULTS } from '@/lib/models/registry'
+
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
-const DEFAULT_ARC_MODEL = 'anthropic/claude-sonnet-4-5'
+const DEFAULT_ARC_MODEL = MODEL_DEFAULTS.arc_synthesis
 
 interface ArcLLMResponse {
   arc_summary: string

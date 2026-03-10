@@ -6,7 +6,8 @@ import type {
   CharacterState,
   CharacterArc,
 } from '@/types/project-memory'
-import type { OutlineChapter } from '@/types/database'
+import type { OutlineChapter, NovelLength } from '@/types/database'
+import { LENGTH_PRESETS } from '@/lib/data/lengths'
 
 /**
  * Assemble the full context package for generating chapter N.
@@ -32,7 +33,7 @@ export async function assembleChapterContext(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('outlines')
-      .select('chapters, chapter_count')
+      .select('chapters, chapter_count, target_length')
       .eq('project_id', projectId)
       .single(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,7 +53,7 @@ export async function assembleChapterContext(
   ])
 
   const memory = memoryResult.data as ProjectMemoryRow | null
-  const outline = outlineResult.data as { chapters: OutlineChapter[]; chapter_count: number } | null
+  const outline = outlineResult.data as { chapters: OutlineChapter[]; chapter_count: number; target_length: NovelLength | null } | null
   const prevCheckpoint = prevCheckpointResult.data as Pick<
     ChapterCheckpointRow,
     'summary' | 'chapter_text'
@@ -134,21 +135,41 @@ export async function assembleChapterContext(
     ? { active: true, chaptersRemaining, overdueThreads }
     : null
 
-  // Last 5 thematic entries for recency
-  const recentThematicDevelopment = (memory?.thematic_development ?? []).slice(-5)
+  // Tiered thematic: recent 5 full, mid 6-15 compressed
+  const allThematic = memory?.thematic_development ?? []
+  const recentThematicDevelopment = allThematic.slice(-5)
+  const compressedMidThematic = allThematic.slice(-15, -5).map(
+    (t) => `Ch${t.chapterNumber} — ${t.theme}: ${t.development}`
+  )
 
-  // Trim previous chapter text to last ~3000 chars for voice continuity
-  let previousChapterText = prevCheckpoint?.chapter_text ?? null
-  if (previousChapterText && previousChapterText.length > 3000) {
-    previousChapterText = '...' + previousChapterText.slice(-3000)
-  }
+  // Tiered timeline: recent 5 full, mid 6-20 compressed
+  const allTimeline = memory?.timeline ?? []
+  const recentTimeline = allTimeline.slice(-5)
+  const compressedMidTimeline = allTimeline.slice(-20, -5).map(
+    (t) => `Ch${t.chapterNumber} [${t.storyTime}]: ${t.event}`
+  )
+
+  // Previous chapter text — no hard cap; pass full text for voice continuity
+  const previousChapterText = prevCheckpoint?.chapter_text ?? null
 
   const totalChapters = totalChaptersForPressure
+
+  // Compute target word count per chapter from the length preset, clamped to 1000–2000
+  const preset = outline?.target_length
+    ? LENGTH_PRESETS.find((p) => p.id === outline.target_length)
+    : null
+  const rawTarget = preset && totalChapters > 0
+    ? Math.round(preset.wordCount / totalChapters)
+    : null
+  const targetWordCount = rawTarget !== null
+    ? Math.max(1000, Math.min(3000, rawTarget))
+    : null
 
   return {
     identity,
     chapterNumber,
     totalChapters,
+    targetWordCount,
     act: chapterOutline?.act ?? null,
     beatSheetMapping: chapterOutline?.beat_sheet_mapping ?? null,
     chapterTitle: chapterOutline?.title ?? `Chapter ${chapterNumber}`,
@@ -162,7 +183,9 @@ export async function assembleChapterContext(
     unresolvedContinuityFacts,
     unresolvedForeshadowing,
     recentThematicDevelopment,
-    timeline: memory?.timeline ?? [],
+    compressedMidThematic,
+    timeline: recentTimeline,
+    compressedMidTimeline,
     characterArcs: Object.keys(characterArcs).length > 0 ? characterArcs : null,
     closingPressure,
   }

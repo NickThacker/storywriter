@@ -270,7 +270,10 @@ export async function getModelPreferences(): Promise<
   )
 
   // Fill in defaults for any task type not explicitly set
-  const taskTypes: TaskType[] = ['outline', 'prose', 'editing']
+  const taskTypes: TaskType[] = [
+    'outline', 'prose', 'editing',
+    'reviewer', 'planner', 'summarizer', 'validation', 'oracle', 'arc_synthesis',
+  ]
   return taskTypes.map((taskType) => ({
     taskType,
     modelId: stored.get(taskType) ?? RECOMMENDED_MODELS[taskType].id,

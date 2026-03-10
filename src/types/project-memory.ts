@@ -251,6 +251,8 @@ export interface ChapterContextPackage {
   // This chapter's outline info
   chapterNumber: number
   totalChapters: number
+  // Target word count for this chapter (derived from total target / chapter count)
+  targetWordCount: number | null
   act: number | null
   beatSheetMapping: string | null
   chapterTitle: string
@@ -268,10 +270,14 @@ export interface ChapterContextPackage {
   unresolvedContinuityFacts: ContinuityFact[]
   // Unresolved foreshadowing seeds
   unresolvedForeshadowing: ForeshadowingSeed[]
-  // Recent thematic development (last 5 entries)
+  // Recent thematic development (last 5 entries, full detail)
   recentThematicDevelopment: ThematicEntry[]
-  // Timeline so far
+  // Mid-range thematic (entries 6-15, compressed to one line each)
+  compressedMidThematic: string[]
+  // Timeline so far (last 5 events, full detail)
   timeline: TimelineEntry[]
+  // Mid-range timeline (events 6-20, compressed to one line each)
+  compressedMidTimeline: string[]
   // Character arcs for featured characters (optional — populated after arc synthesis)
   characterArcs?: Record<string, CharacterArc> | null
   // Thread closing pressure — active in Act 3 / climax beats

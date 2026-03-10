@@ -4,21 +4,21 @@ export const LENGTH_PRESETS = [
     label: 'Short Novel',
     description: '~50,000 words',
     wordCount: 50000,
-    defaultChapters: 15,
+    defaultChapters: 35,
   },
   {
     id: 'standard',
     label: 'Standard Novel',
     description: '~80,000 words',
     wordCount: 80000,
-    defaultChapters: 24,
+    defaultChapters: 55,
   },
   {
     id: 'epic',
     label: 'Epic Novel',
     description: '~120,000 words',
     wordCount: 120000,
-    defaultChapters: 36,
+    defaultChapters: 80,
   },
 ] as const
 

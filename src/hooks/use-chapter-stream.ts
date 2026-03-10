@@ -2,13 +2,23 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { checkBudgetWarning } from '@/hooks/use-budget-warning'
+import type { ContinuityIssue } from '@/lib/memory/continuity-auditor'
+
+export interface ContinuityConflict {
+  issues: ContinuityIssue[]
+  pendingProjectId: string
+  pendingChapterNumber: number
+  pendingAdjustments?: string
+}
 
 interface UseChapterStreamReturn {
   streamedText: string
   isStreaming: boolean
   error: string | null
   wordCount: number
-  startStream: (projectId: string, chapterNumber: number, adjustments?: string) => Promise<void>
+  continuityConflict: ContinuityConflict | null
+  clearContinuityConflict: () => void
+  startStream: (projectId: string, chapterNumber: number, adjustments?: string, force?: boolean) => Promise<void>
   stop: () => void
 }
 
@@ -19,17 +29,21 @@ interface UseChapterStreamReturn {
  * and tracks word count live during streaming.
  *
  * Stop aborts the connection and preserves accumulated text.
+ * On 409 continuity_conflict, exposes conflict data for the UI to show a dialog.
  */
 export function useChapterStream(): UseChapterStreamReturn {
   const [streamedText, setStreamedText] = useState<string>('')
   const [isStreaming, setIsStreaming] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [wordCount, setWordCount] = useState<number>(0)
+  const [continuityConflict, setContinuityConflict] = useState<ContinuityConflict | null>(null)
 
   const abortControllerRef = useRef<AbortController | null>(null)
 
+  const clearContinuityConflict = useCallback(() => setContinuityConflict(null), [])
+
   const startStream = useCallback(
-    async (projectId: string, chapterNumber: number, adjustments?: string): Promise<void> => {
+    async (projectId: string, chapterNumber: number, adjustments?: string, force?: boolean): Promise<void> => {
       // Abort any existing stream first (prevent ReadableStream locked error)
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
@@ -39,6 +53,7 @@ export function useChapterStream(): UseChapterStreamReturn {
       // Reset state for new stream
       setStreamedText('')
       setError(null)
+      setContinuityConflict(null)
       setIsStreaming(true)
       setWordCount(0)
 
@@ -50,11 +65,34 @@ export function useChapterStream(): UseChapterStreamReturn {
         const response = await fetch('/api/generate/chapter', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId, chapterNumber, adjustments }),
+          body: JSON.stringify({ projectId, chapterNumber, adjustments, force }),
           signal: controller.signal,
         })
 
         if (!response.ok) {
+          // Special handling for continuity conflicts
+          if (response.status === 409) {
+            try {
+              const errBody = (await response.json()) as {
+                code?: string
+                issues?: ContinuityIssue[]
+                error?: string
+              }
+              if (errBody.code === 'continuity_conflict' && errBody.issues) {
+                setContinuityConflict({
+                  issues: errBody.issues,
+                  pendingProjectId: projectId,
+                  pendingChapterNumber: chapterNumber,
+                  pendingAdjustments: adjustments,
+                })
+                setIsStreaming(false)
+                return
+              }
+            } catch {
+              // fall through to generic error
+            }
+          }
+
           let errorMessage = `Generation failed (${response.status})`
           try {
             const errBody = (await response.json()) as { error?: string }
@@ -165,6 +203,8 @@ export function useChapterStream(): UseChapterStreamReturn {
     isStreaming,
     error,
     wordCount,
+    continuityConflict,
+    clearContinuityConflict,
     startStream,
     stop,
   }

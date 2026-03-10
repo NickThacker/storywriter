@@ -19,7 +19,16 @@ import type {
 
 export type ProjectStatus = 'draft' | 'writing' | 'complete'
 export type SubscriptionTier = 'none' | 'hosted' | 'starter' | 'writer' | 'pro'
-export type TaskType = 'outline' | 'prose' | 'editing'
+export type TaskType =
+  | 'outline'
+  | 'prose'
+  | 'editing'
+  | 'reviewer'
+  | 'planner'
+  | 'summarizer'
+  | 'validation'
+  | 'oracle'
+  | 'arc_synthesis'
 
 // ------- Phase 2 story bible enum types -------
 

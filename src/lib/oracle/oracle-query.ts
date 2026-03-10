@@ -2,8 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { assembleManuscript } from './assemble-manuscript'
 import { hashOutline } from './outline-hash'
 import type { OutlineChapter } from '@/types/database'
+import { MODEL_DEFAULTS } from '@/lib/models/registry'
 
-const DEFAULT_ORACLE_MODEL = 'google/gemini-3-flash-preview'
+const DEFAULT_ORACLE_MODEL = MODEL_DEFAULTS.oracle
 
 export interface OracleOutput {
   callbacks: string[]

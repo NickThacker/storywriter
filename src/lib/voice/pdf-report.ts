@@ -2,33 +2,41 @@ import PDFDocument from 'pdfkit'
 import type { AuthorPersonaRow } from '@/types/database'
 import type { VoiceAnalysisResult } from './schema'
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+// ── Design tokens — warm dark + gold (matches Meridian website) ──────────────
 const C = {
-  navy:            '#0F2240',
-  navyMid:         '#1A3A5C',
-  blue:            '#2563EB',
-  blueSoft:        '#60A5FA',
-  barFill:         '#3B82F6',
-  barBg:           '#DBEAFE',
-  tableAlt:        '#F8FAFF',
-  border:          '#CBD5E1',
-  text:            '#111827',
-  muted:           '#6B7280',
-  mutedLight:      '#9CA3AF',
-  white:           '#FFFFFF',
-  rule:            '#E2E8F0',
-  calloutBlue:     '#EFF6FF',
-  calloutGreen:    '#F0FDF4',
-  calloutGold:     '#FFFBEB',
-  statBg:          '#F0F7FF',
-  statBorder:      '#BFDBFE',
-  statNum:         '#1D4ED8',
-  tempCool:        '#EFF6FF',
-  tempWarm:        '#FFF7ED',
-  tempRising:      '#FEF2F2',
-  tempMelancholic: '#F5F3FF',
-  tempCharged:     '#FFF1F2',
-  sectionBg:       '#1A3A5C',
+  bg:              '#0e0d0b',
+  bgCard:          '#1a1916',
+  bgCardAlt:       '#15140f',
+  gold:            '#b8935a',
+  goldLight:       '#d4b683',
+  goldMuted:       '#8a7044',
+  goldSubtle:      'rgba(184,147,90,0.15)',
+  cream:           '#f5f1ea',
+  creamMuted:      '#c4bfb4',
+  warmGray:        '#7a7368',
+  warmGrayLight:   '#9e958a',
+  border:          '#2a2722',
+  borderGold:      'rgba(184,147,90,0.25)',
+  text:            '#e8e4dc',
+  textMuted:       '#9e958a',
+  white:           '#f5f1ea',
+  // Callout backgrounds
+  calloutWarm:     '#1f1d18',
+  calloutGreen:    '#141a14',
+  calloutAmber:    '#1a1810',
+  // Stat box
+  statBg:          '#1a1916',
+  statBorder:      'rgba(184,147,90,0.3)',
+  statNum:         '#d4b683',
+  // Temperature row colors
+  tempCool:        '#12161a',
+  tempWarm:        '#1a1610',
+  tempRising:      '#1a1212',
+  tempMelancholic: '#16141a',
+  tempCharged:     '#1a1214',
+  // Section header
+  sectionBg:       '#1a1916',
+  tableAlt:        '#15140f',
 } as const
 
 const MARGIN      = 50
@@ -42,24 +50,49 @@ type Doc = any
 
 // ── Pagination guard ──────────────────────────────────────────────────────────
 function maybeNewPage(doc: Doc, required = 60) {
-  if ((doc.y as number) + required > SAFE_BOTTOM) doc.addPage()
+  if ((doc.y as number) + required > SAFE_BOTTOM) {
+    doc.addPage()
+    // Paint dark background on every new page
+    doc.rect(0, 0, PAGE_W, PAGE_H).fill(C.bg)
+    doc.rect(0, 0, 4, PAGE_H).fill(C.gold)
+    doc.y = MARGIN
+  }
 }
 
 // ── Drawing helpers ───────────────────────────────────────────────────────────
 
-/** Section header: blue badge + dark band */
+/** Section header: gold accent + dark band */
 function sectionHeader(doc: Doc, num: string, title: string) {
   maybeNewPage(doc, 50)
   const y = doc.y as number
   doc.rect(MARGIN, y, CONTENT_W, 28).fill(C.sectionBg)
-  doc.rect(MARGIN, y, 32, 28).fill(C.blue)
+  doc.rect(MARGIN, y, 3, 28).fill(C.gold)
+  doc.rect(MARGIN + 3, y, 29, 28).fill(C.bgCard)
   doc
-    .font('Helvetica-Bold').fontSize(11).fillColor(C.white)
-    .text(num, MARGIN, y + 8, { width: 32, align: 'center', lineBreak: false })
+    .font('Helvetica-Bold').fontSize(11).fillColor(C.gold)
+    .text(num, MARGIN + 3, y + 8, { width: 29, align: 'center', lineBreak: false })
   doc
-    .font('Helvetica-Bold').fontSize(10).fillColor(C.white)
+    .font('Helvetica-Bold').fontSize(10).fillColor(C.cream)
     .text(title.toUpperCase(), MARGIN + 42, y + 9, { width: CONTENT_W - 52, lineBreak: false })
   doc.y = y + 34
+  doc.fillColor(C.text)
+}
+
+/** Meridian usage note — explains how the engine uses this data */
+function usageNote(doc: Doc, text: string) {
+  if (!text) return
+  const textX = MARGIN + 11
+  const textW = CONTENT_W - 19
+  doc.font('Helvetica').fontSize(9)
+  const contentH = doc.heightOfString(text, { width: textW, lineGap: 2 }) as number
+  const totalH = 8 + contentH + 8
+  maybeNewPage(doc, totalH + 4)
+  const startY = doc.y as number
+  doc.rect(MARGIN, startY, CONTENT_W, totalH).fill(C.calloutWarm)
+  doc.rect(MARGIN, startY, 3, totalH).fill(C.goldMuted)
+  doc.font('Helvetica').fontSize(9).fillColor(C.warmGrayLight)
+    .text(text, textX, startY + 8, { width: textW, lineGap: 2 })
+  doc.y = startY + totalH + 8
   doc.fillColor(C.text)
 }
 
@@ -78,14 +111,14 @@ function para(
   const h = doc.heightOfString(text, { width: w, lineGap: 3 }) as number
   maybeNewPage(doc, h + 12)
   doc
-    .fillColor(opts.muted ? C.muted : C.text)
+    .fillColor(opts.muted ? C.warmGray : C.text)
     .text(text, x, doc.y, { width: w, lineGap: 3 })
   doc.moveDown(0.4)
   doc.fillColor(C.text)
 }
 
 /** Small uppercase label */
-function miniLabel(doc: Doc, text: string, color = C.mutedLight) {
+function miniLabel(doc: Doc, text: string, color = C.warmGrayLight) {
   maybeNewPage(doc, 20)
   doc
     .font('Helvetica-Bold').fontSize(7.5).fillColor(color)
@@ -108,8 +141,7 @@ function bulletList(doc: Doc, items: string[], indent = 0, fontSize = 10) {
 }
 
 /**
- * Callout box — accurately sized using heightOfString.
- * borderColor: if provided, draws a 3px left accent bar.
+ * Callout box with left accent bar.
  */
 function callout(
   doc: Doc,
@@ -122,10 +154,9 @@ function callout(
   if (!content) return
   const textX = MARGIN + (borderColor ? 11 : 8)
   const textW = CONTENT_W - (borderColor ? 19 : 16)
-  // Measure content accurately
   doc.font('Helvetica').fontSize(10)
   const contentH = doc.heightOfString(content, { width: textW, lineGap: 2.5 }) as number
-  const totalH   = 21 + contentH + 12   // label row + text + bottom pad
+  const totalH   = 21 + contentH + 12
 
   maybeNewPage(doc, totalH + 8)
   const startY = doc.y as number
@@ -148,14 +179,12 @@ function callout(
 
 /**
  * Two-column label/value table with dynamic row heights.
- * Values are allowed to wrap; heights are pre-measured with heightOfString.
  */
 function metricTable(doc: Doc, rows: [string, string | number][], labelW = 210) {
   if (rows.length === 0) return
   const valueW = CONTENT_W - labelW
   const VPAD   = 7
 
-  // Pre-measure row heights from the wrapping value column
   doc.font('Helvetica').fontSize(9)
   const rowHeights = rows.map(([, val]) => {
     const h = doc.heightOfString(String(val ?? '—'), { width: valueW - 12, lineGap: 2 }) as number
@@ -170,16 +199,12 @@ function metricTable(doc: Doc, rows: [string, string | number][], labelW = 210) 
     const rowH = rowHeights[i]
     if (i % 2 === 0) doc.rect(MARGIN, rowY, CONTENT_W, rowH).fill(C.tableAlt)
 
-    // Label
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.muted)
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.warmGray)
       .text(String(lbl), MARGIN + 6, rowY + VPAD, { width: labelW - 12, lineBreak: false })
-    // Vertical divider
     doc.moveTo(MARGIN + labelW, rowY).lineTo(MARGIN + labelW, rowY + rowH)
       .lineWidth(0.5).strokeColor(C.border).stroke()
-    // Value — wrapping allowed
     doc.font('Helvetica').fontSize(9).fillColor(C.text)
       .text(String(val ?? '—'), MARGIN + labelW + 6, rowY + VPAD, { width: valueW - 12, lineGap: 2 })
-    // Row separator
     if (i < rows.length - 1) {
       doc.moveTo(MARGIN, rowY + rowH).lineTo(MARGIN + CONTENT_W, rowY + rowH)
         .lineWidth(0.5).strokeColor(C.border).stroke()
@@ -192,7 +217,7 @@ function metricTable(doc: Doc, rows: [string, string | number][], labelW = 210) 
   doc.fillColor(C.text).strokeColor(C.text).lineWidth(1)
 }
 
-/** Horizontal bar chart */
+/** Horizontal bar chart with gold bars */
 function barChart(
   doc: Doc,
   items: { label: string; value: number; max: number }[],
@@ -210,11 +235,11 @@ function barChart(
     const ratio = Math.min(Math.max(item.value / item.max, 0), 1)
     const filled = Math.round(barW * ratio)
 
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.muted)
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.warmGray)
       .text(item.label, MARGIN, rowY + 6, { width: labelW - 4, lineBreak: false })
-    doc.rect(MARGIN + labelW, rowY + 6, barW, barH).fill(C.barBg)
-    if (filled > 0) doc.rect(MARGIN + labelW, rowY + 6, filled, barH).fill(C.barFill)
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(C.statNum)
+    doc.rect(MARGIN + labelW, rowY + 6, barW, barH).fill(C.bgCard)
+    if (filled > 0) doc.rect(MARGIN + labelW, rowY + 6, filled, barH).fill(C.gold)
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(C.goldLight)
       .text(`${item.value}/${item.max}`, MARGIN + labelW + barW + 8, rowY + 6, { lineBreak: false })
   }
 
@@ -224,7 +249,6 @@ function barChart(
 
 /**
  * Full-width data table with dynamic row heights.
- * Each row's height is the maximum cell height across all columns.
  */
 function dataTable(
   doc: Doc,
@@ -238,7 +262,6 @@ function dataTable(
   const VPAD    = 7
   const tableW  = colWidths.reduce((a, b) => a + b, 0)
 
-  // Pre-measure every cell; row height = max cell height
   doc.font('Helvetica').fontSize(8.5)
   const rowHeights = rows.map(row =>
     row.reduce((maxH, cell, ci) => {
@@ -252,9 +275,10 @@ function dataTable(
 
   // Header row
   doc.rect(MARGIN, startY, tableW, headerH).fill(C.sectionBg)
+  doc.rect(MARGIN, startY, tableW, 2).fill(C.gold)
   let hx = MARGIN
   for (const [i, h] of headers.entries()) {
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.white)
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.cream)
       .text(h, hx + 6, startY + 9, { width: colWidths[i] - 12, lineBreak: false })
     hx += colWidths[i]
   }
@@ -292,7 +316,6 @@ function dataTable(
 
 /**
  * Side-by-side DO NOT / PRESERVE columns.
- * Pre-measures all items to get accurate total height before page-break check.
  */
 function twocolBullets(
   doc: Doc,
@@ -317,16 +340,16 @@ function twocolBullets(
   maybeNewPage(doc, totalH)
   const startY = doc.y as number
 
-  // Left header
-  doc.rect(MARGIN, startY, colW, 24).fill('#FEE2E2')
-  doc.rect(MARGIN, startY, 3, 24).fill('#EF4444')
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#991B1B')
+  // Left header — red/avoid
+  doc.rect(MARGIN, startY, colW, 24).fill('#1a1212')
+  doc.rect(MARGIN, startY, 3, 24).fill('#c44')
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#e88')
     .text(leftTitle, MARGIN + 10, startY + 8, { width: colW - 16, lineBreak: false })
 
-  // Right header
-  doc.rect(rx, startY, colW, 24).fill('#DCFCE7')
-  doc.rect(rx, startY, 3, 24).fill('#22C55E')
-  doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#166534')
+  // Right header — green/preserve
+  doc.rect(rx, startY, colW, 24).fill('#141a14')
+  doc.rect(rx, startY, 3, 24).fill('#4a4')
+  doc.font('Helvetica-Bold').fontSize(8.5).fillColor('#8c8')
     .text(rightTitle, rx + 10, startY + 8, { width: colW - 16, lineBreak: false })
 
   doc.fillColor(C.text)
@@ -349,21 +372,21 @@ function twocolBullets(
   doc.fillColor(C.text)
 }
 
-/** Big "stat box" card */
+/** Stat box card with gold accent */
 function statBox(doc: Doc, x: number, y: number, w: number, h: number, value: string, label: string) {
   doc.rect(x, y, w, h).fill(C.statBg)
   doc.rect(x, y, w, h).lineWidth(0.5).stroke(C.statBorder)
-  doc.rect(x, y, w, 3).fill(C.blue)
+  doc.rect(x, y, w, 3).fill(C.gold)
   doc.font('Helvetica-Bold').fontSize(28).fillColor(C.statNum)
     .text(value, x, y + 18, { width: w, align: 'center', lineBreak: false })
-  doc.font('Helvetica').fontSize(8).fillColor(C.muted)
+  doc.font('Helvetica').fontSize(8).fillColor(C.warmGray)
     .text(label.toUpperCase(), x, y + h - 20, {
       width: w, align: 'center', lineBreak: false, characterSpacing: 0.3,
     })
   doc.fillColor(C.text)
 }
 
-/** Row background color keyed on emotional temperature (last column) */
+/** Row background color keyed on emotional temperature */
 function tempBg(row: string[]): string | null {
   const temp = (row[4] ?? '').toLowerCase()
   if (temp.includes('cool'))        return C.tempCool
@@ -374,6 +397,20 @@ function tempBg(row: string[]): string | null {
   return null
 }
 
+// ── Meridian usage descriptions per section ──────────────────────────────────
+const USAGE = {
+  voiceIdentity: 'Meridian uses your voice identity as the foundation for every chapter. Your POV type, narrative distance, and literary sensibility are injected into the generation prompt so the AI writes from the correct vantage point — never drifting into a generic third-person omniscient when your voice calls for close-limited.',
+  sentenceArchitecture: 'Your sentence metrics set hard constraints on the prose engine. Average sentence length, dialogue-to-prose ratio, and punctuation habits are enforced during generation so the output mirrors your natural rhythm — not the model\'s default.',
+  pacing: 'Meridian adapts pacing per scene type. Your default pace and tension architecture tell the engine when to compress time (summaries, transitions) and when to expand it (emotional beats, action). This prevents the common AI failure of writing every scene at the same speed.',
+  characterization: 'Your characterization method determines how Meridian reveals character in prose. If you show character through action and subtext rather than interior monologue, the engine follows suit — avoiding the verbose internal narration that plagues generic AI writing.',
+  dialogue: 'Dialogue frequency, function, and attribution patterns are applied as guardrails. If your style uses sparse "said" tags and lets subtext carry the weight, Meridian won\'t generate dialogue heavy with adverbs and attribution.',
+  sensory: 'Your sensory palette weights determine which senses Meridian emphasizes in descriptive passages. A high visual / low gustatory score means the engine will paint scenes through sight and light rather than defaulting to generic five-sense dumps.',
+  sceneRules: 'These rules let Meridian shift register within your voice. An action scene gets shorter sentences and higher emotional temperature; a reflective scene gets longer, more interior prose. The core voice stays constant — only these parameters flex.',
+  guardrails: 'These are hard rules the engine checks against every generation. "Do not" patterns are flagged and rewritten if they appear. "Preserve" patterns are actively maintained. This is how Meridian prevents voice drift over a 50-chapter novel.',
+  themes: 'Meridian tracks your thematic concerns across the full manuscript. When generating new chapters, the engine references these themes to weave consistent motifs and avoid the thematic amnesia that occurs when AI writes chapter-by-chapter without memory.',
+  tendencies: 'These patterns are monitored across generations. If a tendency appears more than expected, Meridian adjusts the next chapter\'s prompt to counterbalance — preventing the repetition that makes AI-generated novels feel mechanical.',
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> {
@@ -382,7 +419,7 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
       margin: MARGIN,
       size: 'letter',
       bufferPages: true,
-      info: { Title: 'Voice DNA Profile', Author: 'StoryWriter' },
+      info: { Title: 'Voice DNA Profile — Meridian', Author: 'Meridian' },
     })
 
     const chunks: Buffer[] = []
@@ -398,31 +435,34 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     })
 
     // ── COVER PAGE ─────────────────────────────────────────────────────────────
-    doc.rect(0, 0, PAGE_W, PAGE_H).fill(C.navy)
-    // Subtle mid-tone band
-    doc.moveTo(0, PAGE_H * 0.55).lineTo(PAGE_W, PAGE_H * 0.35)
-      .lineWidth(140).strokeColor(C.navyMid, 1).stroke()
-    doc.moveTo(0, PAGE_H * 0.45).lineTo(PAGE_W, PAGE_H * 0.28)
-      .lineWidth(2).strokeColor(C.blue, 0.3).stroke()
-    // Left accent bar
-    doc.rect(0, 0, 5, PAGE_H).fill(C.blue)
+    doc.rect(0, 0, PAGE_W, PAGE_H).fill(C.bg)
 
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.blueSoft)
-      .text('STORYWRITER', MARGIN + 8, 34, { width: CONTENT_W, characterSpacing: 2, lineBreak: false })
-    doc.font('Helvetica-Bold').fontSize(38).fillColor(C.white)
+    // Subtle warm diagonal bands
+    doc.moveTo(0, PAGE_H * 0.55).lineTo(PAGE_W, PAGE_H * 0.35)
+      .lineWidth(140).strokeColor(C.bgCard, 1).stroke()
+    doc.moveTo(0, PAGE_H * 0.45).lineTo(PAGE_W, PAGE_H * 0.28)
+      .lineWidth(2).strokeColor(C.gold, 0.2).stroke()
+
+    // Left gold accent bar
+    doc.rect(0, 0, 4, PAGE_H).fill(C.gold)
+
+    // Branding
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.goldLight)
+      .text('MERIDIAN', MARGIN + 8, 34, { width: CONTENT_W, characterSpacing: 2.5, lineBreak: false })
+    doc.font('Helvetica-Bold').fontSize(38).fillColor(C.cream)
       .text('VOICE DNA', MARGIN + 8, 60, { width: CONTENT_W, lineBreak: false })
-    doc.font('Helvetica-Bold').fontSize(38).fillColor(C.white)
+    doc.font('Helvetica-Bold').fontSize(38).fillColor(C.cream)
       .text('PROFILE', MARGIN + 8, 102, { width: CONTENT_W, lineBreak: false })
     doc.moveTo(MARGIN + 8, 150).lineTo(MARGIN + 88, 150)
-      .lineWidth(2).strokeColor(C.blue).stroke()
-    doc.font('Helvetica').fontSize(13).fillColor(C.blueSoft)
+      .lineWidth(2).strokeColor(C.gold).stroke()
+    doc.font('Helvetica').fontSize(13).fillColor(C.goldLight)
       .text('Author Style Analysis', MARGIN + 8, 162, { width: CONTENT_W, lineBreak: false })
-    doc.font('Helvetica').fontSize(10).fillColor(C.white)
+    doc.font('Helvetica').fontSize(10).fillColor(C.creamMuted)
       .text(genre, MARGIN + 8, 186, { width: CONTENT_W, lineBreak: false })
 
     if (a?.voice_description) {
-      doc.rect(MARGIN + 8, 240, CONTENT_W - 8, 2).fill(C.blueSoft)
-      doc.font('Helvetica').fontSize(10.5).fillColor('#CBD5E1')
+      doc.rect(MARGIN + 8, 240, CONTENT_W - 8, 2).fill(C.gold)
+      doc.font('Helvetica').fontSize(10.5).fillColor(C.creamMuted)
         .text(a.voice_description, MARGIN + 8, 254, {
           width: CONTENT_W - 8,
           lineGap: 5,
@@ -431,42 +471,38 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
         })
     }
 
-    doc.rect(0, PAGE_H - 52, PAGE_W, 52).fill('#0A1C35')
-    doc.font('Helvetica').fontSize(8.5).fillColor(C.mutedLight)
-      .text(`Generated ${dateStr}  ·  StoryWriter Voice Analysis`, MARGIN + 8, PAGE_H - 32, {
+    // Cover footer
+    doc.rect(0, PAGE_H - 52, PAGE_W, 52).fill('#0a0908')
+    doc.font('Helvetica').fontSize(8.5).fillColor(C.warmGray)
+      .text(`Generated ${dateStr}  ·  Meridian Voice Analysis`, MARGIN + 8, PAGE_H - 32, {
         width: CONTENT_W, lineBreak: false,
       })
 
-    // ── OVERVIEW / SUBTITLE PAGE ───────────────────────────────────────────────
+    // ── OVERVIEW PAGE ───────────────────────────────────────────────────────────
     doc.addPage()
+    doc.rect(0, 0, PAGE_W, PAGE_H).fill(C.bg)
+    doc.rect(0, 0, 4, PAGE_H).fill(C.gold)
 
-    // Left blue accent bar (mirrors cover aesthetic)
-    doc.rect(0, 0, 5, PAGE_H).fill(C.blue)
-
-    // Small label
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.mutedLight)
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.warmGrayLight)
       .text('AUTHOR STYLE ANALYSIS', MARGIN + 12, 60, {
         width: CONTENT_W, characterSpacing: 1.5, lineBreak: false,
       })
 
-    // Genre — large display
     const genreDisplay = a?.voice_identity?.genre_classification ?? genre
-    doc.font('Helvetica-Bold').fontSize(26).fillColor(C.navy)
+    doc.font('Helvetica-Bold').fontSize(26).fillColor(C.cream)
       .text(genreDisplay, MARGIN + 12, 80, { width: CONTENT_W })
 
-    // Generated date
-    doc.font('Helvetica').fontSize(9).fillColor(C.muted)
+    doc.font('Helvetica').fontSize(9).fillColor(C.warmGray)
       .text(`Generated ${dateStr}`, MARGIN + 12, (doc.y as number) + 2, {
         width: CONTENT_W, lineBreak: false,
       })
 
-    // Horizontal rule
     const subtitleRuleY = (doc.y as number) + 20
     doc.moveTo(MARGIN + 12, subtitleRuleY).lineTo(MARGIN + CONTENT_W, subtitleRuleY)
-      .lineWidth(1).strokeColor(C.rule).stroke()
+      .lineWidth(1).strokeColor(C.border).stroke()
     doc.y = subtitleRuleY + 22
 
-    // Voice portrait — full description always shown
+    // Voice portrait
     if (persona.voice_description) {
       miniLabel(doc, 'Voice Portrait')
       doc.y += 6
@@ -477,7 +513,10 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
       doc.moveDown(1.4)
     }
 
-    // At-a-glance stat boxes — only when rich data available
+    // How Meridian uses this
+    usageNote(doc, 'This profile is your fingerprint inside Meridian. Every element below is actively used during chapter generation to keep AI-written prose indistinguishable from your own writing. Nothing here is decorative — it all feeds the engine.')
+
+    // At-a-glance stat boxes
     if (hasRich && a?.sentence_metrics && a?.sensory_palette) {
       const sm = a.sentence_metrics
       const sp = a.sensory_palette
@@ -504,7 +543,7 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     }
 
     if (hasRich && a?.voice_identity?.comparable_voices) {
-      callout(doc, 'Comparable Voices', a.voice_identity.comparable_voices, C.calloutBlue, C.blue, C.blue)
+      callout(doc, 'Comparable Voices', a.voice_identity.comparable_voices, C.calloutWarm, C.gold, C.gold)
     }
     if (hasRich && a?.voice_identity && a?.pacing) {
       doc.y += 4
@@ -518,18 +557,18 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     }
     if (hasRich && a?.characterization) {
       callout(doc, 'Primary Characterization Technique', a.characterization.primary_technique,
-        C.calloutGreen, '#166534', '#22C55E')
+        C.calloutGreen, '#8c8', '#6a6')
     }
 
     // ── SECTION 1: VOICE IDENTITY ──────────────────────────────────────────────
-    // Each section flows naturally — sectionHeader's maybeNewPage handles breaks.
-    // Only the cover→AtAGlance transition uses a forced doc.addPage().
     doc.y += 20
     sectionHeader(doc, '1', 'Voice Identity')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.voiceIdentity)
+    doc.y += 4
 
     const voiceSummary = persona.voice_description ?? 'Voice analysis not yet complete.'
-    callout(doc, 'Voice Essence', voiceSummary, '#F8FAFF', C.navyMid, C.navyMid)
+    callout(doc, 'Voice Essence', voiceSummary, C.calloutWarm, C.goldMuted, C.goldMuted)
 
     if (hasRich && a?.voice_identity) {
       const vi = a.voice_identity
@@ -545,17 +584,18 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 2: SENTENCE ARCHITECTURE ─────────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '2', 'Sentence Architecture')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.sentenceArchitecture)
+    doc.y += 4
 
     if (hasRich && a?.sentence_metrics) {
       const sm = a.sentence_metrics
-      // Inline stat box
       const statY = doc.y as number
       doc.rect(MARGIN, statY, 90, 52).fill(C.statBg)
-      doc.rect(MARGIN, statY, 90, 3).fill(C.blue)
+      doc.rect(MARGIN, statY, 90, 3).fill(C.gold)
       doc.font('Helvetica-Bold').fontSize(30).fillColor(C.statNum)
         .text(`~${Math.round(sm.avg_length_words)}`, MARGIN, statY + 10, { width: 90, align: 'center', lineBreak: false })
-      doc.font('Helvetica').fontSize(7.5).fillColor(C.muted)
+      doc.font('Helvetica').fontSize(7.5).fillColor(C.warmGray)
         .text('AVG WORDS / SENTENCE', MARGIN, statY + 40, { width: 90, align: 'center', lineBreak: false })
       doc.fillColor(C.text)
       doc.y = statY + 62
@@ -590,11 +630,13 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 3: PACING & RHYTHM ─────────────────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '3', 'Pacing & Rhythm')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.pacing)
+    doc.y += 4
 
     if (hasRich && a?.pacing) {
       const pac = a.pacing
-      callout(doc, 'Default Pace', pac.default_pace, C.calloutGold, '#92400E', '#F59E0B')
+      callout(doc, 'Default Pace', pac.default_pace, C.calloutAmber, C.gold, C.goldMuted)
       doc.y += 4
       metricTable(doc, [
         ['Time Compression', pac.time_compression_usage],
@@ -610,11 +652,13 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 4: CHARACTERIZATION ───────────────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '4', 'Characterization Method')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.characterization)
+    doc.y += 4
 
     if (hasRich && a?.characterization) {
       const ch = a.characterization
-      callout(doc, 'Primary Technique', ch.primary_technique, C.calloutGreen, '#166534', '#22C55E')
+      callout(doc, 'Primary Technique', ch.primary_technique, C.calloutGreen, '#8c8', '#6a6')
       doc.y += 4
       para(doc, ch.technique_description)
       metricTable(doc, [
@@ -626,7 +670,9 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 5: DIALOGUE STYLE ──────────────────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '5', 'Dialogue Style')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.dialogue)
+    doc.y += 4
 
     if (hasRich && a?.dialogue_style) {
       const dlg = a.dialogue_style
@@ -641,11 +687,13 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 6: SENSORY PALETTE ─────────────────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '6', 'Sensory Palette')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.sensory)
+    doc.y += 4
 
     if (hasRich && a?.sensory_palette) {
       const sp = a.sensory_palette
-      doc.font('Helvetica').fontSize(8.5).fillColor(C.muted)
+      doc.font('Helvetica').fontSize(8.5).fillColor(C.warmGray)
         .text('Score:  1 = Absent  ·  2 = Rare  ·  3 = Selective  ·  4 = Frequent  ·  5 = Primary',
           MARGIN, doc.y, { width: CONTENT_W })
       doc.y += 10
@@ -665,7 +713,9 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     doc.y += 16
     sectionHeader(doc, '7', 'Scene-Type Variation Rules')
     doc.y += 4
-    doc.font('Helvetica').fontSize(8.5).fillColor(C.muted)
+    usageNote(doc, USAGE.sceneRules)
+    doc.y += 4
+    doc.font('Helvetica').fontSize(8.5).fillColor(C.warmGray)
       .text('Core voice remains constant. These parameters flex by scene type. Row color indicates emotional temperature.',
         MARGIN, doc.y, { width: CONTENT_W })
     doc.y += 10
@@ -684,7 +734,9 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 8: VOICE GUARDRAILS ────────────────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '8', 'Voice Guardrails')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.guardrails)
+    doc.y += 4
 
     if (hasRich && a?.voice_guardrails) {
       twocolBullets(
@@ -699,7 +751,9 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 9: THEMES & THEMATIC DELIVERY ─────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '9', 'Themes & Thematic Delivery')
-    doc.y += 8
+    doc.y += 4
+    usageNote(doc, USAGE.themes)
+    doc.y += 4
 
     if (hasRich) {
       if (a?.themes && a.themes.length > 0) {
@@ -717,38 +771,34 @@ export function buildVoiceReportPdf(persona: AuthorPersonaRow): Promise<Buffer> 
     // ── SECTION 10: TENDENCIES TO MONITOR ──────────────────────────────────────
     doc.y += 16
     sectionHeader(doc, '10', 'Tendencies to Monitor')
-    doc.y += 6
-    doc.font('Helvetica').fontSize(9).fillColor(C.muted)
-      .text(
-        'These are not flaws — they are patterns that could become repetitive over novel-length work. Flag if appearing in excess.',
-        MARGIN, doc.y, { width: CONTENT_W }
-      )
-    doc.y += 10
+    doc.y += 4
+    usageNote(doc, USAGE.tendencies)
+    doc.y += 4
 
     if (hasRich && a?.tendencies_to_monitor && a.tendencies_to_monitor.length > 0) {
       bulletList(doc, a.tendencies_to_monitor, 0, 9.5)
     }
 
-    // ── PAGE FOOTERS ──────────────────────────────────────────────────────────
+    // ── PAGE BACKGROUNDS + FOOTERS ──────────────────────────────────────────────
     const range = doc.bufferedPageRange() as { start: number; count: number }
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i)
-      if (i === 0) continue  // no footer on cover
+      if (i === 0) continue  // cover handled above
 
-      // CRITICAL: PDFKit's auto-page-break fires inside doc.text() when the
-      // explicit y coordinate exceeds maxY = PAGE_H - margins.bottom (= 742 with
-      // MARGIN=50). Footer text at PAGE_H-28=764 is past that threshold, so PDFKit
-      // silently inserts a blank page mid-write. Setting margins.bottom=0 raises
-      // maxY to PAGE_H=792, keeping footer coordinates in-bounds.
+      // Dark background for all content pages (drawn behind existing content
+      // via bufferPages — but pdfkit draws in z-order per page, so we paint
+      // the bg first only on the cover. For inner pages the bg was already
+      // set via the addPage flow. We just add footers here.)
+
       doc.page.margins.bottom = 0
 
       doc.moveTo(MARGIN, PAGE_H - 38).lineTo(MARGIN + CONTENT_W, PAGE_H - 38)
-        .lineWidth(0.5).strokeColor(C.rule).stroke()
-      doc.font('Helvetica').fontSize(7.5).fillColor(C.mutedLight)
-        .text('Voice DNA Profile  ·  StoryWriter', MARGIN, PAGE_H - 28, {
+        .lineWidth(0.5).strokeColor(C.border).stroke()
+      doc.font('Helvetica').fontSize(7.5).fillColor(C.warmGray)
+        .text('Voice DNA Profile  ·  Meridian', MARGIN, PAGE_H - 28, {
           width: CONTENT_W / 2, lineBreak: false,
         })
-      doc.font('Helvetica').fontSize(7.5).fillColor(C.mutedLight)
+      doc.font('Helvetica').fontSize(7.5).fillColor(C.warmGray)
         .text(`Page ${i} of ${range.count - 1}`, MARGIN + CONTENT_W / 2, PAGE_H - 28, {
           width: CONTENT_W / 2, align: 'right', lineBreak: false,
         })

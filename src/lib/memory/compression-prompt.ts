@@ -28,29 +28,29 @@ export function buildCompressionPrompt(
   currentTrackers: ProjectMemoryRow
 ): { systemMessage: string; userMessage: string } {
   // Build a compact representation of current state for context
-  const activeThreads = currentTrackers.plot_threads
+  const activeThreads = (currentTrackers.plot_threads ?? [])
     .filter((t) => t.status !== 'resolved')
     .map((t) => `- [${t.id}] "${t.name}" (${t.status}): ${t.description}`)
     .join('\n')
 
-  const characterStates = Object.entries(currentTrackers.character_states)
+  const characterStates = Object.entries(currentTrackers.character_states ?? {})
     .map(
       ([name, state]) =>
-        `- ${name}: ${state.emotionalState}, at ${state.location}. Knows: ${state.knowledge.slice(-3).join('; ')}`
+        `- ${name}: ${state.emotionalState}, at ${state.location}. Knows: ${(state.knowledge ?? []).slice(-3).join('; ')}`
     )
     .join('\n')
 
-  const unresolvedFacts = currentTrackers.continuity_facts
+  const unresolvedFacts = (currentTrackers.continuity_facts ?? [])
     .filter((f) => !f.resolved)
     .map((f) => `- [Ch${f.introducedChapter}] ${f.fact} (${f.category})`)
     .join('\n')
 
-  const unresolvedForeshadowing = currentTrackers.foreshadowing
+  const unresolvedForeshadowing = (currentTrackers.foreshadowing ?? [])
     .filter((f) => !f.resolved)
     .map((f) => `- [Ch${f.plantedChapter}] ${f.seed} → ${f.intendedPayoff}`)
     .join('\n')
 
-  const themes = currentTrackers.identity.themes.join(', ')
+  const themes = (currentTrackers.identity?.themes ?? []).join(', ')
 
   const userMessage = `## Chapter ${chapterNumber}: "${chapterTitle}"
 

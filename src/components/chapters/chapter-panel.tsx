@@ -14,6 +14,15 @@ import { ProgressBar } from '@/components/chapters/progress-bar'
 import { useGenerationGuard } from '@/components/chapters/generation-guard-context'
 import { detectScenes } from '@/lib/checkpoint/scene-utils'
 import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import type { OutlineChapter } from '@/types/database'
 import type { ChapterCheckpointRow } from '@/types/project-memory'
 import type { ChapterListItem } from '@/components/chapters/chapter-list'
@@ -64,6 +73,9 @@ export function ChapterPanel({
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [oracleStatus, setOracleStatus] = useState<OracleStatus>('idle')
   const [analysisRunningFor, setAnalysisRunningFor] = useState<number | null>(null)
+  const [conflictChapters, setConflictChapters] = useState<Set<number>>(new Set())
+  // Map of chapterNumber → conflicting fact strings for text highlighting
+  const [conflictHighlights, setConflictHighlights] = useState<Map<number, string[]>>(new Map())
 
   // Derive word count and chapters done from checkpointMap so they update
   // in realtime when chapters are edited, generated, or rewritten.
@@ -89,7 +101,7 @@ export function ChapterPanel({
 
   // ── Streaming hook ───────────────────────────────────────────────────────
 
-  const { streamedText, isStreaming, error, wordCount, startStream, stop } =
+  const { streamedText, isStreaming, error, wordCount, startStream, stop, continuityConflict, clearContinuityConflict } =
     useChapterStream()
 
   // ── Generation guard — prevent accidental navigation ───────────────────
@@ -158,6 +170,7 @@ export function ChapterPanel({
         wordCount: wc,
         hasText: !!checkpoint?.chapter_text,
         isAffected: checkpoint?.affected ?? false,
+        hasConflict: conflictChapters.has(ch.number),
       }
     })
   }
@@ -200,6 +213,8 @@ export function ChapterPanel({
       setGeneratingChapter(chapterNumber)
       setCompressionTriggered(false)
       setOracleStatus('loading')
+      setConflictChapters(new Set())
+      setConflictHighlights(new Map())
       void startStream(projectId, chapterNumber, fullAdjustments || undefined)
     },
     [projectId, startStream, checkpointMap]
@@ -466,6 +481,72 @@ export function ChapterPanel({
     setFocusMode(false)
   }, [])
 
+  // Navigate to conflicting chapters and flag them
+  const handleFixConflicts = useCallback(() => {
+    if (!continuityConflict) return
+
+    // Build a map of sourceChapter → conflicting fact strings for highlighting
+    const highlightsMap = new Map<number, string[]>()
+    const sourceChapters = new Set<number>()
+
+    for (const issue of continuityConflict.issues) {
+      // Use sourceChapter if the AI identified one, otherwise attribute to the
+      // most recent chapter before the one we were trying to generate
+      const ch = issue.sourceChapter ?? continuityConflict.pendingChapterNumber - 1
+      if (ch >= 1) {
+        sourceChapters.add(ch)
+        const existing = highlightsMap.get(ch) ?? []
+        existing.push(issue.conflictingFact)
+        highlightsMap.set(ch, existing)
+      }
+    }
+
+    // Fallback: if nothing was flagged, point at the chapter before generation target
+    if (sourceChapters.size === 0) {
+      const fallback = Math.max(1, continuityConflict.pendingChapterNumber - 1)
+      sourceChapters.add(fallback)
+    }
+
+    setConflictChapters(sourceChapters)
+    setConflictHighlights(highlightsMap)
+    setGeneratingChapter(null)
+    clearContinuityConflict()
+
+    // Navigate to the earliest flagged chapter
+    const earliest = Math.min(...sourceChapters)
+    const idx = outlineChapters.findIndex((c) => c.number === earliest)
+    if (idx >= 0) {
+      handleSelectChapter(idx)
+    }
+
+    toast.info(`${sourceChapters.size} chapter${sourceChapters.size > 1 ? 's' : ''} flagged with continuity conflicts. Edit the text to resolve, then re-generate.`, { duration: 6000 })
+  }, [continuityConflict, clearContinuityConflict, outlineChapters, handleSelectChapter])
+
+  // Auto-fix: generate with conflict resolution instructions injected
+  const handleAutoFixGenerate = useCallback(() => {
+    if (!continuityConflict) return
+    const { pendingProjectId, pendingChapterNumber, pendingAdjustments } = continuityConflict
+
+    // Build conflict resolution instructions for the AI
+    const issueLines = continuityConflict.issues
+      .map((issue, i) => `${i + 1}. [${issue.severity.toUpperCase()}] ${issue.description}\n   Conflicting fact: ${issue.conflictingFact}\n   Suggested fix: ${issue.suggestedResolution}`)
+      .join('\n')
+
+    const fixInstructions = `CONTINUITY CONFLICTS TO RESOLVE:\nThe following conflicts were detected between the chapter plan and established story facts. You MUST resolve each one in your prose — do not contradict any established fact. Adjust the narrative to account for these:\n\n${issueLines}`
+
+    const fullAdjustments = [pendingAdjustments, fixInstructions]
+      .filter(Boolean)
+      .join('\n\n')
+
+    clearContinuityConflict()
+    setConflictChapters(new Set())
+    setConflictHighlights(new Map())
+    setGeneratingChapter(pendingChapterNumber)
+    setCompressionTriggered(false)
+    setOracleStatus('loading')
+    void startStream(pendingProjectId, pendingChapterNumber, fullAdjustments, true)
+  }, [continuityConflict, clearContinuityConflict, startStream])
+
   const selectedChapter = outlineChapters[selectedIndex]
   const selectedCheckpoint = selectedChapter
     ? checkpointMap.get(selectedChapter.number)
@@ -663,6 +744,7 @@ export function ChapterPanel({
                           selectedCheckpoint.chapter_text.trim().split(/\s+/).filter(Boolean).length
                         }
                         onClickToEdit={() => selectedChapter && setEditingChapter(selectedChapter.number)}
+                        conflictHighlights={selectedChapter ? conflictHighlights.get(selectedChapter.number) : undefined}
                       />
                     </div>
                   </div>
@@ -705,6 +787,58 @@ export function ChapterPanel({
           </div>
         </div>
       </div>
+
+      {/* Continuity conflict dialog */}
+      <Dialog
+        open={continuityConflict !== null}
+        onOpenChange={(open) => { if (!open) { setGeneratingChapter(null); clearContinuityConflict() } }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Continuity Conflict Detected</DialogTitle>
+            <DialogDescription>
+              The chapter outline conflicts with established story facts. Review the issues below, then fix the source chapters or generate anyway.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 max-h-80 overflow-y-auto py-1">
+            {continuityConflict?.issues.map((issue, i) => (
+              <div key={i} className="rounded-md border border-border p-3 space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                    issue.severity === 'high'
+                      ? 'bg-destructive/10 text-destructive'
+                      : issue.severity === 'medium'
+                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                      : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {issue.severity.toUpperCase()}
+                  </span>
+                  <p className="text-sm font-medium">{issue.description}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Conflicting fact:</span> {issue.conflictingFact}
+                  {issue.sourceChapter != null && (
+                    <span className="ml-1 font-medium text-destructive">(Ch {issue.sourceChapter})</span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium">Suggestion:</span> {issue.suggestedResolution}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleFixConflicts}>
+              Go to source chapter
+            </Button>
+            <Button onClick={handleAutoFixGenerate}>
+              Auto-fix and generate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Rewrite dialog */}
       {rewriteChapterData && (

@@ -10,7 +10,17 @@ export const apiKeySchema = z.object({
 })
 
 export const modelPreferenceSchema = z.object({
-  taskType: z.enum(['outline', 'prose', 'editing']),
+  taskType: z.enum([
+    'outline',
+    'prose',
+    'editing',
+    'reviewer',
+    'planner',
+    'summarizer',
+    'validation',
+    'oracle',
+    'arc_synthesis',
+  ]),
   modelId: z.string().min(1, 'Model ID is required'),
 })
 

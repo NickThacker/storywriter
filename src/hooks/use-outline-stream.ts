@@ -125,11 +125,23 @@ export function useOutlineStream(projectId: string): UseOutlineStreamReturn {
         // 5. On stream completion, parse the full accumulated string into GeneratedOutline
         if (accumulated.trim()) {
           try {
-            const outline = JSON.parse(accumulated) as GeneratedOutline
+            // Strip markdown code fences if the model wrapped its JSON in ```json...```
+            let jsonStr = accumulated.trim()
+            const fenceMatch = jsonStr.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/);
+            if (fenceMatch) {
+              jsonStr = fenceMatch[1].trim()
+            }
+            const outline = JSON.parse(jsonStr) as GeneratedOutline
             setParsedOutline(outline)
           } catch (parseErr) {
             console.error('Failed to parse final outline JSON:', parseErr)
-            setError('Failed to parse generated outline. The AI may have returned malformed JSON.')
+            const preview = accumulated.trim().slice(0, 80)
+            const looksLikeProse = /^[A-Z][a-z]/.test(preview) && !preview.startsWith('{')
+            setError(
+              looksLikeProse
+                ? 'The AI returned prose instead of a structured outline. Please try again — this is usually a one-time model glitch.'
+                : 'Failed to parse generated outline. Please try again.'
+            )
           }
         }
       } catch (err) {

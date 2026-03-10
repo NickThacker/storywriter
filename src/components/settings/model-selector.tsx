@@ -40,17 +40,15 @@ export function ModelSelector({ initialPreferences }: ModelSelectorProps) {
   // Initialize state from props, defaulting to RECOMMENDED_MODELS
   const [preferences, setPreferences] = useState<Record<TaskType, string>>(() => {
     const prefMap = new Map(initialPreferences.map((p) => [p.taskType, p.modelId]))
-    const taskTypes: TaskType[] = ['outline', 'prose', 'editing']
+    const taskTypes = TASK_TYPES.map((t) => t.value)
     return Object.fromEntries(
       taskTypes.map((t) => [t, prefMap.get(t) ?? RECOMMENDED_MODELS[t].id])
     ) as Record<TaskType, string>
   })
 
-  const [saveStatus, setSaveStatus] = useState<Record<TaskType, SaveStatus>>({
-    outline: 'idle',
-    prose: 'idle',
-    editing: 'idle',
-  })
+  const [saveStatus, setSaveStatus] = useState<Record<TaskType, SaveStatus>>(
+    () => Object.fromEntries(TASK_TYPES.map((t) => [t.value, 'idle'])) as Record<TaskType, SaveStatus>
+  )
 
   const debouncedSave = useDebouncedCallback(
     useCallback(async (taskType: TaskType, modelId: string) => {
@@ -85,6 +83,8 @@ export function ModelSelector({ initialPreferences }: ModelSelectorProps) {
         <CardTitle>Model Preferences</CardTitle>
         <CardDescription>
           Choose which AI model powers each writing task. Changes auto-save as you select.
+          Any model available on OpenRouter can be used — enter the model ID in the format{' '}
+          <code className="text-xs">provider/model-name</code>.
         </CardDescription>
       </CardHeader>
 

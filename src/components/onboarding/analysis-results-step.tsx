@@ -297,8 +297,8 @@ export function AnalysisResultsStep() {
           <div className="flex items-center gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary shrink-0" />
             <div>
-              <p className="text-sm font-semibold">Analyzing your writing style...</p>
-              <p className="text-xs text-muted-foreground">This may take 30–60 seconds.</p>
+              <p className="text-sm font-semibold">Building your Voice DNA profile...</p>
+              <p className="text-xs text-muted-foreground">This takes 1–2 minutes. You can leave this page — your profile will be ready when you return.</p>
             </div>
           </div>
 

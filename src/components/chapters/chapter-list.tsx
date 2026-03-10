@@ -15,6 +15,7 @@ export interface ChapterListItem {
   wordCount: number
   hasText: boolean
   isAffected: boolean
+  hasConflict: boolean
 }
 
 interface ChapterListProps {
@@ -140,8 +141,8 @@ export function ChapterList({
                 <span
                   className={cn(
                     'h-1.5 w-1.5 shrink-0 rounded-full',
-                    config.dotColor,
-                    chapter.status === 'generating' && 'animate-pulse'
+                    chapter.hasConflict ? 'bg-destructive animate-pulse' : config.dotColor,
+                    chapter.status === 'generating' && !chapter.hasConflict && 'animate-pulse'
                   )}
                 />
                 <button
@@ -228,7 +229,13 @@ export function ChapterList({
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       <StatusBadge status={chapter.status} />
-                      {chapter.isAffected && (
+                      {chapter.hasConflict && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive">
+                          <AlertTriangle className="h-3 w-3" />
+                          Conflict
+                        </span>
+                      )}
+                      {chapter.isAffected && !chapter.hasConflict && (
                         <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-600">
                           <AlertTriangle className="h-3 w-3" />
                           Affected

@@ -341,25 +341,44 @@ export async function saveChapterCheckpoint(
 
   const mem = memory as ProjectMemoryRow
 
+  // Null-safe accessors — DB may have nulls for fresh projects
+  const memPlotThreads = mem.plot_threads ?? []
+  const memTimeline = mem.timeline ?? []
+  const memCharacterStates = mem.character_states ?? {}
+  const memContinuityFacts = mem.continuity_facts ?? []
+  const memForeshadowing = mem.foreshadowing ?? []
+  const memThematic = mem.thematic_development ?? []
+
+  // Force arrays — AI may return null, undefined, or an object instead of an array
+  const asArray = <T>(v: unknown): T[] => (Array.isArray(v) ? v : [])
+
+  const cPlotThreads = asArray<CompressionResult['plotThreadUpdates'][number]>(compression.plotThreadUpdates)
+  const cTimelineEvents = asArray<CompressionResult['timelineEvents'][number]>(compression.timelineEvents)
+  const cCharacterUpdates = asArray<CompressionResult['characterUpdates'][number]>(compression.characterUpdates)
+  const cNewFacts = asArray<CompressionResult['newContinuityFacts'][number]>(compression.newContinuityFacts)
+  const cResolvedFacts = asArray<string>(compression.resolvedContinuityFacts)
+  const cForeshadowing = asArray<CompressionResult['foreshadowingUpdates'][number]>(compression.foreshadowingUpdates)
+  const cThematic = asArray<CompressionResult['thematicDevelopment'][number]>(compression.thematicDevelopment)
+
   // 2. Build the state diff for the checkpoint
   const stateDiff: StateDiff = {
-    newThreads: compression.plotThreadUpdates
-      .filter((t) => !mem.plot_threads.some((pt) => pt.id === t.id))
+    newThreads: cPlotThreads
+      .filter((t) => !memPlotThreads.some((pt) => pt.id === t.id))
       .map((t) => t.name),
-    advancedThreads: compression.plotThreadUpdates
+    advancedThreads: cPlotThreads
       .filter((t) => t.status === 'advanced')
       .map((t) => t.name),
-    resolvedThreads: compression.plotThreadUpdates
+    resolvedThreads: cPlotThreads
       .filter((t) => t.status === 'resolved')
       .map((t) => t.name),
     characterChanges: Object.fromEntries(
-      compression.characterUpdates.map((cu) => [
+      cCharacterUpdates.map((cu) => [
         cu.name,
         cu.emotionalState,
       ])
     ),
-    newContinuityFacts: compression.newContinuityFacts.map((f) => f.fact),
-    newForeshadowing: compression.foreshadowingUpdates
+    newContinuityFacts: cNewFacts.map((f) => f.fact),
+    newForeshadowing: cForeshadowing
       .filter((f) => !f.resolved)
       .map((f) => f.seed),
   }
@@ -372,9 +391,9 @@ export async function saveChapterCheckpoint(
       {
         project_id: projectId,
         chapter_number: chapterNumber,
-        summary: compression.summary,
+        summary: compression.summary ?? '',
         state_diff: stateDiff,
-        continuity_notes: compression.newContinuityFacts.map((f) => f.fact),
+        continuity_notes: cNewFacts.map((f) => f.fact),
         chapter_text: chapterText,
       },
       { onConflict: 'project_id,chapter_number' }
@@ -386,13 +405,13 @@ export async function saveChapterCheckpoint(
 
   // 4. Update Layer 2 trackers on project_memory
   const updatedTimeline: TimelineEntry[] = [
-    ...mem.timeline,
-    ...compression.timelineEvents,
+    ...memTimeline,
+    ...cTimelineEvents,
   ]
 
   // Merge plot threads: update existing, add new
-  const updatedThreads: PlotThread[] = [...mem.plot_threads]
-  for (const update of compression.plotThreadUpdates) {
+  const updatedThreads: PlotThread[] = [...memPlotThreads]
+  for (const update of cPlotThreads) {
     const existing = updatedThreads.find((t) => t.id === update.id)
     if (existing) {
       existing.status = update.status
@@ -413,37 +432,37 @@ export async function saveChapterCheckpoint(
 
   // Merge character states
   const updatedCharacters: Record<string, CharacterState> = {
-    ...mem.character_states,
+    ...memCharacterStates,
   }
-  for (const cu of compression.characterUpdates) {
+  for (const cu of cCharacterUpdates) {
     updatedCharacters[cu.name] = {
       name: cu.name,
       emotionalState: cu.emotionalState,
-      knowledge: cu.knowledge,
+      knowledge: cu.knowledge ?? [],
       relationships: Object.fromEntries(
-        cu.relationships.map((r) => {
+        (cu.relationships ?? []).map((r) => {
           const idx = r.indexOf(':')
           return idx > 0 ? [r.slice(0, idx).trim(), r.slice(idx + 1).trim()] : [r, '']
         })
       ),
-      physicalState: cu.physicalState,
-      location: cu.location,
+      physicalState: cu.physicalState ?? '',
+      location: cu.location ?? '',
     }
   }
 
   // Append new continuity facts, resolve old ones
-  const updatedFacts: ContinuityFact[] = [...mem.continuity_facts]
-  for (const resolvedFact of compression.resolvedContinuityFacts) {
+  const updatedFacts: ContinuityFact[] = [...memContinuityFacts]
+  for (const resolvedFact of cResolvedFacts) {
     const fact = updatedFacts.find((f) => f.fact === resolvedFact)
     if (fact) {
       fact.resolved = true
     }
   }
-  updatedFacts.push(...compression.newContinuityFacts)
+  updatedFacts.push(...cNewFacts)
 
   // Merge foreshadowing
-  const updatedForeshadowing: ForeshadowingSeed[] = [...mem.foreshadowing]
-  for (const update of compression.foreshadowingUpdates) {
+  const updatedForeshadowing: ForeshadowingSeed[] = [...memForeshadowing]
+  for (const update of cForeshadowing) {
     const existing = updatedForeshadowing.find((f) => f.seed === update.seed)
     if (existing) {
       existing.resolved = update.resolved
@@ -463,8 +482,8 @@ export async function saveChapterCheckpoint(
 
   // Append thematic development
   const updatedThematic: ThematicEntry[] = [
-    ...mem.thematic_development,
-    ...compression.thematicDevelopment.map((t) => ({
+    ...memThematic,
+    ...cThematic.map((t) => ({
       theme: t.theme,
       chapterNumber,
       development: t.development,
