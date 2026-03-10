@@ -12,6 +12,8 @@ If you follow publishing Twitter (or whatever we're calling it now), you'd think
 
 I've spent the last year talking to writers, reading submission guidelines, and watching the industry wrestle with this. Here's what I've found.
 
+![Publisher Stances on AI-Assisted Work — a spectrum from explicit ban to no restrictions, with most publishers in the cautious-but-open middle](assets/publisher-landscape.svg)
+
 ## The Official Positions (As of Early 2026)
 
 The major publishers have, for the most part, taken a cautious stance. Not an outright ban — that would be unenforceable and they know it — but a positioning that protects them legally while leaving room to maneuver.
