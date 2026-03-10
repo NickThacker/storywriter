@@ -14,6 +14,8 @@ This is exactly what every AI writing tool does when it uses one model for every
 
 When I designed [Meridian's pipeline](https://meridianwrite.com/multi-model-pipeline/), this was one of the first architectural decisions I made — and one of the most important. Writing and reviewing are separate jobs. They need separate models.
 
+![Multi-Model Pipeline — the Writer model produces prose, the Reviewer model checks quality, with a revision loop between them](assets/writer-reviewer-pipeline.svg)
+
 ## The Self-Review Problem
 
 Large language models are remarkably good at generating fluent text. They are remarkably bad at evaluating whether that text accomplishes what it's supposed to accomplish.
