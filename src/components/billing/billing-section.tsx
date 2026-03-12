@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { TIERS, YEARLY_PRICES, YEARLY_AMOUNTS } from '@/lib/stripe/tiers'
 import { createCheckoutSession, createProjectCreditSession, createPortalSession } from '@/actions/billing'
@@ -19,12 +20,39 @@ function formatDate(iso: string | null): string {
   })
 }
 
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null
+  const diff = new Date(iso).getTime() - Date.now()
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+}
+
+function tierLabel(tier: string): string {
+  if (tier === 'none') return 'No active plan'
+  return tier.charAt(0).toUpperCase() + tier.slice(1)
+}
+
 export function BillingSection({ billingStatus }: BillingSectionProps) {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null)
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month')
+  const searchParams = useSearchParams()
 
   const isLoading = loadingPriceId !== null
   const hasSubscription = billingStatus.tier !== 'none'
+  const hasBooks = billingStatus.projectCredits > 0
+  const daysLeft = daysUntil(billingStatus.billingPeriodEnd)
+
+  // Handle ?billing=success redirect from Stripe
+  useEffect(() => {
+    const billing = searchParams.get('billing')
+    if (billing === 'success') {
+      toast.success('Payment successful! Your account has been updated.')
+      // Clean the URL without triggering navigation
+      window.history.replaceState({}, '', '/settings')
+    } else if (billing === 'cancelled') {
+      toast('Checkout cancelled.')
+      window.history.replaceState({}, '', '/settings')
+    }
+  }, [searchParams])
 
   async function handleSubscribe(priceId: string) {
     setLoadingPriceId(priceId)
@@ -43,7 +71,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
     }
   }
 
-  async function handleBuyProjectCredit(priceId: string) {
+  async function handleBuyBook(priceId: string) {
     setLoadingPriceId(priceId)
     try {
       const result = await createProjectCreditSession(priceId)
@@ -95,52 +123,117 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
 
   return (
     <div className="space-y-8">
-      {/* Current plan summary (if subscribed) */}
-      {hasSubscription && (
-        <div
-          className="border border-border p-5 flex items-start justify-between gap-4"
-          style={{ borderRadius: 0 }}
-        >
-          <div className="space-y-1">
-            <p className="text-sm text-foreground">
-              {billingStatus.tier.charAt(0).toUpperCase() + billingStatus.tier.slice(1)} Plan
+      {/* ── Your Plan ── */}
+      <div
+        className="border border-border p-6"
+        style={{ borderRadius: 0 }}
+      >
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <p
+              className="text-[0.6rem] uppercase tracking-[0.12em] mb-1.5"
+              style={{ color: 'var(--gold)' }}
+            >
+              Your Plan
             </p>
-            <p className="text-[0.7rem] text-muted-foreground">
-              {billingStatus.maxProjects === null
-                ? 'Unlimited projects'
-                : `${billingStatus.activeProjects} of ${billingStatus.maxProjects} projects used`}
+            <p
+              className="text-xl font-light"
+              style={{ fontFamily: 'var(--font-literata)' }}
+            >
+              {tierLabel(billingStatus.tier)}
             </p>
-            {billingStatus.billingPeriodEnd && (
-              <p className="text-[0.7rem] text-muted-foreground">
-                Next billing date: {formatDate(billingStatus.billingPeriodEnd)}
+          </div>
+          {hasSubscription && (
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={handleManageSubscription}
+              className="shrink-0 px-4 py-2 text-[0.68rem] uppercase tracking-[0.1em] border border-border hover:border-foreground transition-colors disabled:opacity-60 cursor-pointer"
+              style={{ borderRadius: 0 }}
+            >
+              {loadingPriceId === 'portal' ? 'Redirecting...' : 'Manage Subscription'}
+            </button>
+          )}
+        </div>
+
+        {/* Status details */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Projects */}
+          <div className="border border-border/50 p-3.5" style={{ borderRadius: 0 }}>
+            <p className="text-[0.6rem] uppercase tracking-[0.1em] text-muted-foreground mb-1">
+              Active Projects
+            </p>
+            <p className="text-lg font-light" style={{ fontFamily: 'var(--font-literata)' }}>
+              {billingStatus.activeProjects}
+              <span className="text-sm text-muted-foreground ml-1">
+                / {billingStatus.maxProjects === null ? 'unlimited' : billingStatus.maxProjects}
+              </span>
+            </p>
+          </div>
+
+          {/* Books */}
+          <div className="border border-border/50 p-3.5" style={{ borderRadius: 0 }}>
+            <p className="text-[0.6rem] uppercase tracking-[0.1em] text-muted-foreground mb-1">
+              Book Credits
+            </p>
+            <p className="text-lg font-light" style={{ fontFamily: 'var(--font-literata)' }}>
+              {billingStatus.projectCredits}
+            </p>
+            {hasBooks && (
+              <p className="text-[0.65rem] text-muted-foreground mt-1">
+                Each book gives 12 months of access to one novel.
+              </p>
+            )}
+            {!hasBooks && !hasSubscription && (
+              <p className="text-[0.65rem] text-muted-foreground mt-1">
+                Buy a book or subscribe to start writing.
               </p>
             )}
           </div>
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={handleManageSubscription}
-            className="shrink-0 px-4 py-2 text-[0.68rem] uppercase tracking-[0.1em] border border-border hover:border-foreground transition-colors disabled:opacity-60 cursor-pointer"
-            style={{ borderRadius: 0 }}
-          >
-            {loadingPriceId === 'portal' ? 'Redirecting...' : 'Manage'}
-          </button>
-        </div>
-      )}
 
-      {/* Project credits */}
-      {billingStatus.projectCredits > 0 && (
-        <div className="border border-border p-4" style={{ borderRadius: 0 }}>
-          <p className="text-sm text-foreground">
-            {billingStatus.projectCredits} project credit{billingStatus.projectCredits !== 1 ? 's' : ''} available
-          </p>
-          <p className="text-[0.7rem] text-muted-foreground mt-1">
-            Each credit lets you start one novel with 12 months of access.
-          </p>
+          {/* Renewal */}
+          <div className="border border-border/50 p-3.5" style={{ borderRadius: 0 }}>
+            <p className="text-[0.6rem] uppercase tracking-[0.1em] text-muted-foreground mb-1">
+              {hasSubscription ? 'Renews' : 'Next Renewal'}
+            </p>
+            {billingStatus.billingPeriodEnd ? (
+              <>
+                <p className="text-lg font-light" style={{ fontFamily: 'var(--font-literata)' }}>
+                  {formatDate(billingStatus.billingPeriodEnd)}
+                </p>
+                {daysLeft !== null && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-[0.6rem] text-muted-foreground mb-1">
+                      <span>{daysLeft} day{daysLeft !== 1 ? 's' : ''} remaining</span>
+                    </div>
+                    <div className="h-1 bg-border/50 w-full" style={{ borderRadius: 0 }}>
+                      <div
+                        className="h-1 transition-all"
+                        style={{
+                          borderRadius: 0,
+                          backgroundColor: 'var(--gold)',
+                          // Assume 30-day cycle; clamp between 0-100%
+                          width: `${Math.min(100, Math.max(0, (daysLeft / 30) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : hasSubscription ? (
+              <p className="text-sm text-muted-foreground mt-1">
+                Pending first invoice
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                &mdash;
+              </p>
+            )}
+          </div>
         </div>
-      )}
+      </div>
 
-      {/* Billing interval toggle */}
+      {/* ── Billing interval toggle ── */}
       <div className="flex items-center justify-center gap-4">
         <button
           type="button"
@@ -166,25 +259,39 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
         </button>
       </div>
 
-      {/* Tier cards */}
+      {/* ── Tier cards ── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {TIERS.map((tier) => {
           const isCurrentTier = billingStatus.tier === tier.id
+          const isProjectTier = tier.id === 'project'
+          // Project tier is "active" if user has book credits
+          const isActiveProject = isProjectTier && hasBooks && !hasSubscription
+          const isActive = isCurrentTier || isActiveProject
           const priceId = getPriceId(tier)
           const { amount, label } = getDisplayPrice(tier)
-          const isProject = tier.id === 'project'
 
           return (
             <div
               key={tier.id}
-              className={`relative border p-5 flex flex-col ${
-                tier.popular
+              className={`relative border p-5 flex flex-col transition-colors ${
+                isActive
+                  ? 'border-[color:var(--gold)]/60 bg-[color:var(--gold)]/[0.03]'
+                  : tier.popular
                   ? 'border-[color:var(--gold)]/40 bg-card'
                   : 'border-border bg-card'
               } ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}
               style={{ borderRadius: 0 }}
             >
-              {tier.popular && (
+              {/* Badges */}
+              {isActive && (
+                <div
+                  className="absolute -top-3 left-4 px-3 py-0.5 text-[0.55rem] uppercase tracking-[0.15em] bg-[color:var(--gold)] text-background font-medium"
+                  style={{ borderRadius: 0 }}
+                >
+                  Your Plan
+                </div>
+              )}
+              {tier.popular && !isActive && (
                 <div
                   className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-[0.55rem] uppercase tracking-[0.15em] bg-[color:var(--gold)] text-background font-medium"
                   style={{ borderRadius: 0 }}
@@ -231,20 +338,20 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
               </ul>
 
               {/* CTA */}
-              {isCurrentTier ? (
+              {isActive ? (
                 <div
                   className="w-full text-center py-2.5 text-[0.65rem] uppercase tracking-[0.1em] border border-[color:var(--gold)]/30 text-[color:var(--gold)]"
                   style={{ borderRadius: 0 }}
                 >
-                  Current Plan
+                  {isCurrentTier ? 'Current Plan' : `${billingStatus.projectCredits} book${billingStatus.projectCredits !== 1 ? 's' : ''} remaining`}
                 </div>
               ) : (
                 <button
                   type="button"
                   disabled={isLoading}
                   onClick={() =>
-                    isProject
-                      ? handleBuyProjectCredit(priceId)
+                    isProjectTier
+                      ? handleBuyBook(priceId)
                       : handleSubscribe(priceId)
                   }
                   className={`w-full py-2.5 text-[0.65rem] uppercase tracking-[0.1em] transition-colors cursor-pointer ${
@@ -254,7 +361,13 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
                   }`}
                   style={{ borderRadius: 0 }}
                 >
-                  {loadingPriceId === priceId ? 'Redirecting...' : tier.cta}
+                  {loadingPriceId === priceId
+                    ? 'Redirecting...'
+                    : isProjectTier
+                    ? 'Buy a Book'
+                    : isCurrentTier
+                    ? 'Current Plan'
+                    : tier.cta}
                 </button>
               )}
             </div>
@@ -262,7 +375,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
         })}
       </div>
 
-      {/* Yearly footnote for Author */}
+      {/* Yearly footnote */}
       {billingInterval === 'month' && (
         <p className="text-center text-[0.65rem] text-muted-foreground">
           Author is also available at $490/year. Studio at $990/year.{' '}
@@ -275,6 +388,34 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
           </button>
         </p>
       )}
+
+      {/* Explainer */}
+      <div className="border-t border-border pt-6 space-y-3">
+        <p
+          className="text-[0.6rem] uppercase tracking-[0.12em]"
+          style={{ color: 'var(--gold)' }}
+        >
+          How it works
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-foreground mb-1 font-medium">Book credits</p>
+            <p className="text-[0.7rem] text-muted-foreground leading-relaxed">
+              A book credit lets you start one novel. You get 12 months of unlimited
+              generation within that project. Buy another when you&apos;re ready for
+              your next book.
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-foreground mb-1 font-medium">Subscriptions</p>
+            <p className="text-[0.7rem] text-muted-foreground leading-relaxed">
+              Author and Studio plans renew automatically each billing cycle.
+              You can work on multiple books at the same time. Cancel or change
+              plans anytime from the Manage Subscription portal.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

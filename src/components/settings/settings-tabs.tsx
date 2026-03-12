@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ModelSelector } from '@/components/settings/model-selector'
 import { BillingSection } from '@/components/billing/billing-section'
 import { VoiceProfileTab } from '@/components/settings/voice-profile-tab'
@@ -22,7 +23,12 @@ interface SettingsTabsProps {
 }
 
 export function SettingsTabs({ modelPreferences, billingStatus, persona }: SettingsTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('models')
+  const searchParams = useSearchParams()
+  // Auto-open billing tab when returning from Stripe checkout
+  const billingParam = searchParams.get('billing')
+  const [activeTab, setActiveTab] = useState<TabId>(
+    billingParam === 'success' || billingParam === 'cancelled' ? 'billing' : 'models'
+  )
 
   return (
     <div className="space-y-8">

@@ -28,9 +28,9 @@ export function UpgradeModal({ open, onClose, reason }: UpgradeModalProps) {
     : 'Subscription Required'
 
   const description = reason === 'project_expired'
-    ? 'Your 12-month access for this project has expired. Purchase a new project credit or subscribe to continue.'
+    ? 'Your 12-month access for this book has expired. Purchase a new book or subscribe to continue.'
     : reason === 'project_limit_reached'
-    ? 'You\'ve reached your active project limit. Upgrade your plan or buy a single project credit.'
+    ? 'You\'ve reached your active project limit. Upgrade your plan or buy another book.'
     : 'Choose a plan to start writing with Meridian.'
 
   async function handleSubscribe(priceId: string) {

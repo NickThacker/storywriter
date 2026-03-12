@@ -114,7 +114,7 @@ export default async function UsagePage() {
 
           {billingStatus.projectCredits > 0 && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Project credits</span>
+              <span className="text-muted-foreground">Book credits</span>
               <span className="text-foreground">{billingStatus.projectCredits}</span>
             </div>
           )}

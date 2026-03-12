@@ -22,7 +22,7 @@ export const TIERS: TierConfig[] = [
     ],
     stripePriceId: 'price_1TAESbGywhC8qTIasPkbXbCR',
     tagline: 'Try the full pipeline. No commitment.',
-    cta: 'Start Your Project',
+    cta: 'Buy a Book',
   },
   {
     id: 'author',
