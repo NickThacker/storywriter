@@ -7,6 +7,40 @@ import { savePersona } from '@/actions/voice'
 import type { AuthorPersonaRow } from '@/types/database'
 import { toast } from 'sonner'
 
+function formatValue(value: unknown, depth = 0): React.ReactNode {
+  if (value === null || value === undefined) return '—'
+  if (typeof value === 'string') return value
+  if (typeof value === 'number') return String(value)
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (Array.isArray(value)) return value.map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(', ')
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).map(([k, v]) => (
+      <div key={k} className={depth === 0 ? 'mt-1.5 first:mt-0' : 'mt-0.5 first:mt-0 ml-3'}>
+        <span className="text-muted-foreground text-xs">{k.replace(/_/g, ' ')}:</span>{' '}
+        {typeof v === 'object' && v !== null && !Array.isArray(v)
+          ? <div className="mt-0.5">{formatValue(v, depth + 1)}</div>
+          : <span className="text-sm">{formatValue(v, depth + 1)}</span>}
+      </div>
+    ))
+  }
+  return String(value)
+}
+
+const SENSORY_KEYS = ['visual', 'tactile', 'auditory', 'gustatory', 'olfactory']
+
+function SensoryBar({ label, value, max = 5 }: { label: string; value: number; max?: number }) {
+  const pct = Math.round((value / max) * 100)
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground w-20 shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 bg-border overflow-hidden">
+        <div className="h-full transition-all duration-300" style={{ width: `${pct}%`, background: 'var(--gold)' }} />
+      </div>
+      <span className="text-xs text-muted-foreground w-6 text-right">{value}/{max}</span>
+    </div>
+  )
+}
+
 export function VoiceProfileTab({ persona }: { persona: AuthorPersonaRow | null }) {
   const [guidanceText, setGuidanceText] = useState(persona?.raw_guidance_text ?? '')
   const [isSaving, setIsSaving] = useState(false)
@@ -61,29 +95,42 @@ export function VoiceProfileTab({ persona }: { persona: AuthorPersonaRow | null 
             Style Descriptors
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {Object.entries(persona.style_descriptors).map(([key, value]) => (
-              <div
-                key={key}
-                className="border border-border bg-card p-3"
-                style={{ borderRadius: 0 }}
-              >
-                <div className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground">{key.replace(/_/g, ' ')}</div>
-                <div className="mt-1 text-sm text-foreground">
-                  {typeof value === 'string'
-                    ? value
-                    : Array.isArray(value)
-                    ? value.join(', ')
-                    : value && typeof value === 'object'
-                    ? Object.entries(value).map(([k, v]) => (
-                        <div key={k} className="mt-1 first:mt-0">
-                          <span className="text-muted-foreground text-xs">{k.replace(/_/g, ' ')}:</span>{' '}
-                          <span>{String(v)}</span>
-                        </div>
-                      ))
-                    : String(value)}
+            {Object.entries(persona.style_descriptors).map(([key, value]) => {
+              // Sensory palette gets a visual bar chart
+              if (key === 'sensory_palette' && value && typeof value === 'object') {
+                const obj = value as Record<string, unknown>
+                const senses = SENSORY_KEYS.filter((k) => typeof obj[k] === 'number')
+                const notes = obj.figurative_language_notes as string | undefined
+                return (
+                  <div
+                    key={key}
+                    className="border border-border bg-card p-4 col-span-2"
+                    style={{ borderRadius: 0 }}
+                  >
+                    <div className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground mb-3">{key.replace(/_/g, ' ')}</div>
+                    <div className="space-y-2.5">
+                      {senses.map((s) => (
+                        <SensoryBar key={s} label={s} value={obj[s] as number} />
+                      ))}
+                    </div>
+                    {notes && typeof notes === 'string' && (
+                      <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border">{notes}</p>
+                    )}
+                  </div>
+                )
+              }
+
+              return (
+                <div
+                  key={key}
+                  className="border border-border bg-card p-3"
+                  style={{ borderRadius: 0 }}
+                >
+                  <div className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground">{key.replace(/_/g, ' ')}</div>
+                  <div className="mt-1 text-sm text-foreground">{formatValue(value)}</div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
