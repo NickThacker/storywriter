@@ -1,212 +1,205 @@
-# Feature Research
+# Feature Landscape
 
-**Domain:** AI-powered novel writing web application
-**Researched:** 2026-02-28
-**Confidence:** MEDIUM — Market research via WebSearch and WebFetch across multiple sources. Competitor feature sets are well-documented. User pain points corroborated across multiple independent reviews and Reddit analysis.
+**Domain:** Password reset flow fix + three-tier Stripe billing rework (v1.1 milestone)
+**Researched:** 2026-03-11
+**Confidence:** HIGH — Auth flow verified against live codebase; Stripe patterns verified against official docs.
 
 ---
 
-## Feature Landscape
+## Context: What Already Exists
 
-### Table Stakes (Users Expect These)
+This is a subsequent milestone. The following are **already built and must be preserved**:
 
-Features that every serious AI writing tool provides. Missing any of these will cause users to immediately reach for a competitor.
+| Existing Component | Location | Status |
+|-------------------|----------|--------|
+| `/auth/confirm` route handler | `src/app/(auth)/auth/confirm/route.ts` | Working — handles PKCE code exchange and OTP token_hash forward |
+| `/auth/verify` client page | `src/app/(auth)/auth/verify/page.tsx` | Working — runs `verifyOtp` in browser to defeat link scanners, routes `recovery` type to `/auth/reset-password` |
+| `/auth/reset-password` page | `src/app/(auth)/auth/reset-password/page.tsx` | Page exists, renders `ResetPasswordForm` |
+| `ResetPasswordForm` component | `src/components/auth/reset-password-form.tsx` | Form exists — new/confirm password fields, calls `updatePassword` server action |
+| `updatePassword` server action | `src/actions/auth.ts` | Logic exists — calls `supabase.auth.updateUser`, but **missing session guard** |
+| `resetPassword` server action | `src/actions/auth.ts` | Working — sends recovery email with `redirectTo` pointing to `/auth/confirm?next=/auth/reset-password` |
+| Stripe webhook handler | `src/app/api/webhooks/stripe/route.ts` | Working — handles subscription + credit-pack events; uses token-budget model |
+| Stripe tiers config | `src/lib/stripe/tiers.ts` | Exists — currently: Starter/Writer/Pro token-based tiers + credit packs |
+| `user_settings` billing columns | migration `00005` | `token_budget_total`, `token_budget_remaining`, `credit_pack_tokens`, `billing_period_end` |
+| Settings page | `src/app/(dashboard)/settings/page.tsx` | Exists — needs billing section update |
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Project persistence | Users return to novels across days/weeks; losing work is fatal | LOW | Store project state in DB; prose in files as per PROJECT.md architecture |
-| User authentication | Multi-session, multi-device access; public product requires accounts | LOW | Standard auth (NextAuth, Clerk, or Supabase Auth) |
-| Multi-project dashboard | Writers work on more than one book; need a home screen to manage projects | LOW | List view with status, word count, last-modified |
-| Novel outline generation | Every competitor generates an outline from a premise; it's the entry point of the workflow | MEDIUM | Sudowrite, NovelCrafter, Squibler all do this; our guided-interview intake is a differentiator on top of this |
-| Chapter-by-chapter prose generation | Writing one chapter at a time is the standard pattern across all tools | MEDIUM | Sudowrite's "Draft" and "Story Engine," Squibler's book generator, NovelCrafter's scene drafting all work chapter by chapter |
-| Story bible / world state tracking | AI must remember characters, locations, and lore across the whole novel; users expect this | HIGH | Context injection per-generation. Sudowrite's Story Bible, NovelCrafter's Codex are the benchmark. Crucial for character/plot consistency |
-| Character profiles | Writers need to define characters before writing; AI must reference them | LOW | Structured fields: name, appearance, backstory, voice. Feeds story bible |
-| Revision / rewrite capability | Users will always want to regenerate or adjust output they don't like | MEDIUM | "Rewrite this chapter" flow, tone/style adjustment controls |
-| Export to standard formats | Writers need to get their work out (DOCX, PDF, plain text at minimum) | LOW | Squibler, NovelCrafter, and all competitors export DOCX/PDF. No ePub/KDP at v1 (per PROJECT.md) |
-| Real-time streaming prose | Watching prose appear letter-by-letter is now the standard UX expectation from ChatGPT and Sudowrite | MEDIUM | OpenRouter streaming; handle per-model fallback |
-| Visible progress indicator | Writers need to know where they are in the novel (chapter X of Y, word count, % done) | LOW | Progress bar, chapter list with statuses |
-| Save/autosave | Writing tools must never lose work | LOW | Auto-persist after each generation or user edit |
-| Basic text editing | Users will want to manually edit AI output inline | LOW | Rich text editor or at minimum a clean textarea; not a full document editor |
+---
 
-### Differentiators (Competitive Advantage)
+## Table Stakes
 
-Features that set StoryWriter apart. These align directly with the core value proposition: guided, decision-driven collaboration that maximizes creative control.
+Features that must work correctly for the milestone to ship. Missing any = broken product.
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Guided intake interview | Removes blank-page paralysis by eliciting genre, themes, characters, tone through structured questions — not an open text box | MEDIUM | This is the primary UX differentiator; no competitor does a proper wizard-style intake. Sudowrite and NovelCrafter start from a synopsis paste. Decision-driven UI (from PROJECT.md) makes this unique |
-| Between-chapter creative checkpoints | After each chapter, user makes explicit creative decisions (approve, rewrite, adjust direction) rather than just clicking "next" — keeps them in the driver's seat | HIGH | No competitor has a structured approval + fork flow between chapters. This is the core UX loop. Pairs with structured phases and visible progress |
-| Per-task LLM selection via OpenRouter | Users choose the best model for outline (reasoning-heavy), prose (creative), and editing (critique) separately | MEDIUM | NovelAI uses proprietary Kayra model; Sudowrite uses proprietary Muse; NovelCrafter supports custom AI connections but complex setup. OpenRouter as the unified gateway is cleaner and more powerful |
-| BYOK (Bring Your Own Key) | Power users and writers with existing OpenRouter accounts can connect their own key; eliminates cost concerns and trust issues | LOW | Well-validated pattern (JetBrains, WritingMate, CodeGPT all implement it). Reduces barrier to trial |
-| Premise-to-novel structured pipeline | Full workflow from idea through outline through chapters in one coherent, stateful session — not ad-hoc prompting | HIGH | Sudowrite does this via Story Engine but the UX is complex. Squibler does bulk generation (too hands-off). StoryWriter's GSD-style phased flow is the differentiator |
-| Decision-driven plot branching | At chapter checkpoints, present 2-3 plot direction options to choose from — keeps user engaged and creative | HIGH | Research shows branching narrative structures with defined choice points improve ownership. No tool does this cleanly in a guided UI |
-| Narrative consistency enforcement | Automatically inject relevant story bible context (character details, prior events) into every generation prompt | HIGH | Sudowrite Story Bible and NovelCrafter Codex do this well. Must match or exceed their approach |
+| Feature | Why Required | Complexity | Dependency on Existing |
+|---------|-------------|------------|----------------------|
+| Recovery link lands on password form with active session | Without session, `updateUser` call returns 401 and password cannot be changed — the core bug | LOW | `auth/confirm` route already exchanges the code; problem is the reset-password page does not verify a session exists before rendering the form |
+| Session guard on `/auth/reset-password` | Redirect to login with error if no auth session — prevents dangling form with no ability to save | LOW | Reads `supabase.auth.getUser()` server-side; already done in `updatePassword` action but needs to also guard the page render |
+| "Forgot password" link visible on login page | Users cannot initiate reset if entry point is missing or broken | LOW | `auth-form.tsx` — needs to verify this link exists and points to a reset request page |
+| Password confirmation field mismatch error | Standard form UX — both fields must match before submitting | LOW | `updatePasswordSchema` in `src/lib/validations/auth.ts` already validates this |
+| Success redirect to dashboard after reset | Flow must complete cleanly — no stuck page | LOW | `updatePassword` action already calls `redirect('/dashboard')` on success |
+| Three Stripe products created via CLI | No product IDs = no checkout sessions can be created | LOW | Replaces existing Starter/Writer/Pro token-tier product IDs with new Project/Author/Studio ones |
+| `checkout.session.completed` webhook handles Project (one-time, `mode: 'payment'`) | Webhook currently only branches on `mode: 'subscription'` or `metadata.type === 'credit_pack'` — Project purchase has no handler | MEDIUM | Modify `route.ts` webhook handler; new branch for one-time project purchase |
+| `checkout.session.completed` webhook handles Author/Studio (subscriptions) | Existing subscription branch must update to new tier IDs | LOW | Update `tiers.ts` with new price IDs and tier names; webhook logic structure stays the same |
+| Project-count enforcement replaces token-budget enforcement | Generation gates must check active project count, not token budget | MEDIUM | All 7 generation routes use `checkBudget` utility — must be replaced with `checkProjectAccess` utility; `user_settings` schema needs `projects_purchased` counter or check against projects table |
+| Completed projects remain readable after subscription expires | "Completed" status = read-only access regardless of subscription state | MEDIUM | Projects table has status field; generation routes need to check `project.status !== 'completed'` before enforcing tier gate |
+| Generation locked on non-purchased projects when subscription inactive | Active subscription (Author/Studio) OR a paid Project record required to generate | MEDIUM | New enforcement logic; must distinguish "project paid one-time" vs "subscriber can generate on any project up to limit" |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+---
 
-Features that seem appealing but will hurt the product if built at v1.
+## Differentiators
 
-| Feature | Why Requested | Why Problematic | Alternative |
-|---------|---------------|-----------------|-------------|
-| Full-document word processor | Writers want "everything in one place" like Scrivener | Enormous scope; Scrivener took years to build; distract from the AI pipeline that is the actual value | Inline editing of generated prose is sufficient at v1; keep scope tight |
-| Real-time multi-user collaboration | "Google Docs for novels" sounds great | Operational transforms / CRDTs are complex infrastructure; adds authentication surface; PROJECT.md already ruled this out | Solo authorship at v1; note in roadmap for v2 |
-| AI-generated cover art | "One-stop-shop" appeal | Separate domain (image generation), different models, different UX entirely; dilutes focus | Out of scope per PROJECT.md; if added, external Midjourney/DALL-E link is sufficient |
-| Auto-publish to Amazon KDP | Completes the "write to publish" loop | KDP publishing has legal, formatting, metadata, and account complexity; not the core value proposition | Export DOCX for user to self-upload; explicit v2+ per PROJECT.md |
-| Offline mode | Writers work on planes | Requires service worker, local LLM or queuing, sync-on-reconnect; high complexity for niche use case | Explicit constraint in PROJECT.md; document it clearly so users know upfront |
-| Unlimited free tier | Low barrier to adoption | Novel generation is massively token-intensive; free-tier economics break at scale with 100K+ token chapters | BYOK lowers cost concerns for power users; hosted tier must have clear credit/token limits |
-| Fully open-ended text input for every decision | Maximum creative freedom | Open boxes paralyze most users and produce worse outputs than structured choices; research confirms hybrid works better | Decision-driven UI with structured options plus an "other/custom" escape hatch |
-| "Write the whole novel for me" one-click mode | Speed and convenience | Produces generic, flat prose; loses the creative collaboration that is the product's core value; users end up with AI slop they're embarrassed by | Chapter-by-chapter with human checkpoints is the deliberate design |
+Features that go beyond baseline and create user value within this milestone scope.
+
+| Feature | Value Proposition | Complexity | Dependency |
+|---------|-------------------|------------|------------|
+| Annual Author option ($490/yr) saves ~17% | Reduces churn; common SaaS conversion lever | LOW | One additional price on the Author product in Stripe; `tiers.ts` adds `author_annual` entry; UI pricing page shows both with "Save 17%" badge |
+| $25 repeat project discount via Stripe coupon | Rewards returning buyers; nudges toward Author upgrade | MEDIUM | Stripe coupon (`amount_off: 2500`, `max_redemptions: null`); server must check if user has prior Project purchase before surfacing checkout; apply coupon programmatically on checkout session creation — do NOT use user-input promo codes (avoids abuse) |
+| Self-serve subscription portal (Stripe Customer Portal) | Users can cancel/upgrade without emailing support | LOW | Stripe Customer Portal pre-built UI; backend needs one route to create a portal session; `stripe_customer_id` already stored in `user_settings` |
+| Clear pricing page with plan comparison | Reduces friction; users need to understand Project vs Author vs Studio | LOW | Static marketing/pricing page; not gated |
+
+---
+
+## Anti-Features
+
+Features that seem sensible but should be explicitly deferred or rejected for this milestone.
+
+| Anti-Feature | Why It Looks Attractive | Why Not | Alternative |
+|-------------|------------------------|---------|-------------|
+| User-entered promo/coupon codes at checkout | Flexible discounting | Opens discount abuse; requires customer-facing code management; enables code sharing | Apply repeat-buyer discount programmatically on the server before creating the checkout session |
+| Token-budget soft warnings / near-limit emails | "Nice to have" billing UX | Token model is being removed; these components become dead code | Remove token UI from settings/usage pages; replace with project-count display |
+| Trial periods | Lower barrier to entry | Complex lifecycle: trial → convert → cancel → re-trial edge cases; Stripe trial webhooks add webhook surface area | Project tier at $39 one-time is already a low-commitment entry point; no free trial needed |
+| Prorations on upgrade from Author monthly to Author annual | Feels like fair billing | Proration on interval switch requires Stripe `proration_behavior` handling, partial credits, and period reset logic | Set subscription to cancel at period end and create a new annual subscription on renewal; cleaner state |
+| Multiple active subscriptions | Studio + credit packs simultaneously | `user_settings` assumes one active subscription ID; multiple subscriptions require table restructure | Studio tier is the top tier; credit packs are modeled as one-time purchases in `payment` mode, not subscriptions |
+| Webhook retries with exponential backoff | Stripe retries on non-200 | Stripe already handles retries; adding app-level retry logic introduces double-processing risk | Idempotency table (`stripe_webhook_events`) already built — use it; always return 200 |
 
 ---
 
 ## Feature Dependencies
 
 ```
-User Authentication
-    └──requires──> Multi-Project Dashboard
-                       └──requires──> Project Persistence (DB + file storage)
-                                          └──requires──> Novel Outline Generation
-                                                             └──requires──> Story Bible / World State
-                                                                                └──requires──> Chapter Generation
-                                                                                                   └──requires──> Real-Time Streaming
-                                                                                                   └──requires──> Creative Checkpoints
-                                                                                                   └──requires──> Revision / Rewrite
-                                                                                                   └──requires──> Export
+Password Reset Feature
+  └──requires──> /auth/confirm route (already built — no changes needed)
+  └──requires──> /auth/verify client page (already built — no changes needed)
+  └──requires──> Session guard on /auth/reset-password page (NEW — server component check)
+  └──requires──> updatePassword action (already built — no changes needed)
+  └──requires──> "Forgot password" link on login (verify exists in auth-form.tsx)
 
-Guided Intake Interview ──feeds──> Novel Outline Generation
+Three-Tier Stripe Billing
+  └──requires──> Stripe products/prices created via CLI (NEW — prerequisite, blocks everything else)
+  └──requires──> tiers.ts updated with new tier IDs + price IDs (NEW — replaces Starter/Writer/Pro)
+  └──requires──> DB schema migration for project-count model (NEW — migration 00013)
+  └──requires──> Webhook handler: one-time Project purchase branch (NEW — modify webhook route.ts)
+  └──requires──> Webhook handler: subscription branches updated to new tier names (MODIFY)
+  └──requires──> checkProjectAccess utility (NEW — replaces checkBudget)
+  └──requires──> Project-count enforcement wired into all 7 generation routes (MODIFY)
+  └──requires──> Completed project read-only gate (NEW — check status before enforcement)
 
-Per-Task LLM Selection ──enhances──> Outline Generation
-Per-Task LLM Selection ──enhances──> Chapter Generation
+Repeat Purchase Discount
+  └──requires──> Three-Tier Billing (Stripe products must exist)
+  └──requires──> Prior-purchase check (query projects table or purchase_history for user)
+  └──requires──> Checkout session creation applies coupon programmatically (server-side)
 
-BYOK ──enhances──> Per-Task LLM Selection (user controls cost)
+Annual Author Option
+  └──requires──> Three-Tier Billing (Author product must exist first)
+  └──requires──> Second price on Author product (annual interval, $490)
+  └──requires──> UI to present both monthly and annual at checkout
 
-Character Profiles ──feeds──> Story Bible / World State
-
-Decision-Driven Plot Branching ──requires──> Creative Checkpoints (branching is the checkpoint mechanic)
+Stripe Customer Portal
+  └──requires──> stripe_customer_id stored (already stored in user_settings)
+  └──requires──> POST /api/billing/portal-session route (NEW)
+  └──requires──> Link in settings page (MODIFY)
 ```
 
-### Dependency Notes
+---
 
-- **User Auth requires Project Dashboard:** There is no meaningful use without account-scoped project state; auth is the gateway to everything.
-- **Story Bible requires Outline:** The outline is the first artifact that populates story bible entries (characters, plot beats); bible cannot be built before the outline pass.
-- **Chapter Generation requires Story Bible:** Every generation prompt must inject relevant context or the prose will contradict prior chapters. This is the #1 complaint about AI writing tools (losing track of characters).
-- **Creative Checkpoints require Chapter Generation:** Checkpoints are the post-chapter review step; chapter generation must exist first.
-- **Decision-Driven Plot Branching requires Checkpoints:** Branching is a checkpoint mechanic — the user picks the direction at each checkpoint. These are the same feature at different fidelity levels.
-- **Streaming requires OpenRouter integration:** Streaming depends on the AI pipeline being wired up; cannot be developed independently.
-- **BYOK and Hosted Billing conflict:** These are mutually exclusive per-project modes; must design the billing model so they coexist without confusion.
+## MVP for This Milestone
+
+### Ship With
+
+1. **Password reset page session guard** — actual bug fix; without it the reset flow silently fails for users in certain browser states
+2. **Stripe products/prices via CLI** — prerequisite for all billing work; must be done first
+3. **tiers.ts rework to Project/Author/Studio** — replaces token-tier configuration
+4. **DB migration 00013** — adds `projects_purchased` counter (or equivalent project-count tracking) to `user_settings`; updates subscription tier check constraint
+5. **Webhook handler: one-time Project purchase** — new branch in existing webhook handler
+6. **`checkProjectAccess` utility** — replaces `checkBudget`; wired into all generation routes
+7. **Completed project read-only access** — projects with `status = 'completed'` remain readable regardless of subscription state
+8. **Stripe Customer Portal route** — one endpoint, minimal code; high user value
+
+### Defer to v1.2
+
+- Annual Author option — valid differentiator but adds Stripe price + UI complexity; not a bug fix
+- Repeat project discount — business logic complexity (detecting prior purchase, programmatic coupon application); not blocking launch
+- Pricing/marketing page — useful but not required for the billing system to function
 
 ---
 
-## MVP Definition
+## Technical Notes by Feature
 
-### Launch With (v1)
+### Password Reset: What Is Actually Broken
 
-Minimum viable product to validate the guided-collaborative pipeline concept.
+The infrastructure is complete. The session guard is the only gap:
+- `auth/confirm` exchanges the code for a session correctly
+- `auth/verify` calls `verifyOtp` and routes `recovery` type to `/auth/reset-password`
+- The reset-password **page** renders the form without verifying the session exists server-side
+- `updatePassword` checks `getUser()` inside the server action, but by the time it fails, the user has already seen a form they cannot submit successfully
+- Fix: `ResetPasswordPage` should be a server component that calls `getUser()`, and redirects to `/login?error=session_expired` if no user
 
-- [ ] User authentication and multi-project dashboard — without this, nothing persists
-- [ ] Guided intake interview (genre, themes, characters, setting) — the primary UX differentiator; must ship to validate it
-- [ ] AI outline generation with user review and edit — core of the workflow
-- [ ] Character profiles feeding story bible — table stakes for consistency
-- [ ] Story bible / context injection — table stakes; missing it means broken prose
-- [ ] Chapter-by-chapter generation with real-time streaming — the core generation experience
-- [ ] Between-chapter creative checkpoints (approve / rewrite / adjust direction) — the second key differentiator
-- [ ] Revision / rewrite for any chapter — users need the escape valve
-- [ ] Visible progress (chapter list, word count, % complete) — writers need orientation
-- [ ] Export to DOCX and plain text — writers need to own their work
-- [ ] BYOK via OpenRouter — lowers cost barrier for technical early adopters
-- [ ] Hosted/subscription billing — enables revenue from non-technical users
-- [ ] Per-task LLM selection (at minimum: one model for outline, one for prose) — core differentiator from OpenRouter integration
+### Stripe: One-Time vs Subscription Webhook Events
 
-### Add After Validation (v1.x)
+The existing webhook handler handles two checkout modes: `subscription` and one-time (detected by `metadata.type === 'credit_pack'`). The new Project tier is also a one-time purchase but uses a different fulfillment path:
 
-- [ ] Decision-driven plot branching at checkpoints (present 2-3 direction options) — adds depth to checkpoint UX once base flow is validated
-- [ ] Style matching / voice calibration (upload sample prose for AI to mimic) — high user demand; complexity warrants deferring until v1 is stable
-- [ ] Detailed revision history and version control (compare chapter versions) — writers will want this once they have multiple drafts
-- [ ] Series management (link multiple novels with shared codex) — relevant once users finish a first novel
+- **Credit pack** (existing): adds tokens to `credit_pack_tokens` counter
+- **Project purchase** (new): increments `projects_purchased` counter (or creates a `project_purchases` row); grants the user one additional project generation slot
+- Detection: use `metadata.type === 'project_purchase'` on the checkout session; keep `credit_pack` path for backward compatibility
 
-### Future Consideration (v2+)
+### Stripe: Project-Count Enforcement Model
 
-- [ ] Multi-user collaboration — high complexity, explicitly out of scope for v1 per PROJECT.md
-- [ ] Auto-publish to Amazon KDP — needs separate legal and format work
-- [ ] AI-generated cover art — separate domain, defer
-- [ ] Mobile native app — web-responsive covers mobile; native app is a separate product investment
-- [ ] Audiobook / text-to-speech export — interesting but niche at launch
+Replace the token-budget check with:
 
----
+```
+User can generate IF:
+  (subscription is 'author' or 'studio' AND subscription is active)
+  OR
+  (project was individually purchased — project has a paid record)
+```
 
-## Feature Prioritization Matrix
+The simplest implementation: add `purchased_project_ids uuid[]` to `user_settings` or create a separate `project_purchases` table. Generation routes check: "is this project's ID in the user's purchased list, OR does the user have an active Author/Studio subscription?"
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| User authentication | HIGH | LOW | P1 |
-| Multi-project dashboard | HIGH | LOW | P1 |
-| Project persistence | HIGH | LOW | P1 |
-| Guided intake interview | HIGH | MEDIUM | P1 |
-| Novel outline generation | HIGH | MEDIUM | P1 |
-| Character profiles | HIGH | LOW | P1 |
-| Story bible / context injection | HIGH | HIGH | P1 |
-| Chapter generation + streaming | HIGH | HIGH | P1 |
-| Between-chapter checkpoints | HIGH | MEDIUM | P1 |
-| Revision / rewrite | HIGH | MEDIUM | P1 |
-| Visible progress tracking | MEDIUM | LOW | P1 |
-| Export (DOCX, TXT) | HIGH | LOW | P1 |
-| BYOK support | HIGH | LOW | P1 |
-| Hosted billing model | HIGH | MEDIUM | P1 |
-| Per-task LLM selection | MEDIUM | MEDIUM | P1 |
-| Decision-driven plot branching | HIGH | HIGH | P2 |
-| Style matching / voice calibration | MEDIUM | HIGH | P2 |
-| Version history / chapter diffs | MEDIUM | MEDIUM | P2 |
-| Series management | LOW | HIGH | P3 |
-| Multi-user collaboration | MEDIUM | HIGH | P3 |
-| Export to ePub/MOBI | LOW | LOW | P3 |
-| AI cover art | LOW | HIGH | P3 |
+### Stripe: Annual vs Monthly Same Product
 
-**Priority key:**
-- P1: Must have for launch
-- P2: Should have, add when possible
-- P3: Nice to have, future consideration
+One Stripe Product for Author; two Prices on that product:
+- `price_author_monthly`: `recurring.interval = 'month'`, `unit_amount = 4900`
+- `price_author_annual`: `recurring.interval = 'year'`, `unit_amount = 49000`
 
----
+Both map to `subscription_tier = 'author'` in `tiers.ts`. Webhook logic is unchanged — it only reads the tier mapping, not the interval.
 
-## Competitor Feature Analysis
+### Stripe: Repeat Purchase Discount
 
-| Feature | Sudowrite | NovelCrafter | Squibler | NovelAI | StoryWriter Approach |
-|---------|-----------|--------------|---------|---------|---------------------|
-| Guided intake / interview UX | No (paste synopsis) | No (paste synopsis) | Partial (genre + tone form) | No | YES — full guided interview (key differentiator) |
-| Outline generation | Yes (Story Bible) | Yes (scene-based) | Yes (bulk or outline mode) | Yes | Yes — with user review step |
-| Story Bible / Codex | Yes (Story Bible) | Yes (Codex — best in class) | Folder-based | Yes (Lorebook, keyword-triggered) | Yes — auto-inject on every generation |
-| Character profiles | Yes | Yes (rich with relations, progressions) | Basic | Yes | Yes — feeds into story bible |
-| Chapter generation | Yes (3K-5K words per draft) | Yes (scene-based) | Yes (250-page bulk option) | Yes | Yes — chapter at a time with streaming |
-| Real-time streaming | Yes | Not prominently featured | No (batch) | No (batch) | Yes — core UX |
-| Between-chapter checkpoints | No | No | No | No | YES (key differentiator) |
-| Decision-driven plot options | No | No | No | No | Yes (v1.x) |
-| Per-task LLM selection | No (proprietary Muse) | Yes (BYOK + multiple providers) | No (proprietary) | No (proprietary Kayra) | YES via OpenRouter |
-| BYOK model | No | Yes (BYOK plan) | No | No | YES |
-| Hosted subscription | Yes ($19-29/mo) | Yes | Yes ($192/yr) | Yes ($10/mo) | Yes |
-| Export | Yes (Story Bible exports) | Yes (DOCX, Markdown, HTML) | Yes (DOCX, PDF, MOBI, ePub) | Yes | Yes (DOCX, TXT at v1) |
-| Revision / rewrite tools | Yes (strong — Show Don't Tell, Tone Shift) | Yes (custom prompts) | Limited | Limited | Yes |
-| Style matching | Yes (Style Examples — Muse adapts) | No | No | No | v1.x |
-| Version history | No | Yes | No | No | v1.x |
-| Series management | No | Yes | No | No | v2+ |
-| Distraction-free editor | Basic | Yes (Focus Mode) | Basic | Basic | Progressive disclosure replaces this |
+Server-side flow:
+1. User initiates "Buy another project" checkout
+2. Server checks: does this user have any prior project purchase records?
+3. If yes, create checkout session with `discounts: [{ coupon: 'repeat_buyer_coupon_id' }]`
+4. Coupon created once via CLI: `stripe coupons create --amount-off=2500 --currency=usd --duration=once`
+5. Never expose coupon code to user — applied programmatically only
 
 ---
 
 ## Sources
 
-- [Sudowrite official site and documentation](https://sudowrite.com/) — HIGH confidence; first-party
-- [Sudowrite Story Bible docs](https://docs.sudowrite.com/using-sudowrite/1ow1qkGqof9rtcyGnrWUBS/what-is-story-bible/jmWepHcQdJetNrE991fjJC) — HIGH confidence; first-party
-- [Sudowrite Review: Kindlepreneur 2026](https://kindlepreneur.com/sudowrite-review/) — MEDIUM confidence; independent review
-- [NovelCrafter features page](https://www.novelcrafter.com/features) — HIGH confidence; first-party
-- [NovelCrafter Codex documentation](https://docs.novelcrafter.com/en/articles/8675743-the-codex) — HIGH confidence; first-party
-- [NovelAI review 2026 (toolsforhumans.ai)](https://www.toolsforhumans.ai/ai-tools/novelai) — MEDIUM confidence; third-party review
-- [11 Best AI Fiction Writing Tools 2026 (mylifenote.ai)](https://blog.mylifenote.ai/the-11-best-ai-tools-for-writing-fiction-in-2026/) — MEDIUM confidence; multi-tool comparison
-- [5 Best AI Novel Writing Software (eesel.ai)](https://www.eesel.ai/blog/ai-novel-writing-software) — MEDIUM confidence; includes user complaint analysis
-- [Reddit Writers: What Works and Fails with AI (resizemyimg.com)](https://resizemyimg.com/blog/writing-a-novel-with-ai-in-2025-what-works-what-fails-and-real-reddit-writers-feedback-on-using-chatgpt-or-similar-models/) — MEDIUM confidence; aggregated Reddit feedback
-- [BYOK model analysis (byoklist.com, Medium)](https://byoklist.com/) — MEDIUM confidence; corroborated by multiple sources
-- [How Creative Writers Integrate AI into their Writing Practice (arxiv.org, 2025)](https://arxiv.org/pdf/2411.03137) — HIGH confidence; peer-reviewed research
+- [Supabase Password-based Auth Docs](https://supabase.com/docs/guides/auth/passwords) — HIGH confidence; official
+- [Supabase Auth PKCE Flow Docs](https://supabase.com/docs/guides/auth/sessions/pkce-flow) — HIGH confidence; official
+- [Supabase `resetPasswordForEmail` JS Reference](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail) — HIGH confidence; official
+- [Supabase Password-based Auth UI Docs (Next.js)](https://supabase.com/ui/docs/nextjs/password-based-auth) — HIGH confidence; official
+- [Stripe How Products and Prices Work](https://docs.stripe.com/products-prices/how-products-and-prices-work) — HIGH confidence; official
+- [Stripe Build a Subscriptions Integration](https://docs.stripe.com/billing/subscriptions/build-subscriptions) — HIGH confidence; official
+- [Stripe Coupons and Promotion Codes](https://docs.stripe.com/billing/subscriptions/coupons) — HIGH confidence; official
+- [Stripe Add Discounts for One-Time Payments](https://docs.stripe.com/payments/checkout/discounts) — HIGH confidence; official
+- [Stripe Customer Portal Docs](https://docs.stripe.com/customer-management) — HIGH confidence; official
+- [Stripe Using Webhooks with Subscriptions](https://docs.stripe.com/billing/subscriptions/webhooks) — HIGH confidence; official
+- [Stripe Prorations Docs](https://docs.stripe.com/billing/subscriptions/prorations) — HIGH confidence; official
+- [Stripe Checkout Session API Reference](https://docs.stripe.com/api/checkout/sessions/create) — HIGH confidence; official
+- Codebase review: `src/app/(auth)/`, `src/actions/auth.ts`, `src/app/api/webhooks/stripe/route.ts`, `src/lib/stripe/tiers.ts` — HIGH confidence; primary source
 
 ---
 
-*Feature research for: AI-powered novel writing web application*
-*Researched: 2026-02-28*
+*Feature research for: StoryWriter v1.1 — Password Reset + Three-Tier Billing*
+*Researched: 2026-03-11*
