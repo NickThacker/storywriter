@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Chapter Generation** - Hybrid streaming prose generation, chapter management, progress tracking (completed 2026-03-03)
 - [x] **Phase 4: Creative Checkpoints** - Between-chapter approval loop, plot direction choices, human-in-the-loop checkpoints (completed 2026-03-03)
 - [x] **Phase 5: Export and Billing** - DOCX/TXT export, subscription billing, token tracking, launch readiness (completed 2026-03-04)
-- [ ] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context
+- [x] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context (completed 2026-03-12)
 - [x] **Phase 7: Character Creator** - Pre-outline character definition with AI name suggestions, detail expansion, and strict enforcement through outline and chapter generation (completed 2026-03-09)
 - [x] **Phase 8: Milestone Fixes** - Middleware allow-list fixes, BYOK removal + platform key, Phase 6 verification, traceability update (completed 2026-03-09)
 
@@ -136,7 +136,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 
 | 3. Chapter Generation | 5/5 | Complete   | 2026-03-03 |
 | 4. Creative Checkpoints | 5/5 | Complete    | 2026-03-03 |
 | 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
-| 6. Author Onboarding & Voice Analysis | 5/6 | Complete   | 2026-03-04 |
+| 6. Author Onboarding & Voice Analysis | 6/6 | Complete   | 2026-03-12 |
 | 7. Character Creator | 3/3 | Complete    | 2026-03-09 |
 | 8. Milestone Fixes | 2/2 | Complete   | 2026-03-09 |
 
@@ -145,7 +145,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 
 **Goal:** Onboarding sequence (accessible before dashboard, revisitable) where users provide style/voice preferences and upload writing samples. AI analyzes their writing style to produce: 1) a downloadable PDF style report, and 2) an "author voice" persona loaded into generation context. Users can provide general AI guidance and revisit their profile from Settings.
 **Requirements**: VOIC-01, VOIC-02, VOIC-03, VOIC-04, VOIC-05, VOIC-06, VOIC-07
 **Depends on:** Phase 1 (auth required, but independent of writing pipeline)
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 - [ ] 06-01-PLAN.md — DB migration (author_personas table), TypeScript types, npm install (mammoth/pdf-parse/pdfkit), next.config.ts serverExternalPackages (Wave 1)
