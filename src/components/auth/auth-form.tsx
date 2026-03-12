@@ -179,10 +179,11 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 // --- Main AuthForm component ---
 interface AuthFormProps {
   initialError?: string
+  initialMode?: AuthMode
 }
 
-export function AuthForm({ initialError }: AuthFormProps) {
-  const [mode, setMode] = useState<AuthMode>('sign-in')
+export function AuthForm({ initialError, initialMode }: AuthFormProps) {
+  const [mode, setMode] = useState<AuthMode>(initialMode ?? 'sign-in')
 
   return (
     <div className="flex flex-col items-center gap-6">

@@ -1,19 +1,66 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { updatePassword } from '@/actions/auth'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { CheckCircle } from 'lucide-react'
 
-type ActionState = { error?: string } | null
+type ActionState = { error?: string; success?: boolean } | null
+
+function SuccessState() {
+  const router = useRouter()
+  const [seconds, setSeconds] = useState(3)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          router.push('/dashboard')
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [router])
+
+  return (
+    <div className="flex flex-col items-center gap-6">
+      <p className="text-2xl font-bold text-foreground">Meridian</p>
+      <Card className="w-full max-w-sm">
+        <CardContent className="pt-6 flex flex-col items-center gap-4 text-center">
+          <CheckCircle className="h-10 w-10 text-green-500" />
+          <p className="text-lg font-bold">Password updated!</p>
+          <p className="text-sm text-muted-foreground">
+            Redirecting to dashboard in {seconds}...
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard')}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+          >
+            Continue now
+          </button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 
 export function ResetPasswordForm() {
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(
     updatePassword,
     null
   )
+
+  if (state && 'success' in state && state.success) {
+    return <SuccessState />
+  }
 
   return (
     <div className="flex flex-col items-center gap-6">

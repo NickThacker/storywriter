@@ -15,7 +15,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       ? 'The verification link is invalid. Please try again.'
       : params.error === 'expired_link'
       ? 'This link has already been used or has expired. Please request a new one.'
+      : params.error === 'session_expired'
+      ? 'Your reset link has expired. Request a new one below.'
       : undefined
 
-  return <AuthForm initialError={error} />
+  return (
+    <AuthForm
+      initialError={error}
+      initialMode={params.error === 'session_expired' ? 'forgot-password' : undefined}
+    />
+  )
 }

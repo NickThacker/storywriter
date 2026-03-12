@@ -130,7 +130,7 @@ export async function resetPassword(
 export async function updatePassword(
   prevState: { error?: string } | null,
   formData: FormData
-): Promise<{ error: string } | never> {
+): Promise<{ error: string } | { success: boolean }> {
   const raw = {
     password: formData.get('password') as string,
     confirmPassword: formData.get('confirmPassword') as string,
@@ -162,5 +162,5 @@ export async function updatePassword(
     return { error: error.message }
   }
 
-  redirect('/dashboard')
+  return { success: true }
 }
