@@ -7,8 +7,10 @@ if (!process.env.STRIPE_SECRET_KEY) {
   console.warn('STRIPE_SECRET_KEY not set — billing features will be unavailable')
 }
 
-export const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripeKey = process.env.STRIPE_SECRET_KEY?.trim()
+
+export const stripe = stripeKey
+  ? new Stripe(stripeKey, {
       maxNetworkRetries: 3,
       timeout: 30_000,
     })
