@@ -44,14 +44,6 @@ export async function updateSession(request: NextRequest) {
     '/api/bug-report', // Authenticated in route handler
   ]
 
-  // Supabase may redirect auth codes to the root URL instead of /auth/confirm.
-  // Forward to the confirm handler so the code gets exchanged properly.
-  if (request.nextUrl.searchParams.has('code') && request.nextUrl.pathname === '/') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/confirm'
-    return NextResponse.redirect(url)
-  }
-
   // Landing page is public
   if (request.nextUrl.pathname === '/') {
     return supabaseResponse

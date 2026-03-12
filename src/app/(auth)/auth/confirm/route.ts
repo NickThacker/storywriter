@@ -13,17 +13,11 @@ export async function GET(request: NextRequest) {
   // Supabase verifies the token on their end and redirects here with a `code`.
   if (code) {
     const supabase = await createClient()
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       return NextResponse.redirect(`${origin}/login?error=expired_link`)
     }
-    // Detect recovery: explicit params, or session authenticated via recovery OTP
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const amrMethods: string[] = ((data.session as any)?.amr ?? []).map((a: any) => a.method)
-    const isRecovery =
-      type === 'recovery' ||
-      next === '/auth/reset-password' ||
-      (amrMethods.includes('otp') && !amrMethods.includes('password'))
+    const isRecovery = type === 'recovery' || next === '/auth/reset-password'
     const defaultNext = isRecovery ? '/auth/reset-password' : '/dashboard'
     return NextResponse.redirect(`${origin}${next ?? defaultNext}`)
   }
