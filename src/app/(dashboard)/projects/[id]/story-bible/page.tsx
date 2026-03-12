@@ -5,7 +5,7 @@ import { BibleTabs } from '@/components/story-bible/bible-tabs'
 import type { CharacterRow, LocationRow, WorldFactRow } from '@/types/database'
 
 export const metadata: Metadata = {
-  title: 'Story Bible — StoryWriter',
+  title: 'Story Bible — Meridian',
 }
 
 export default async function StoryBiblePage({

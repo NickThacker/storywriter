@@ -108,8 +108,8 @@ Return ONLY valid JSON. Do not include explanations or markdown.`
         headers: {
           Authorization: `Bearer ${resolvedKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://storywriter.app',
-          'X-Title': 'StoryWriter',
+          'HTTP-Referer': 'https://meridianwrite.com',
+          'X-Title': 'Meridian',
         },
         body: JSON.stringify({
           model: prefillModel,

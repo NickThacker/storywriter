@@ -144,7 +144,7 @@ function CompletionModal({ open }: { open: boolean }) {
           </div>
           <DialogTitle className="text-center text-lg">Your Voice DNA Profile is ready</DialogTitle>
           <DialogDescription className="text-center">
-            StoryWriter has captured your writing voice. Your style will now be used to match your prose across all generated chapters.
+            Meridian has captured your writing voice. Your style will now be used to match your prose across all generated chapters.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-2">

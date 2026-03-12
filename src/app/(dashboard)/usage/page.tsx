@@ -7,7 +7,7 @@ import { getUserTotalUsage, getProjectTokenUsage } from '@/actions/token-usage'
 import { UsageBar } from '@/components/billing/usage-bar'
 
 export const metadata: Metadata = {
-  title: 'Usage — StoryWriter',
+  title: 'Usage — Meridian',
 }
 
 function formatDate(iso: string | null): string {

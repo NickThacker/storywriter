@@ -10,7 +10,7 @@ import { VoiceProfileTab } from '@/components/settings/voice-profile-tab'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export const metadata: Metadata = {
-  title: 'Settings — StoryWriter',
+  title: 'Settings — Meridian',
 }
 
 export default async function SettingsPage() {

@@ -145,7 +145,7 @@ Each array should contain 2–5 specific, concrete strings referencing actual co
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-      'X-Title': 'StoryWriter',
+      'X-Title': 'Meridian',
     },
     body: JSON.stringify({
       model: modelId,

@@ -6,7 +6,7 @@ import type { OutlineRow, ProjectRow } from '@/types/database'
 import type { IntakeData } from '@/lib/validations/intake'
 
 export const metadata = {
-  title: 'Outline — StoryWriter',
+  title: 'Outline — Meridian',
 }
 
 export default async function OutlinePage({

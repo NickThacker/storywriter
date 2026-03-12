@@ -133,7 +133,7 @@ describe('runContinuityAudit', () => {
     const [url, opts] = mockFetch.mock.calls[0]
     expect(url).toBe('https://openrouter.ai/api/v1/chat/completions')
     expect(opts.headers.Authorization).toBe('Bearer my-api-key')
-    expect(opts.headers['X-Title']).toBe('StoryWriter')
+    expect(opts.headers['X-Title']).toBe('Meridian')
   })
 
   it('includes continuity facts in the prompt', async () => {

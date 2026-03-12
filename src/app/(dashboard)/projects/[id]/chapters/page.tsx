@@ -6,7 +6,7 @@ import { ExportDialog } from '@/components/export/export-dialog'
 import type { OutlineChapter, ProjectRow, OutlineRow } from '@/types/database'
 import type { ChapterCheckpointRow } from '@/types/project-memory'
 
-export const metadata = { title: 'Chapters — StoryWriter' }
+export const metadata = { title: 'Chapters — Meridian' }
 
 export default async function ChaptersPage({
   params,

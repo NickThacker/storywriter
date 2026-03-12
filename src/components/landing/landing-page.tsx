@@ -81,7 +81,7 @@ export function LandingPage() {
               fontStyle: 'italic',
             }}
           >
-            StoryWriter
+            Meridian
           </span>
 
           <div className="flex items-center gap-6">
@@ -512,10 +512,10 @@ export function LandingPage() {
               opacity: 0.6,
             }}
           >
-            StoryWriter
+            Meridian
           </span>
           <p style={{ color: '#7a7368', fontSize: '0.72rem', letterSpacing: '0.04em' }}>
-            &copy; {new Date().getFullYear()} StoryWriter
+            &copy; {new Date().getFullYear()} Meridian
           </p>
         </div>
       </footer>

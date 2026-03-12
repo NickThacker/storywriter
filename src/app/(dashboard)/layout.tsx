@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/actions/auth'
 import { VoiceOnboardingNudge } from '@/components/dashboard/voice-onboarding-nudge'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { BugReportButton } from '@/components/bug-report-button'
 
 export default async function DashboardLayout({
   children,
@@ -50,7 +51,7 @@ export default async function DashboardLayout({
             href="/dashboard"
             className="font-[family-name:var(--font-literata)] italic text-[color:var(--gold)] text-[1.05rem] tracking-[0.02em] shrink-0 hover:opacity-80 transition-opacity"
           >
-            StoryWriter
+            Meridian
           </Link>
 
           {/* Nav links */}
@@ -91,6 +92,7 @@ export default async function DashboardLayout({
         {showVoiceNudge && <VoiceOnboardingNudge />}
         {children}
       </main>
+      <BugReportButton userEmail={user.email ?? undefined} />
     </div>
   )
 }

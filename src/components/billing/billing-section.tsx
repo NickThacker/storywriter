@@ -68,7 +68,7 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
     return (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Choose a plan to start generating with StoryWriter&apos;s hosted AI.
+          Choose a plan to start generating with Meridian&apos;s hosted AI.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {TIERS.map((tier) => (

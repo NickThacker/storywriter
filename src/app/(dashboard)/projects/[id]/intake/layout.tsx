@@ -5,7 +5,7 @@ import type { IntakeState } from '@/lib/stores/intake-store'
 import { GENRES } from '@/lib/data/genres'
 
 export const metadata = {
-  title: 'Story Intake — StoryWriter',
+  title: 'Story Intake — Meridian',
 }
 
 export default async function IntakeLayout({

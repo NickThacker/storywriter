@@ -1,7 +1,7 @@
 import { AuthForm } from '@/components/auth/auth-form'
 
 export const metadata = {
-  title: 'Sign In — StoryWriter',
+  title: 'Sign In — Meridian',
 }
 
 interface LoginPageProps {

@@ -6,7 +6,7 @@ import { EmptyState } from '@/components/dashboard/empty-state'
 import type { Project } from '@/types/database'
 
 export const metadata: Metadata = {
-  title: 'Dashboard — StoryWriter',
+  title: 'Dashboard — Meridian',
 }
 
 export default async function DashboardPage() {

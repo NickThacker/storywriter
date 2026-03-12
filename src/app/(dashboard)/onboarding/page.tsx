@@ -81,7 +81,7 @@ export default function OnboardingPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Author Voice Setup</h1>
         <p className="mt-1 text-muted-foreground">
-          Provide writing samples so StoryWriter can match your style.
+          Provide writing samples so Meridian can match your style.
         </p>
       </div>
       <VoiceProgressBar currentStep={currentStep} />

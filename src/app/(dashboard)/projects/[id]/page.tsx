@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Project — StoryWriter',
+  title: 'Project — Meridian',
 }
 
 export default async function ProjectPage({

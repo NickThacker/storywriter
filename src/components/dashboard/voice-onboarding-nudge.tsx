@@ -18,7 +18,7 @@ export function VoiceOnboardingNudge() {
     <div className="mb-6 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
       <div>
         <strong>Set up your author voice.</strong>{' '}
-        Help StoryWriter write in your style &mdash; upload a writing sample and we will analyze your voice.
+        Help Meridian write in your style &mdash; upload a writing sample and we will analyze your voice.
       </div>
       <div className="ml-4 flex shrink-0 items-center gap-3">
         <Link

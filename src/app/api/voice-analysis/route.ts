@@ -88,7 +88,7 @@ export async function POST(request: Request): Promise<Response> {
         Authorization: `Bearer ${resolvedKey}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-        'X-Title': 'StoryWriter',
+        'X-Title': 'Meridian',
       },
       body: JSON.stringify({
         model: modelId,

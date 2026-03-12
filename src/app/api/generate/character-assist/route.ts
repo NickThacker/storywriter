@@ -196,8 +196,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       headers: {
         Authorization: `Bearer ${resolvedKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://storywriter.app',
-        'X-Title': 'StoryWriter',
+        'HTTP-Referer': 'https://meridianwrite.com',
+        'X-Title': 'Meridian',
       },
       body: JSON.stringify({
         model,

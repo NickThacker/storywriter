@@ -17,7 +17,7 @@ export function ResetPasswordForm() {
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <p className="text-2xl font-bold text-foreground">StoryWriter</p>
+      <p className="text-2xl font-bold text-foreground">Meridian</p>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <h1 className="text-xl font-semibold text-center">Set New Password</h1>

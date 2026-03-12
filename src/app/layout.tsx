@@ -20,7 +20,7 @@ const literata = Literata({
 })
 
 export const metadata: Metadata = {
-  title: 'StoryWriter',
+  title: 'Meridian',
   description: 'Go from an idea to a complete novel through structured AI collaboration',
 }
 
