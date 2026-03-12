@@ -102,8 +102,8 @@ Requirements for Auth & Billing milestone. Each maps to roadmap phases.
 
 ### Password Reset
 
-- [ ] **PRST-01**: Recovery link from Supabase email lands on `/auth/reset-password` with an active session (server-side guard redirects to login with error if no session)
-- [ ] **PRST-02**: User can enter and confirm a new password on the reset page, then is redirected to dashboard on success
+- [x] **PRST-01**: Recovery link from Supabase email lands on `/auth/reset-password` with an active session (server-side guard redirects to login with error if no session)
+- [x] **PRST-02**: User can enter and confirm a new password on the reset page, then is redirected to dashboard on success
 
 ### Billing Infrastructure
 

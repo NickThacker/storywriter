@@ -187,7 +187,7 @@ Plans:
 
 **Milestone Goal:** Fix the password reset flow so recovery links land on a proper "set new password" page, and rework Stripe billing from token-based to the three-tier pricing model (Project / Author / Studio).
 
-- [ ] **Phase 9: Password Reset Fix** - Recovery link lands on `/auth/reset-password` with working set-new-password form
+- [x] **Phase 9: Password Reset Fix** - Recovery link lands on `/auth/reset-password` with working set-new-password form (completed 2026-03-12)
 - [ ] **Phase 10: Billing Infrastructure** - Stripe products/prices/coupon created via CLI, DB migration, tier definitions updated
 - [ ] **Phase 11: Billing Enforcement** - Project-count gates replace token-budget gates; completed projects stay readable
 - [ ] **Phase 12: Checkout and Webhooks** - Self-serve Stripe Checkout for all tiers, webhook handler for purchases and subscriptions, repeat discount
@@ -204,7 +204,7 @@ Plans:
   2. If no valid recovery session is present when visiting `/auth/reset-password`, the page redirects to `/login` with an error message
   3. User can enter and confirm a new password on the reset page and submit successfully
   4. After a successful password reset, the user is redirected to the dashboard and is logged in
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 09-01-PLAN.md — Move reset-password to (reset) route group with session guard, success countdown, login error handling (Wave 1)
@@ -269,7 +269,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 
 | 6. Author Onboarding & Voice Analysis | v1.0 | 6/6 | Complete | 2026-03-12 |
 | 7. Character Creator | v1.0 | 3/3 | Complete | 2026-03-09 |
 | 8. Milestone Fixes | v1.0 | 2/2 | Complete | 2026-03-09 |
-| 9. Password Reset Fix | v1.1 | 0/1 | Not started | - |
+| 9. Password Reset Fix | 1/1 | Complete   | 2026-03-12 | - |
 | 10. Billing Infrastructure | v1.1 | 0/TBD | Not started | - |
 | 11. Billing Enforcement | v1.1 | 0/TBD | Not started | - |
 | 12. Checkout and Webhooks | v1.1 | 0/TBD | Not started | - |

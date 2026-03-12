@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Auth & Billing
-current_phase: 9
-current_plan: null
-status: ready_to_plan
-last_updated: "2026-03-12T00:00:00.000Z"
+current_phase: Phase 9 of 13 (Password Reset Fix) — ready to plan
+current_plan: —
+status: planning
+last_updated: "2026-03-12T15:17:05.312Z"
+last_activity: 2026-03-12 — v1.1 roadmap defined (Phases 9-13)
 progress:
-  total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 10
+  completed_phases: 10
+  total_plans: 45
+  completed_plans: 45
 ---
 
 # Session State
@@ -25,15 +26,16 @@ See: .planning/PROJECT.md (updated 2026-03-11)
 ## Position
 
 **Milestone:** v1.1 Auth & Billing
-**Current phase:** Phase 9 of 13 (Password Reset Fix) — ready to plan
-**Current plan:** —
-**Status:** Roadmap created — ready to plan Phase 9
-**Last activity:** 2026-03-12 — v1.1 roadmap defined (Phases 9-13)
+**Current phase:** Phase 9 of 13 (Password Reset Fix) — complete
+**Current plan:** 09-01 complete
+**Status:** Phase 9 complete — ready for Phase 10
+**Last activity:** 2026-03-12 — Phase 9 password reset fix executed (09-01)
 
-Progress: [░░░░░░░░░░] 0% (v1.1)
+Progress: [█░░░░░░░░░] 10% (v1.1)
 
 ## Session Log
 
+- 2026-03-12: Phase 9 complete — password reset flow fixed (route group isolation, session guard, success countdown)
 - 2026-03-12: v1.1 roadmap created — 5 phases (9-13), 16 requirements mapped
 - 2026-03-11: Milestone v1.1 started — password reset fix + Stripe billing rework
 
@@ -47,6 +49,8 @@ Progress: [░░░░░░░░░░] 0% (v1.1)
 (v1.1)
 - Project-count limits replace token budgets — decided during requirements definition
 - No user-facing promo codes — repeat discount applied server-side only
+- [Phase 09-password-reset-fix]: Move reset-password to (reset) route group to bypass (auth) layout redirect guard — recovery users were being sent to dashboard before seeing the reset form
+- [Phase 09-password-reset-fix]: updatePassword returns { success: true } instead of calling redirect() so client component can show success state with countdown before navigating
 
 ## Accumulated Context
 
