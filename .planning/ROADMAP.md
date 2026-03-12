@@ -204,7 +204,10 @@ Plans:
   2. If no valid recovery session is present when visiting `/auth/reset-password`, the page redirects to `/login` with an error message
   3. User can enter and confirm a new password on the reset page and submit successfully
   4. After a successful password reset, the user is redirected to the dashboard and is logged in
-**Plans**: TBD
+**Plans:** 1 plan
+
+Plans:
+- [ ] 09-01-PLAN.md — Move reset-password to (reset) route group with session guard, success countdown, login error handling (Wave 1)
 
 ### Phase 10: Billing Infrastructure
 **Goal**: The three-tier pricing model exists in Stripe and the database — products, prices, and coupon created via CLI; schema updated; tier definitions reflect new model
@@ -266,7 +269,7 @@ Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 
 | 6. Author Onboarding & Voice Analysis | v1.0 | 6/6 | Complete | 2026-03-12 |
 | 7. Character Creator | v1.0 | 3/3 | Complete | 2026-03-09 |
 | 8. Milestone Fixes | v1.0 | 2/2 | Complete | 2026-03-09 |
-| 9. Password Reset Fix | v1.1 | 0/TBD | Not started | - |
+| 9. Password Reset Fix | v1.1 | 0/1 | Not started | - |
 | 10. Billing Infrastructure | v1.1 | 0/TBD | Not started | - |
 | 11. Billing Enforcement | v1.1 | 0/TBD | Not started | - |
 | 12. Checkout and Webhooks | v1.1 | 0/TBD | Not started | - |
