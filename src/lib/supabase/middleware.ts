@@ -50,6 +50,7 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     if (request.nextUrl.searchParams.has('code')) {
       url.pathname = '/auth/confirm'
+      url.searchParams.set('next', '/auth/reset-password')
     } else if (user) {
       url.pathname = '/dashboard'
     } else {
