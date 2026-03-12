@@ -40,13 +40,22 @@ export async function updateSession(request: NextRequest) {
     '/auth/verify',
     '/auth/reset-password',
     '/api/health',
-    '/api/webhooks', // Covers /api/webhooks/stripe and future webhook providers
-    '/api/bug-report', // Authenticated in route handler
+    '/api/webhooks',
+    '/api/bug-report',
   ]
 
-  // Landing page is public
+  // Root URL: if Supabase sent an auth code, forward to /auth/confirm.
+  // Otherwise redirect to /login (no landing page on the app subdomain).
   if (request.nextUrl.pathname === '/') {
-    return supabaseResponse
+    const url = request.nextUrl.clone()
+    if (request.nextUrl.searchParams.has('code')) {
+      url.pathname = '/auth/confirm'
+    } else if (user) {
+      url.pathname = '/dashboard'
+    } else {
+      url.pathname = '/login'
+    }
+    return NextResponse.redirect(url)
   }
 
   const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))
