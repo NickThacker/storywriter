@@ -68,7 +68,20 @@ export function VoiceProfileTab({ persona }: { persona: AuthorPersonaRow | null 
                 style={{ borderRadius: 0 }}
               >
                 <div className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground">{key.replace(/_/g, ' ')}</div>
-                <div className="mt-1 text-sm text-foreground">{String(value)}</div>
+                <div className="mt-1 text-sm text-foreground">
+                  {typeof value === 'string'
+                    ? value
+                    : Array.isArray(value)
+                    ? value.join(', ')
+                    : value && typeof value === 'object'
+                    ? Object.entries(value).map(([k, v]) => (
+                        <div key={k} className="mt-1 first:mt-0">
+                          <span className="text-muted-foreground text-xs">{k.replace(/_/g, ' ')}:</span>{' '}
+                          <span>{String(v)}</span>
+                        </div>
+                      ))
+                    : String(value)}
+                </div>
               </div>
             ))}
           </div>
