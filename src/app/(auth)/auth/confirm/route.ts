@@ -13,11 +13,12 @@ export async function GET(request: NextRequest) {
   // Supabase verifies the token on their end and redirects here with a `code`.
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       return NextResponse.redirect(`${origin}/login?error=expired_link`)
     }
-    const defaultNext = type === 'recovery' ? '/auth/reset-password' : '/dashboard'
+    const isRecovery = type === 'recovery' || next === '/auth/reset-password'
+    const defaultNext = isRecovery ? '/auth/reset-password' : '/dashboard'
     return NextResponse.redirect(`${origin}${next ?? defaultNext}`)
   }
 

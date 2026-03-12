@@ -41,7 +41,13 @@ export async function updateSession(request: NextRequest) {
     '/auth/reset-password',
     '/api/health',
     '/api/webhooks', // Covers /api/webhooks/stripe and future webhook providers
+    '/api/bug-report', // Authenticated in route handler
   ]
+
+  // Landing page is public
+  if (request.nextUrl.pathname === '/') {
+    return supabaseResponse
+  }
 
   const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))
 
