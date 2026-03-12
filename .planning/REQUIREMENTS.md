@@ -88,7 +88,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Author Voice & Onboarding
 
-- [x] **VOIC-01**: User can complete a 3-step voice onboarding wizard (writing samples, style preferences, analysis results)
+- [x] **VOIC-01**: User can complete the voice onboarding wizard (writing samples → AI analysis with streaming results)
 - [x] **VOIC-02**: User can provide writing samples by pasting text or uploading PDF, DOCX, or TXT files
 - [x] **VOIC-03**: AI analyzes writing samples and style preferences to produce a structured author voice persona (style descriptors, thematic preferences, voice description, guidance text)
 - [x] **VOIC-04**: User receives a downloadable PDF style report after analysis completes
