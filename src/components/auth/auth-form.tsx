@@ -1,12 +1,12 @@
 'use client'
 
 import { useActionState, useState } from 'react'
+import Image from 'next/image'
 import { signIn, signUp, resetPassword } from '@/actions/auth'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import logo from '@/app/assets/logo.png'
 
 type AuthMode = 'sign-in' | 'sign-up' | 'forgot-password'
 type ActionState = { error?: string; success?: string } | null
@@ -19,9 +19,9 @@ function SignInForm({ initialError }: { initialError?: string }) {
   )
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="signin-email">Email</Label>
+    <form action={formAction} className="space-y-5">
+      <div className="space-y-1.5">
+        <Label htmlFor="signin-email" className="text-xs uppercase tracking-widest text-muted-foreground">Email</Label>
         <Input
           id="signin-email"
           type="email"
@@ -29,11 +29,12 @@ function SignInForm({ initialError }: { initialError?: string }) {
           placeholder="you@example.com"
           name="email"
           required
+          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="signin-password">Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="signin-password" className="text-xs uppercase tracking-widest text-muted-foreground">Password</Label>
         <Input
           id="signin-password"
           type="password"
@@ -42,6 +43,7 @@ function SignInForm({ initialError }: { initialError?: string }) {
           name="password"
           required
           minLength={8}
+          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
@@ -49,7 +51,7 @@ function SignInForm({ initialError }: { initialError?: string }) {
         <p className="text-sm text-destructive">{state.error}</p>
       )}
 
-      <Button type="submit" className="w-full" disabled={isPending}>
+      <Button type="submit" className="w-full h-10 rounded-sm" disabled={isPending}>
         {isPending ? 'Signing in...' : 'Sign in'}
       </Button>
     </form>
@@ -64,9 +66,9 @@ function SignUpForm() {
   )
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="signup-email">Email</Label>
+    <form action={formAction} className="space-y-5">
+      <div className="space-y-1.5">
+        <Label htmlFor="signup-email" className="text-xs uppercase tracking-widest text-muted-foreground">Email</Label>
         <Input
           id="signup-email"
           type="email"
@@ -74,11 +76,12 @@ function SignUpForm() {
           placeholder="you@example.com"
           name="email"
           required
+          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="signup-password">Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="signup-password" className="text-xs uppercase tracking-widest text-muted-foreground">Password</Label>
         <Input
           id="signup-password"
           type="password"
@@ -88,11 +91,12 @@ function SignUpForm() {
           required
           minLength={8}
           maxLength={72}
+          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="signup-confirm">Confirm Password</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="signup-confirm" className="text-xs uppercase tracking-widest text-muted-foreground">Confirm Password</Label>
         <Input
           id="signup-confirm"
           type="password"
@@ -101,6 +105,7 @@ function SignUpForm() {
           name="confirmPassword"
           required
           minLength={8}
+          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
@@ -109,12 +114,10 @@ function SignUpForm() {
       )}
 
       {state && 'success' in state && state.success && (
-        <div className="rounded-md bg-secondary border border-border p-3">
-          <p className="text-sm text-foreground">{state.success}</p>
-        </div>
+        <p className="text-sm text-muted-foreground">{state.success}</p>
       )}
 
-      <Button type="submit" className="w-full" disabled={isPending}>
+      <Button type="submit" className="w-full h-10 rounded-sm" disabled={isPending}>
         {isPending ? 'Creating account...' : 'Create account'}
       </Button>
     </form>
@@ -129,17 +132,17 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-semibold">Reset Password</h2>
+        <h2 className="font-[family-name:var(--font-literata)] italic text-lg text-foreground">Reset Password</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Enter your email and we&apos;ll send you a reset link.
         </p>
       </div>
 
-      <form action={formAction} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="reset-email">Email</Label>
+      <form action={formAction} className="space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="reset-email" className="text-xs uppercase tracking-widest text-muted-foreground">Email</Label>
           <Input
             id="reset-email"
             type="email"
@@ -147,6 +150,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
             placeholder="you@example.com"
             name="email"
             required
+            className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
           />
         </div>
 
@@ -155,12 +159,10 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
         )}
 
         {state && 'success' in state && state.success && (
-          <div className="rounded-md bg-green-50 border border-green-200 p-3">
-            <p className="text-sm text-green-800">{state.success}</p>
-          </div>
+          <p className="text-sm text-muted-foreground">{state.success}</p>
         )}
 
-        <Button type="submit" className="w-full" disabled={isPending}>
+        <Button type="submit" className="w-full h-10 rounded-sm" disabled={isPending}>
           {isPending ? 'Sending...' : 'Send reset link'}
         </Button>
       </form>
@@ -168,7 +170,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
       <button
         type="button"
         onClick={onBack}
-        className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline w-full text-center"
+        className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-full text-center"
       >
         Back to sign in
       </button>
@@ -186,54 +188,69 @@ export function AuthForm({ initialError, initialMode }: AuthFormProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode ?? 'sign-in')
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      <p className="text-2xl font-bold text-foreground">Meridian</p>
+    <div className="flex flex-col items-center gap-10">
+      <Image
+        src={logo}
+        alt="Meridian"
+        width={180}
+        height={90}
+        priority
+        className="dark:invert-0"
+      />
 
-      <Card className="w-full max-w-sm">
-        <CardHeader className="pb-2">
-          {mode === 'forgot-password' ? null : (
+      <div className="w-full max-w-sm space-y-6">
+        {mode === 'forgot-password' ? (
+          <ForgotPasswordForm onBack={() => setMode('sign-in')} />
+        ) : (
+          <>
             <p className="text-sm text-muted-foreground text-center">
               Sign in or create an account to continue
             </p>
-          )}
-        </CardHeader>
-        <CardContent>
-          {mode === 'forgot-password' ? (
-            <ForgotPasswordForm onBack={() => setMode('sign-in')} />
-          ) : (
-            <Tabs
-              value={mode}
-              onValueChange={(v) => setMode(v as AuthMode)}
-            >
-              <TabsList className="w-full mb-4">
-                <TabsTrigger value="sign-in" className="flex-1">
-                  Sign in
-                </TabsTrigger>
-                <TabsTrigger value="sign-up" className="flex-1">
-                  Create account
-                </TabsTrigger>
-              </TabsList>
 
-              <TabsContent value="sign-in">
+            <div className="flex justify-center gap-6 border-b border-border/50">
+              <button
+                type="button"
+                onClick={() => setMode('sign-in')}
+                className={`pb-2.5 text-xs uppercase tracking-widest transition-colors ${
+                  mode === 'sign-in'
+                    ? 'text-foreground border-b border-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('sign-up')}
+                className={`pb-2.5 text-xs uppercase tracking-widest transition-colors ${
+                  mode === 'sign-up'
+                    ? 'text-foreground border-b border-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Create account
+              </button>
+            </div>
+
+            {mode === 'sign-in' && (
+              <>
                 <SignInForm initialError={initialError} />
-                <div className="mt-3 text-center">
+                <div className="text-center">
                   <button
                     type="button"
                     onClick={() => setMode('forgot-password')}
-                    className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+                    className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Forgot password?
                   </button>
                 </div>
-              </TabsContent>
+              </>
+            )}
 
-              <TabsContent value="sign-up">
-                <SignUpForm />
-              </TabsContent>
-            </Tabs>
-          )}
-        </CardContent>
-      </Card>
+            {mode === 'sign-up' && <SignUpForm />}
+          </>
+        )}
+      </div>
     </div>
   )
 }
