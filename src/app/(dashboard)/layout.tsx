@@ -1,10 +1,12 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/actions/auth'
 import { VoiceOnboardingNudge } from '@/components/dashboard/voice-onboarding-nudge'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { BugReportButton } from '@/components/bug-report-button'
+import logo from '@/app/assets/logo.png'
 
 export default async function DashboardLayout({
   children,
@@ -49,9 +51,16 @@ export default async function DashboardLayout({
           {/* Logo */}
           <Link
             href="/dashboard"
-            className="font-[family-name:var(--font-literata)] italic text-[color:var(--gold)] text-[1.05rem] tracking-[0.02em] shrink-0 hover:opacity-80 transition-opacity"
+            className="shrink-0 hover:opacity-80 transition-opacity"
           >
-            Meridian
+            <Image
+              src={logo}
+              alt="Meridian"
+              width={100}
+              height={50}
+              priority
+              className="h-7 w-auto"
+            />
           </Link>
 
           {/* Nav links */}

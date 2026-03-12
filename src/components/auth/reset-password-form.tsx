@@ -4,13 +4,32 @@ import { useActionState, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { updatePassword } from '@/actions/auth'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
 import logo from '@/app/assets/logo.png'
 
 type ActionState = { error?: string; success?: boolean } | null
+
+function AuthInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className="w-full h-10 bg-transparent border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-[color:var(--gold)]/60 transition-colors"
+      style={{ borderRadius: 0 }}
+    />
+  )
+}
+
+function AuthLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground"
+    >
+      {children}
+    </label>
+  )
+}
 
 function SuccessState() {
   const router = useRouter()
@@ -31,22 +50,29 @@ function SuccessState() {
   }, [router])
 
   return (
-    <div className="flex flex-col items-center gap-10">
+    <div className="flex flex-col items-center gap-12">
       <Image
         src={logo}
         alt="Meridian"
-        width={180}
-        height={90}
+        width={200}
+        height={100}
         priority
-        className="dark:invert-0"
       />
 
-      <div className="w-full max-w-sm flex flex-col items-center gap-5 text-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50">
-          <Check className="h-5 w-5 text-foreground" />
+      <div className="w-full max-w-sm flex flex-col items-center gap-6 text-center">
+        <div
+          className="flex h-10 w-10 items-center justify-center border border-[color:var(--gold)]/40"
+          style={{ borderRadius: 0 }}
+        >
+          <Check className="h-4 w-4" style={{ color: 'var(--gold)' }} />
         </div>
-        <div className="space-y-1.5">
-          <p className="font-[family-name:var(--font-literata)] italic text-lg text-foreground">Password updated</p>
+        <div className="space-y-2">
+          <p
+            className="font-[family-name:var(--font-literata)] text-foreground"
+            style={{ fontSize: '1.0625rem', fontWeight: 400 }}
+          >
+            Password updated
+          </p>
           <p className="text-sm text-muted-foreground">
             Redirecting to dashboard in {seconds}...
           </p>
@@ -54,7 +80,7 @@ function SuccessState() {
         <button
           type="button"
           onClick={() => router.push('/dashboard')}
-          className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+          className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           Continue now
         </button>
@@ -74,19 +100,23 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-10">
+    <div className="flex flex-col items-center gap-12">
       <Image
         src={logo}
         alt="Meridian"
-        width={180}
-        height={90}
+        width={200}
+        height={100}
         priority
-        className="dark:invert-0"
       />
 
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-8">
         <div>
-          <h1 className="font-[family-name:var(--font-literata)] italic text-lg text-foreground">Set New Password</h1>
+          <h1
+            className="font-[family-name:var(--font-literata)] text-foreground"
+            style={{ fontSize: '1.0625rem', fontWeight: 400 }}
+          >
+            Set New Password
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Enter your new password below.
           </p>
@@ -94,8 +124,8 @@ export function ResetPasswordForm() {
 
         <form action={formAction} className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="password" className="text-xs uppercase tracking-widest text-muted-foreground">New Password</Label>
-            <Input
+            <AuthLabel htmlFor="password">New Password</AuthLabel>
+            <AuthInput
               id="password"
               name="password"
               type="password"
@@ -103,13 +133,12 @@ export function ResetPasswordForm() {
               minLength={8}
               placeholder="Enter new password"
               autoComplete="new-password"
-              className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="confirmPassword" className="text-xs uppercase tracking-widest text-muted-foreground">Confirm Password</Label>
-            <Input
+            <AuthLabel htmlFor="confirmPassword">Confirm Password</AuthLabel>
+            <AuthInput
               id="confirmPassword"
               name="confirmPassword"
               type="password"
@@ -117,7 +146,6 @@ export function ResetPasswordForm() {
               minLength={8}
               placeholder="Confirm new password"
               autoComplete="new-password"
-              className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
             />
           </div>
 
@@ -125,7 +153,13 @@ export function ResetPasswordForm() {
             <p className="text-sm text-destructive">{state.error}</p>
           )}
 
-          <Button type="submit" className="w-full h-10 rounded-sm" disabled={isPending}>
+          <Button
+            type="submit"
+            variant="outline"
+            className="w-full h-10 text-[0.68rem] uppercase tracking-[0.1em] cursor-pointer"
+            style={{ borderRadius: 0 }}
+            disabled={isPending}
+          >
             {isPending ? 'Updating...' : 'Update Password'}
           </Button>
         </form>

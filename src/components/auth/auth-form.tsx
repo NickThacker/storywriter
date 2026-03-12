@@ -3,13 +3,32 @@
 import { useActionState, useState } from 'react'
 import Image from 'next/image'
 import { signIn, signUp, resetPassword } from '@/actions/auth'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import logo from '@/app/assets/logo.png'
 
 type AuthMode = 'sign-in' | 'sign-up' | 'forgot-password'
 type ActionState = { error?: string; success?: string } | null
+
+function AuthInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className="w-full h-10 bg-transparent border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-[color:var(--gold)]/60 transition-colors"
+      style={{ borderRadius: 0 }}
+    />
+  )
+}
+
+function AuthLabel({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground"
+    >
+      {children}
+    </label>
+  )
+}
 
 // --- Sign-in form ---
 function SignInForm({ initialError }: { initialError?: string }) {
@@ -21,21 +40,20 @@ function SignInForm({ initialError }: { initialError?: string }) {
   return (
     <form action={formAction} className="space-y-5">
       <div className="space-y-1.5">
-        <Label htmlFor="signin-email" className="text-xs uppercase tracking-widest text-muted-foreground">Email</Label>
-        <Input
+        <AuthLabel htmlFor="signin-email">Email</AuthLabel>
+        <AuthInput
           id="signin-email"
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
           name="email"
           required
-          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="signin-password" className="text-xs uppercase tracking-widest text-muted-foreground">Password</Label>
-        <Input
+        <AuthLabel htmlFor="signin-password">Password</AuthLabel>
+        <AuthInput
           id="signin-password"
           type="password"
           autoComplete="current-password"
@@ -43,7 +61,6 @@ function SignInForm({ initialError }: { initialError?: string }) {
           name="password"
           required
           minLength={8}
-          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
@@ -51,7 +68,13 @@ function SignInForm({ initialError }: { initialError?: string }) {
         <p className="text-sm text-destructive">{state.error}</p>
       )}
 
-      <Button type="submit" className="w-full h-10 rounded-sm" disabled={isPending}>
+      <Button
+        type="submit"
+        variant="outline"
+        className="w-full h-10 text-[0.68rem] uppercase tracking-[0.1em] cursor-pointer"
+        style={{ borderRadius: 0 }}
+        disabled={isPending}
+      >
         {isPending ? 'Signing in...' : 'Sign in'}
       </Button>
     </form>
@@ -68,21 +91,20 @@ function SignUpForm() {
   return (
     <form action={formAction} className="space-y-5">
       <div className="space-y-1.5">
-        <Label htmlFor="signup-email" className="text-xs uppercase tracking-widest text-muted-foreground">Email</Label>
-        <Input
+        <AuthLabel htmlFor="signup-email">Email</AuthLabel>
+        <AuthInput
           id="signup-email"
           type="email"
           autoComplete="email"
           placeholder="you@example.com"
           name="email"
           required
-          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="signup-password" className="text-xs uppercase tracking-widest text-muted-foreground">Password</Label>
-        <Input
+        <AuthLabel htmlFor="signup-password">Password</AuthLabel>
+        <AuthInput
           id="signup-password"
           type="password"
           autoComplete="new-password"
@@ -91,13 +113,12 @@ function SignUpForm() {
           required
           minLength={8}
           maxLength={72}
-          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="signup-confirm" className="text-xs uppercase tracking-widest text-muted-foreground">Confirm Password</Label>
-        <Input
+        <AuthLabel htmlFor="signup-confirm">Confirm Password</AuthLabel>
+        <AuthInput
           id="signup-confirm"
           type="password"
           autoComplete="new-password"
@@ -105,7 +126,6 @@ function SignUpForm() {
           name="confirmPassword"
           required
           minLength={8}
-          className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
         />
       </div>
 
@@ -117,7 +137,13 @@ function SignUpForm() {
         <p className="text-sm text-muted-foreground">{state.success}</p>
       )}
 
-      <Button type="submit" className="w-full h-10 rounded-sm" disabled={isPending}>
+      <Button
+        type="submit"
+        variant="outline"
+        className="w-full h-10 text-[0.68rem] uppercase tracking-[0.1em] cursor-pointer"
+        style={{ borderRadius: 0 }}
+        disabled={isPending}
+      >
         {isPending ? 'Creating account...' : 'Create account'}
       </Button>
     </form>
@@ -134,7 +160,12 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-[family-name:var(--font-literata)] italic text-lg text-foreground">Reset Password</h2>
+        <h2
+          className="font-[family-name:var(--font-literata)] text-foreground"
+          style={{ fontSize: '1.0625rem', fontWeight: 400 }}
+        >
+          Reset Password
+        </h2>
         <p className="text-sm text-muted-foreground mt-1">
           Enter your email and we&apos;ll send you a reset link.
         </p>
@@ -142,15 +173,14 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
 
       <form action={formAction} className="space-y-5">
         <div className="space-y-1.5">
-          <Label htmlFor="reset-email" className="text-xs uppercase tracking-widest text-muted-foreground">Email</Label>
-          <Input
+          <AuthLabel htmlFor="reset-email">Email</AuthLabel>
+          <AuthInput
             id="reset-email"
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
             name="email"
             required
-            className="h-10 rounded-sm border-border/50 bg-background focus-visible:ring-[color:var(--gold)]"
           />
         </div>
 
@@ -162,7 +192,13 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
           <p className="text-sm text-muted-foreground">{state.success}</p>
         )}
 
-        <Button type="submit" className="w-full h-10 rounded-sm" disabled={isPending}>
+        <Button
+          type="submit"
+          variant="outline"
+          className="w-full h-10 text-[0.68rem] uppercase tracking-[0.1em] cursor-pointer"
+          style={{ borderRadius: 0 }}
+          disabled={isPending}
+        >
           {isPending ? 'Sending...' : 'Send reset link'}
         </Button>
       </form>
@@ -170,7 +206,7 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
       <button
         type="button"
         onClick={onBack}
-        className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors w-full text-center"
+        className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground transition-colors w-full text-center cursor-pointer"
       >
         Back to sign in
       </button>
@@ -188,32 +224,27 @@ export function AuthForm({ initialError, initialMode }: AuthFormProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode ?? 'sign-in')
 
   return (
-    <div className="flex flex-col items-center gap-10">
+    <div className="flex flex-col items-center gap-12">
       <Image
         src={logo}
         alt="Meridian"
-        width={180}
-        height={90}
+        width={200}
+        height={100}
         priority
-        className="dark:invert-0"
       />
 
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-8">
         {mode === 'forgot-password' ? (
           <ForgotPasswordForm onBack={() => setMode('sign-in')} />
         ) : (
           <>
-            <p className="text-sm text-muted-foreground text-center">
-              Sign in or create an account to continue
-            </p>
-
-            <div className="flex justify-center gap-6 border-b border-border/50">
+            <div className="flex justify-center gap-8">
               <button
                 type="button"
                 onClick={() => setMode('sign-in')}
-                className={`pb-2.5 text-xs uppercase tracking-widest transition-colors ${
+                className={`pb-2 text-[0.65rem] uppercase tracking-[0.1em] transition-colors cursor-pointer ${
                   mode === 'sign-in'
-                    ? 'text-foreground border-b border-foreground'
+                    ? 'text-[color:var(--gold)] border-b border-[color:var(--gold)]'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -222,9 +253,9 @@ export function AuthForm({ initialError, initialMode }: AuthFormProps) {
               <button
                 type="button"
                 onClick={() => setMode('sign-up')}
-                className={`pb-2.5 text-xs uppercase tracking-widest transition-colors ${
+                className={`pb-2 text-[0.65rem] uppercase tracking-[0.1em] transition-colors cursor-pointer ${
                   mode === 'sign-up'
-                    ? 'text-foreground border-b border-foreground'
+                    ? 'text-[color:var(--gold)] border-b border-[color:var(--gold)]'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -239,7 +270,7 @@ export function AuthForm({ initialError, initialMode }: AuthFormProps) {
                   <button
                     type="button"
                     onClick={() => setMode('forgot-password')}
-                    className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     Forgot password?
                   </button>
