@@ -197,9 +197,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error('[webhook] Signature verification failed:', message)
-    console.error('[webhook] sig header (first 20):', sig.substring(0, 20))
-    console.error('[webhook] secret prefix:', process.env.STRIPE_WEBHOOK_SECRET.substring(0, 10))
-    console.error('[webhook] body length:', body.length)
     return NextResponse.json({ error: `Webhook signature verification failed: ${message}` }, { status: 400 })
   }
 
