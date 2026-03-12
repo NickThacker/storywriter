@@ -12,9 +12,11 @@ import type { SubscriptionTier } from '@/types/database'
 
 async function getOrigin(): Promise<string> {
   const headerList = await headers()
-  const origin = headerList.get('origin') ?? headerList.get('x-forwarded-host')
+  // origin header includes the scheme (https://app.meridianwrite.com)
+  const origin = headerList.get('origin')
   if (origin) return origin
-  const host = headerList.get('host') ?? 'localhost:3000'
+  // x-forwarded-host and host are hostname only — need to add scheme
+  const host = headerList.get('x-forwarded-host') ?? headerList.get('host') ?? 'localhost:3000'
   const proto = host.startsWith('localhost') ? 'http' : 'https'
   return `${proto}://${host}`
 }
@@ -75,32 +77,37 @@ async function getOrCreateStripeCustomer(
 export async function createCheckoutSession(
   priceId: string
 ): Promise<{ url: string } | { error: string }> {
-  if (!stripe) return { error: 'Stripe not configured' }
+  try {
+    if (!stripe) return { error: 'Stripe not configured' }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
 
-  if (userError || !user) return { error: 'You must be logged in' }
+    if (userError || !user) return { error: 'You must be logged in' }
 
-  const customerResult = await getOrCreateStripeCustomer(user.id, user.email ?? '')
-  if ('error' in customerResult) return customerResult
+    const customerResult = await getOrCreateStripeCustomer(user.id, user.email ?? '')
+    if ('error' in customerResult) return customerResult
 
-  const origin = await getOrigin()
+    const origin = await getOrigin()
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    customer: customerResult.customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/settings?billing=success`,
-    cancel_url: `${origin}/settings?billing=cancelled`,
-    metadata: { userId: user.id },
-  })
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      customer: customerResult.customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/settings?billing=success`,
+      cancel_url: `${origin}/settings?billing=cancelled`,
+      metadata: { userId: user.id },
+    })
 
-  if (!session.url) return { error: 'Checkout session URL not returned by Stripe' }
-  return { url: session.url }
+    if (!session.url) return { error: 'Checkout session URL not returned by Stripe' }
+    return { url: session.url }
+  } catch (err) {
+    console.error('[billing] createCheckoutSession error:', err)
+    return { error: err instanceof Error ? err.message : 'Checkout failed' }
+  }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -110,32 +117,37 @@ export async function createCheckoutSession(
 export async function createProjectCreditSession(
   priceId: string
 ): Promise<{ url: string } | { error: string }> {
-  if (!stripe) return { error: 'Stripe not configured' }
+  try {
+    if (!stripe) return { error: 'Stripe not configured' }
 
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
 
-  if (userError || !user) return { error: 'You must be logged in' }
+    if (userError || !user) return { error: 'You must be logged in' }
 
-  const customerResult = await getOrCreateStripeCustomer(user.id, user.email ?? '')
-  if ('error' in customerResult) return customerResult
+    const customerResult = await getOrCreateStripeCustomer(user.id, user.email ?? '')
+    if ('error' in customerResult) return customerResult
 
-  const origin = await getOrigin()
+    const origin = await getOrigin()
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    customer: customerResult.customerId,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${origin}/settings?billing=success`,
-    cancel_url: `${origin}/settings?billing=cancelled`,
-    metadata: { userId: user.id, type: 'project_credit' },
-  })
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      customer: customerResult.customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${origin}/settings?billing=success`,
+      cancel_url: `${origin}/settings?billing=cancelled`,
+      metadata: { userId: user.id, type: 'project_credit' },
+    })
 
-  if (!session.url) return { error: 'Checkout session URL not returned by Stripe' }
-  return { url: session.url }
+    if (!session.url) return { error: 'Checkout session URL not returned by Stripe' }
+    return { url: session.url }
+  } catch (err) {
+    console.error('[billing] createProjectCreditSession error:', err)
+    return { error: err instanceof Error ? err.message : 'Checkout failed' }
+  }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
