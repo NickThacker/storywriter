@@ -47,18 +47,8 @@ export function SettingsTabs({ modelPreferences, billingStatus, persona }: Setti
         <ModelSelector initialPreferences={modelPreferences} />
       )}
 
-      {activeTab === 'billing' && (
-        <>
-          {billingStatus && !billingStatus.isByok ? (
-            <BillingSection billingStatus={billingStatus} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {billingStatus?.isByok
-                ? 'You are using your own API key (BYOK). No billing applies.'
-                : 'Billing information is not available.'}
-            </p>
-          )}
-        </>
+      {activeTab === 'billing' && billingStatus && (
+        <BillingSection billingStatus={billingStatus} />
       )}
 
       {activeTab === 'voice' && (

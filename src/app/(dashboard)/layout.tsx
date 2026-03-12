@@ -28,7 +28,7 @@ export default async function DashboardLayout({
   const [{ data: settings }, { data: persona }] = await Promise.all([
     (supabase as any)
       .from('user_settings')
-      .select('openrouter_api_key, voice_onboarding_dismissed, is_admin')
+      .select('voice_onboarding_dismissed, is_admin')
       .eq('user_id', user.id)
       .single(),
     (supabase as any)
@@ -38,8 +38,7 @@ export default async function DashboardLayout({
       .maybeSingle(),
   ])
 
-  const s = settings as { openrouter_api_key?: string | null; voice_onboarding_dismissed?: boolean; is_admin?: boolean } | null
-  const isByok = Boolean(s?.openrouter_api_key)
+  const s = settings as { voice_onboarding_dismissed?: boolean; is_admin?: boolean } | null
   const isAdmin = Boolean(s?.is_admin)
   const showVoiceNudge = !s?.voice_onboarding_dismissed && !persona
 
@@ -67,7 +66,7 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-5">
             {[
               { href: '/dashboard', label: 'Library' },
-              ...(!isByok ? [{ href: '/usage', label: 'Usage' }] : []),
+              { href: '/usage', label: 'Usage' },
               { href: '/settings', label: 'Settings' },
               ...(isAdmin ? [{ href: '/admin/prompt-logs', label: 'Admin' }] : []),
             ].map(({ href, label }) => (

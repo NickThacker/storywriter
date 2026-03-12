@@ -1,7 +1,7 @@
 import type { SubscriptionTier } from '@/types/database'
 
 // -----------------------------------------------------------------------
-// Token usage row type — matches the token_usage table
+// Token usage row type — matches the token_usage table (kept for history)
 // -----------------------------------------------------------------------
 
 export interface TokenUsageRow {
@@ -34,118 +34,43 @@ export interface StripeWebhookEventRow {
 }
 
 // -----------------------------------------------------------------------
-// Budget check result — returned by the budget check utility
+// Access check result — returned before project creation
 // -----------------------------------------------------------------------
 
-export interface BudgetCheckResult {
+export interface AccessCheckResult {
   allowed: boolean
-  isByok: boolean
-  budgetRemaining?: number
-  budgetTotal?: number
-  warningThreshold?: 'near_limit' | null
-  reason?: 'budget_exhausted' | 'no_subscription'
+  reason?: 'no_subscription' | 'project_limit_reached'
+  tier: SubscriptionTier
+  projectCredits: number
+  activeProjects: number
+  maxProjects: number | null // null = unlimited
 }
 
 // -----------------------------------------------------------------------
-// Billing status — for UI display on the /usage page
+// Billing status — for UI display on settings page
 // -----------------------------------------------------------------------
 
 export interface BillingStatus {
-  isByok: boolean
   tier: SubscriptionTier
-  tokenBudgetTotal: number
-  tokenBudgetRemaining: number
-  creditPackTokens: number
+  projectCredits: number
+  activeProjects: number
+  maxProjects: number | null // null = unlimited (studio)
   billingPeriodEnd: string | null
-  usagePercent: number
 }
 
 // -----------------------------------------------------------------------
-// Subscription tier config — for pricing display
+// Tier configs — project-based billing
 // -----------------------------------------------------------------------
 
 export interface TierConfig {
-  id: SubscriptionTier
+  id: SubscriptionTier | 'project'
   name: string
   price: number
-  monthlyTokens: number
+  interval: 'one_time' | 'month' | 'year'
+  maxProjects: number | null // null = unlimited
+  features: string[]
   stripePriceId: string
+  tagline: string
+  cta: string
+  popular?: boolean
 }
-
-// -----------------------------------------------------------------------
-// Credit pack config — for one-time purchase options
-// -----------------------------------------------------------------------
-
-export interface CreditPackConfig {
-  id: string
-  name: string
-  tokens: number
-  price: number
-  stripePriceId: string
-}
-
-// -----------------------------------------------------------------------
-// Subscription tier configs (Claude's discretion per 05-RESEARCH.md)
-// -----------------------------------------------------------------------
-
-export const TIER_CONFIGS: TierConfig[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 9,
-    monthlyTokens: 500_000,
-    stripePriceId: '', // Set via NEXT_PUBLIC_STRIPE_PRICE_STARTER env var
-  },
-  {
-    id: 'writer',
-    name: 'Writer',
-    price: 19,
-    monthlyTokens: 2_000_000,
-    stripePriceId: '', // Set via NEXT_PUBLIC_STRIPE_PRICE_WRITER env var
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: 39,
-    monthlyTokens: 5_000_000,
-    stripePriceId: '', // Set via NEXT_PUBLIC_STRIPE_PRICE_PRO env var
-  },
-]
-
-// -----------------------------------------------------------------------
-// Credit pack configs
-// -----------------------------------------------------------------------
-
-export const CREDIT_PACK_CONFIGS: CreditPackConfig[] = [
-  {
-    id: 'pack-250k',
-    name: '250K Tokens',
-    tokens: 250_000,
-    price: 4,
-    stripePriceId: '', // Set via env var
-  },
-  {
-    id: 'pack-1m',
-    name: '1M Tokens',
-    tokens: 1_000_000,
-    price: 12,
-    stripePriceId: '', // Set via env var
-  },
-  {
-    id: 'pack-500k',
-    name: '500K Tokens',
-    tokens: 500_000,
-    price: 6,
-    stripePriceId: '', // Set via env var
-  },
-  {
-    id: 'pack-2m',
-    name: '2M Tokens',
-    tokens: 2_000_000,
-    price: 18,
-    stripePriceId: '', // Set via env var
-  },
-]
-
-// Budget warning threshold (80%)
-export const BUDGET_WARNING_THRESHOLD = 0.8

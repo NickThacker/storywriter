@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { buildVoiceAnalysisPrompt } from '@/lib/voice/prompt'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
-import { getOpenRouterApiKey } from '@/lib/api-key'
+import { getApiKey } from '@/lib/api-key'
 
 interface VoiceAnalysisBody {
   samples: string[]
@@ -46,19 +46,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // 3. Get API key
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key')
-    .eq('user_id', user.id)
-    .single()
-
-  const apiKey =
-    settingsError || !settings
-      ? null
-      : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
-
-  const resolvedKey = getOpenRouterApiKey(apiKey)
+  const resolvedKey = await getApiKey()
   if (!resolvedKey) {
     return new Response(
       JSON.stringify({ error: 'No API key available. Contact support.' }),

@@ -1,76 +1,98 @@
-import type { TierConfig, CreditPackConfig } from '@/types/billing'
+import type { TierConfig } from '@/types/billing'
 import type { SubscriptionTier } from '@/types/database'
+
+// -----------------------------------------------------------------------
+// Tier configurations — project-based billing
+// -----------------------------------------------------------------------
 
 export const TIERS: TierConfig[] = [
   {
-    id: 'starter' as SubscriptionTier,
-    name: 'Starter',
-    price: 9,
-    monthlyTokens: 500_000,
-    stripePriceId: process.env.STRIPE_PRICE_STARTER || 'price_starter_placeholder',
-  },
-  {
-    id: 'writer' as SubscriptionTier,
-    name: 'Writer',
-    price: 19,
-    monthlyTokens: 2_000_000,
-    stripePriceId: process.env.STRIPE_PRICE_WRITER || 'price_writer_placeholder',
-  },
-  {
-    id: 'pro' as SubscriptionTier,
-    name: 'Pro',
+    id: 'project',
+    name: 'Project',
     price: 39,
-    monthlyTokens: 5_000_000,
-    stripePriceId: process.env.STRIPE_PRICE_PRO || 'price_pro_placeholder',
+    interval: 'one_time',
+    maxProjects: 1,
+    features: [
+      'One novel, start to finish',
+      'Full 6-stage pipeline',
+      'Voice DNA profiling from your own writing',
+      'Unlimited generation within the project',
+      'Access for 12 months',
+      'No subscription required',
+    ],
+    stripePriceId: process.env.STRIPE_PRICE_PROJECT || 'price_project_placeholder',
+    tagline: 'Try the full pipeline. No commitment.',
+    cta: 'Start Your Project',
+  },
+  {
+    id: 'author',
+    name: 'Author',
+    price: 49,
+    interval: 'month',
+    maxProjects: 3,
+    features: [
+      'Up to 3 active projects',
+      'Full 6-stage pipeline on every generation',
+      'Voice DNA + Style Anchor',
+      'Chapter continuity and arc tracking',
+      'Private — no community, no shared data',
+    ],
+    stripePriceId: process.env.STRIPE_PRICE_AUTHOR_MONTHLY || 'price_author_monthly_placeholder',
+    tagline: 'Early member pricing. Locked for life.',
+    cta: 'Start Writing',
+    popular: true,
+  },
+  {
+    id: 'studio',
+    name: 'Studio',
+    price: 99,
+    interval: 'month',
+    maxProjects: null,
+    features: [
+      'Unlimited active projects',
+      'Multiple voice profiles',
+      'Priority processing',
+      'Series continuity tools',
+      'Early access to new pipeline features',
+    ],
+    stripePriceId: process.env.STRIPE_PRICE_STUDIO_MONTHLY || 'price_studio_monthly_placeholder',
+    tagline: 'For working professionals.',
+    cta: 'Get Started',
   },
 ]
 
-export const CREDIT_PACKS: CreditPackConfig[] = [
-  {
-    id: 'pack-250k',
-    name: '250K Tokens',
-    tokens: 250_000,
-    price: 4,
-    stripePriceId: process.env.STRIPE_PRICE_PACK_250K || 'price_pack_250k_placeholder',
-  },
-  {
-    id: 'pack-500k',
-    name: '500K Tokens',
-    tokens: 500_000,
-    price: 6,
-    stripePriceId: process.env.STRIPE_PRICE_PACK_500K || 'price_pack_500k_placeholder',
-  },
-  {
-    id: 'pack-1m',
-    name: '1M Tokens',
-    tokens: 1_000_000,
-    price: 8,
-    stripePriceId: process.env.STRIPE_PRICE_PACK_1M || 'price_pack_1m_placeholder',
-  },
-  {
-    id: 'pack-2m',
-    name: '2M Tokens',
-    tokens: 2_000_000,
-    price: 18,
-    stripePriceId: process.env.STRIPE_PRICE_PACK_2M || 'price_pack_2m_placeholder',
-  },
-  {
-    id: 'pack-5m',
-    name: '5M Tokens',
-    tokens: 5_000_000,
-    price: 30,
-    stripePriceId: process.env.STRIPE_PRICE_PACK_5M || 'price_pack_5m_placeholder',
-  },
-]
-
-export function getTierByStripePriceId(priceId: string): TierConfig | undefined {
-  return TIERS.find((t) => t.stripePriceId === priceId)
+// Yearly price IDs (used for annual toggle)
+export const YEARLY_PRICES: Record<string, string> = {
+  author: process.env.STRIPE_PRICE_AUTHOR_YEARLY || 'price_author_yearly_placeholder',
+  studio: process.env.STRIPE_PRICE_STUDIO_YEARLY || 'price_studio_yearly_placeholder',
 }
 
-export function getCreditPackByStripePriceId(priceId: string): CreditPackConfig | undefined {
-  return CREDIT_PACKS.find((p) => p.stripePriceId === priceId)
+export const YEARLY_AMOUNTS: Record<string, number> = {
+  author: 490,
+  studio: 990,
 }
 
-export function getTierById(tierId: SubscriptionTier): TierConfig | undefined {
-  return TIERS.find((t) => t.id === tierId)
+// -----------------------------------------------------------------------
+// Lookup helpers
+// -----------------------------------------------------------------------
+
+const ALL_PRICE_IDS = new Map<string, { tier: SubscriptionTier | 'project'; isYearly: boolean }>()
+
+// Build lookup map at module load
+function buildPriceMap() {
+  for (const t of TIERS) {
+    ALL_PRICE_IDS.set(t.stripePriceId, { tier: t.id, isYearly: false })
+  }
+  for (const [tier, priceId] of Object.entries(YEARLY_PRICES)) {
+    ALL_PRICE_IDS.set(priceId, { tier: tier as SubscriptionTier, isYearly: true })
+  }
+}
+buildPriceMap()
+
+export function getTierByStripePriceId(priceId: string): { tier: SubscriptionTier | 'project'; isYearly: boolean } | undefined {
+  return ALL_PRICE_IDS.get(priceId)
+}
+
+export function getTierConfigById(id: string): TierConfig | undefined {
+  return TIERS.find((t) => t.id === id)
 }

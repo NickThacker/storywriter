@@ -18,7 +18,7 @@ import type {
 } from '@/types/billing'
 
 export type ProjectStatus = 'draft' | 'writing' | 'complete'
-export type SubscriptionTier = 'none' | 'hosted' | 'starter' | 'writer' | 'pro'
+export type SubscriptionTier = 'none' | 'author' | 'studio'
 export type TaskType =
   | 'outline'
   | 'prose'
@@ -56,12 +56,10 @@ export interface UserSettingsRow {
   subscription_tier: SubscriptionTier
   created_at: string
   updated_at: string
-  // Phase 5 billing fields
+  // Billing fields
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
-  token_budget_total: number
-  token_budget_remaining: number
-  credit_pack_tokens: number
+  project_credits: number
   billing_period_end: string | null
   // Phase 6 voice onboarding
   voice_onboarding_dismissed: boolean
@@ -86,6 +84,8 @@ export interface ProjectRow {
   chapters_done: number
   story_bible: Record<string, unknown>
   intake_data: Record<string, unknown> | null
+  billing_type: 'subscription' | 'credit'
+  credit_expires_at: string | null
   created_at: string
   updated_at: string
 }
@@ -204,9 +204,7 @@ export type UserSettingsInsert = Omit<UserSettingsRow, 'id' | 'created_at' | 'up
   updated_at?: string
   stripe_customer_id?: string | null
   stripe_subscription_id?: string | null
-  token_budget_total?: number
-  token_budget_remaining?: number
-  credit_pack_tokens?: number
+  project_credits?: number
   billing_period_end?: string | null
   voice_onboarding_dismissed?: boolean
 }

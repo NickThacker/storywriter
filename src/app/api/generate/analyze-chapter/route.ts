@@ -6,7 +6,7 @@ import type { ChapterAnalysis } from '@/lib/memory/analysis-prompt'
 import { applyAnalysisToMemory } from '@/lib/memory/memory-updater'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
-import { getOpenRouterApiKey } from '@/lib/api-key'
+import { getApiKey } from '@/lib/api-key'
 import type { ProjectMemoryRow } from '@/types/project-memory'
 import type { OutlineChapter } from '@/types/database'
 
@@ -68,19 +68,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // 4. Get OpenRouter API key
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key')
-    .eq('user_id', user.id)
-    .single()
-
-  const apiKey =
-    settingsError || !settings
-      ? null
-      : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
-
-  const resolvedKey = getOpenRouterApiKey(apiKey)
+  const resolvedKey = await getApiKey()
   if (!resolvedKey) {
     return new Response(
       JSON.stringify({ error: 'No API key available. Contact support.' }),

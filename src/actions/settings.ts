@@ -5,178 +5,52 @@ import { apiKeySchema, modelPreferenceSchema } from '@/lib/validations/settings'
 import { RECOMMENDED_MODELS } from '@/lib/models'
 import type { TaskType } from '@/types/database'
 
+const ADMIN_EMAIL = 'nick@nickthacker.com'
+
 // ──────────────────────────────────────────────────────────────────────────────
-// API Key management
+// API Key management — admin only
+// The admin's OpenRouter key powers all users silently.
 // ──────────────────────────────────────────────────────────────────────────────
 
 /**
- * Save the user's OpenRouter API key directly in user_settings.
- * The raw key is NEVER returned to the client after this call.
- * Protected by RLS — only the owning user can read/write their row.
+ * Save the admin's OpenRouter API key. Only nick@nickthacker.com can call this.
  */
 export async function saveApiKey(
   prevState: { error?: string; success?: boolean } | null,
   formData: FormData
 ): Promise<{ success: boolean } | { error: string }> {
-  const raw = {
-    apiKey: formData.get('apiKey') as string,
-  }
+  const raw = { apiKey: formData.get('apiKey') as string }
 
   const parsed = apiKeySchema.safeParse(raw)
   if (!parsed.success) {
-    const firstError = parsed.error.issues[0]?.message ?? 'Invalid API key'
-    return { error: firstError }
+    return { error: parsed.error.issues[0]?.message ?? 'Invalid API key' }
   }
 
   const supabase = await createClient()
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-  if (userError || !user) {
-    return { error: 'You must be logged in to save an API key' }
-  }
+  if (userError || !user) return { error: 'You must be logged in' }
+  if (user.email !== ADMIN_EMAIL) return { error: 'Only the admin can update the API key' }
 
-  // Upsert into user_settings — creates row if user signed up before settings table existed.
-  // RLS ensures only the owner can access.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updateError } = await (supabase as any)
     .from('user_settings')
     .upsert(
-      {
-        user_id: user.id,
-        openrouter_api_key: parsed.data.apiKey,
-        subscription_tier: 'none',
-      },
+      { user_id: user.id, openrouter_api_key: parsed.data.apiKey },
       { onConflict: 'user_id' }
     )
 
-  if (updateError) {
-    return { error: `Failed to save API key: ${updateError.message}` }
-  }
-
+  if (updateError) return { error: `Failed to save API key: ${updateError.message}` }
   return { success: true }
 }
 
 /**
- * Test an OpenRouter API key by calling the models endpoint server-side.
- * The key is NEVER stored or logged during this call.
+ * Check if the current user is the admin (for conditional UI).
  */
-export async function testApiKey(
-  apiKey: string
-): Promise<{ valid: true } | { valid: false; error: string }> {
-  if (!apiKey || apiKey.trim().length === 0) {
-    return { valid: false, error: 'API key is required' }
-  }
-
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10_000)
-
-    const response = await fetch('https://openrouter.ai/api/v1/models', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      signal: controller.signal,
-    })
-
-    clearTimeout(timeoutId)
-
-    if (response.ok) {
-      return { valid: true }
-    }
-
-    if (response.status === 401 || response.status === 403) {
-      return { valid: false, error: 'Invalid API key' }
-    }
-
-    return { valid: false, error: `Unexpected response: ${response.status}` }
-  } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError') {
-      return { valid: false, error: 'Connection timed out' }
-    }
-    return { valid: false, error: 'Connection failed' }
-  }
-}
-
-/**
- * Delete the user's API key from user_settings.
- */
-export async function deleteApiKey(): Promise<{ success: boolean } | { error: string }> {
+export async function getIsAdmin(): Promise<boolean> {
   const supabase = await createClient()
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return { error: 'You must be logged in to delete an API key' }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateError } = await (supabase as any)
-    .from('user_settings')
-    .update({ openrouter_api_key: null })
-    .eq('user_id', user.id)
-
-  if (updateError) {
-    return { error: `Failed to delete API key: ${updateError.message}` }
-  }
-
-  return { success: true }
-}
-
-/**
- * Get the current API key status for the authenticated user.
- * Returns only the last 4 characters of the key — NEVER the full key.
- */
-export async function getApiKeyStatus(): Promise<{
-  hasKey: boolean
-  keyHint: string | null
-  subscriptionTier: string
-}> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return { hasKey: false, keyHint: null, subscriptionTier: 'none' }
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key, subscription_tier')
-    .eq('user_id', user.id)
-    .single()
-
-  if (settingsError || !settings) {
-    return { hasKey: false, keyHint: null, subscriptionTier: 'none' }
-  }
-
-  const apiKey = settings?.openrouter_api_key as string | null
-  const subscriptionTier = settings?.subscription_tier as string ?? 'none'
-
-  if (!apiKey) {
-    return {
-      hasKey: false,
-      keyHint: null,
-      subscriptionTier,
-    }
-  }
-
-  // Extract ONLY last 4 characters — the full key is never returned
-  const keyHint = apiKey.slice(-4)
-
-  return {
-    hasKey: true,
-    keyHint,
-    subscriptionTier,
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  return user?.email === ADMIN_EMAIL
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

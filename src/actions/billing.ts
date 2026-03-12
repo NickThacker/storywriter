@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe/client'
 import type { BillingStatus } from '@/types/billing'
+import type { SubscriptionTier } from '@/types/database'
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helper: resolve the origin (scheme + host) for redirect URLs
@@ -13,7 +14,6 @@ async function getOrigin(): Promise<string> {
   const headerList = await headers()
   const origin = headerList.get('origin') ?? headerList.get('x-forwarded-host')
   if (origin) return origin
-  // Fallback for direct server invocations (e.g. tests, seed scripts)
   const host = headerList.get('host') ?? 'localhost:3000'
   const proto = host.startsWith('localhost') ? 'http' : 'https'
   return `${proto}://${host}`
@@ -48,13 +48,11 @@ async function getOrCreateStripeCustomer(
     return { customerId: existingCustomerId }
   }
 
-  // Create a new Stripe customer
   const customer = await stripe.customers.create({
     email: userEmail,
     metadata: { supabase_user_id: userId },
   })
 
-  // Persist the customer ID back to user_settings
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updateError } = await (supabase as any)
     .from('user_settings')
@@ -64,7 +62,6 @@ async function getOrCreateStripeCustomer(
     )
 
   if (updateError) {
-    // Non-fatal: customer exists in Stripe, DB write failed — log and continue
     console.error('Failed to save stripe_customer_id:', updateError.message)
   }
 
@@ -72,7 +69,7 @@ async function getOrCreateStripeCustomer(
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// createCheckoutSession — start a subscription checkout
+// createCheckoutSession — start a subscription checkout (Author / Studio)
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function createCheckoutSession(
@@ -107,10 +104,10 @@ export async function createCheckoutSession(
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// createCreditPackSession — start a one-time credit pack checkout
+// createProjectCreditSession — buy a single-project credit ($39 one-time)
 // ──────────────────────────────────────────────────────────────────────────────
 
-export async function createCreditPackSession(
+export async function createProjectCreditSession(
   priceId: string
 ): Promise<{ url: string } | { error: string }> {
   if (!stripe) return { error: 'Stripe not configured' }
@@ -134,7 +131,7 @@ export async function createCreditPackSession(
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/settings?billing=success`,
     cancel_url: `${origin}/settings?billing=cancelled`,
-    metadata: { userId: user.id, type: 'credit_pack' },
+    metadata: { userId: user.id, type: 'project_credit' },
   })
 
   if (!session.url) return { error: 'Checkout session URL not returned by Stripe' }
@@ -180,7 +177,7 @@ export async function createPortalSession(): Promise<
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// getBillingStatus — fetch billing state for the /usage or /settings page
+// getBillingStatus — fetch billing state for the settings page
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function getBillingStatus(): Promise<BillingStatus | { error: string }> {
@@ -192,53 +189,34 @@ export async function getBillingStatus(): Promise<BillingStatus | { error: strin
 
   if (userError || !user) return { error: 'You must be logged in' }
 
+  // Fetch settings + active project count in parallel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select(
-      'openrouter_api_key, subscription_tier, token_budget_total, token_budget_remaining, credit_pack_tokens, billing_period_end'
-    )
-    .eq('user_id', user.id)
-    .single()
+  const [settingsResult, projectsResult] = await Promise.all([
+    (supabase as any)
+      .from('user_settings')
+      .select('subscription_tier, project_credits, billing_period_end')
+      .eq('user_id', user.id)
+      .single(),
+    (supabase as any)
+      .from('projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id),
+  ])
 
-  if (settingsError || !settings) {
-    // No settings row yet — return sensible defaults
-    return {
-      isByok: false,
-      tier: 'none',
-      tokenBudgetTotal: 0,
-      tokenBudgetRemaining: 0,
-      creditPackTokens: 0,
-      billingPeriodEnd: null,
-      usagePercent: 0,
-    }
-  }
+  const settings = settingsResult.data as {
+    subscription_tier: SubscriptionTier
+    project_credits: number
+    billing_period_end: string | null
+  } | null
 
-  // BYOK users bypass all billing
-  if (settings.openrouter_api_key) {
-    return {
-      isByok: true,
-      tier: (settings.subscription_tier as string) as BillingStatus['tier'],
-      tokenBudgetTotal: 0,
-      tokenBudgetRemaining: 0,
-      creditPackTokens: 0,
-      billingPeriodEnd: null,
-      usagePercent: 0,
-    }
-  }
-
-  const budgetTotal = (settings.token_budget_total as number) ?? 0
-  const budgetRemaining = (settings.token_budget_remaining as number) ?? 0
-  const usagePercent =
-    budgetTotal > 0 ? ((budgetTotal - budgetRemaining) / budgetTotal) * 100 : 0
+  const tier: SubscriptionTier = settings?.subscription_tier ?? 'none'
+  const maxProjects = tier === 'studio' ? null : tier === 'author' ? 3 : 0
 
   return {
-    isByok: false,
-    tier: (settings.subscription_tier as string) as BillingStatus['tier'],
-    tokenBudgetTotal: budgetTotal,
-    tokenBudgetRemaining: budgetRemaining,
-    creditPackTokens: (settings.credit_pack_tokens as number) ?? 0,
-    billingPeriodEnd: (settings.billing_period_end as string | null) ?? null,
-    usagePercent,
+    tier,
+    projectCredits: settings?.project_credits ?? 0,
+    activeProjects: projectsResult.count ?? 0,
+    maxProjects,
+    billingPeriodEnd: settings?.billing_period_end ?? null,
   }
 }

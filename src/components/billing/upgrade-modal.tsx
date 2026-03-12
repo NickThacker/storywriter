@@ -8,126 +8,104 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { PlanCard } from '@/components/billing/plan-card'
-import { TIERS, CREDIT_PACKS } from '@/lib/stripe/tiers'
-import { createCheckoutSession, createCreditPackSession, createPortalSession } from '@/actions/billing'
-import type { BillingStatus } from '@/types/billing'
+import { TIERS } from '@/lib/stripe/tiers'
+import { createCheckoutSession, createProjectCreditSession, createPortalSession } from '@/actions/billing'
 
 interface UpgradeModalProps {
   open: boolean
   onClose: () => void
-  billingStatus: BillingStatus
+  reason?: 'no_subscription' | 'project_limit_reached' | 'project_expired' | string
 }
 
-export function UpgradeModal({ open, onClose, billingStatus }: UpgradeModalProps) {
+export function UpgradeModal({ open, onClose, reason }: UpgradeModalProps) {
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null)
+  const isLoading = loadingPriceId !== null
 
-  async function handleSelectTier(priceId: string) {
+  const title = reason === 'project_expired'
+    ? 'Project Access Expired'
+    : reason === 'project_limit_reached'
+    ? 'Project Limit Reached'
+    : 'Subscription Required'
+
+  const description = reason === 'project_expired'
+    ? 'Your 12-month access for this project has expired. Purchase a new project credit or subscribe to continue.'
+    : reason === 'project_limit_reached'
+    ? 'You\'ve reached your active project limit. Upgrade your plan or buy a single project credit.'
+    : 'Choose a plan to start writing with Meridian.'
+
+  async function handleSubscribe(priceId: string) {
     setLoadingPriceId(priceId)
     try {
       const result = await createCheckoutSession(priceId)
-      if ('url' in result && result.url) {
-        window.location.href = result.url
-      }
+      if ('url' in result && result.url) window.location.href = result.url
     } finally {
       setLoadingPriceId(null)
     }
   }
 
-  async function handleSelectCreditPack(priceId: string) {
+  async function handleBuyCredit(priceId: string) {
     setLoadingPriceId(priceId)
     try {
-      const result = await createCreditPackSession(priceId)
-      if ('url' in result && result.url) {
-        window.location.href = result.url
-      }
+      const result = await createProjectCreditSession(priceId)
+      if ('url' in result && result.url) window.location.href = result.url
     } finally {
       setLoadingPriceId(null)
     }
   }
-
-  async function handleManageSubscription() {
-    setLoadingPriceId('portal')
-    try {
-      const result = await createPortalSession()
-      if ('url' in result && result.url) {
-        window.location.href = result.url
-      }
-    } finally {
-      setLoadingPriceId(null)
-    }
-  }
-
-  const isLoading = loadingPriceId !== null
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" style={{ borderRadius: 0 }}>
         <DialogHeader>
-          <DialogTitle>Token Budget Exhausted</DialogTitle>
-          <DialogDescription>
-            You&apos;ve used all your tokens for this billing period. Upgrade your plan or buy a
-            credit pack to continue generating.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        {/* Plan upgrade cards */}
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Upgrade Plan
-          </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {TIERS.map((tier) => (
-              <div key={tier.id} className={isLoading ? 'opacity-60 pointer-events-none' : ''}>
-                <PlanCard
-                  tier={tier}
-                  isCurrentTier={billingStatus.tier === tier.id}
-                  onSelect={handleSelectTier}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Credit packs */}
-        <div>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Buy Credit Pack
-          </h3>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {CREDIT_PACKS.map((pack) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-4">
+          {TIERS.map((tier) => {
+            const isProject = tier.id === 'project'
+            return (
               <button
-                key={pack.id}
+                key={tier.id}
                 type="button"
                 disabled={isLoading}
-                onClick={() => handleSelectCreditPack(pack.stripePriceId)}
-                className="rounded-lg border p-4 text-left hover:border-primary hover:bg-accent/50 transition-colors disabled:opacity-60 disabled:pointer-events-none"
+                onClick={() =>
+                  isProject
+                    ? handleBuyCredit(tier.stripePriceId)
+                    : handleSubscribe(tier.stripePriceId)
+                }
+                className={`border p-4 text-left transition-colors disabled:opacity-60 cursor-pointer ${
+                  tier.popular
+                    ? 'border-[color:var(--gold)]/40 hover:border-[color:var(--gold)]'
+                    : 'border-border hover:border-foreground'
+                }`}
+                style={{ borderRadius: 0 }}
               >
-                <p className="font-medium text-sm">{pack.name}</p>
-                <p className="text-muted-foreground text-xs mt-1">${pack.price} one-time</p>
-                {loadingPriceId === pack.stripePriceId && (
-                  <p className="text-xs text-primary mt-1">Redirecting...</p>
+                <p className="text-[0.6rem] uppercase tracking-[0.12em] mb-1" style={{ color: 'var(--gold)' }}>
+                  {tier.name}
+                </p>
+                <p className="text-lg font-light" style={{ fontFamily: 'var(--font-literata)' }}>
+                  ${tier.price}
+                  <span className="text-xs text-muted-foreground ml-1">
+                    {tier.interval === 'one_time' ? 'one time' : '/mo'}
+                  </span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">{tier.tagline}</p>
+                {loadingPriceId === tier.stripePriceId && (
+                  <p className="text-[0.65rem] mt-1" style={{ color: 'var(--gold)' }}>Redirecting...</p>
                 )}
               </button>
-            ))}
-          </div>
+            )
+          })}
         </div>
 
-        {/* Manage subscription / close */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={handleManageSubscription}
-            className="text-sm text-muted-foreground hover:text-foreground underline disabled:opacity-60"
-          >
-            {loadingPriceId === 'portal' ? 'Redirecting...' : 'Manage Subscription'}
-          </button>
+        <div className="flex items-center justify-end pt-3 border-t border-border mt-4">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="rounded-md px-4 py-2 text-sm border hover:bg-accent transition-colors disabled:opacity-60"
+            className="px-4 py-2 text-[0.68rem] uppercase tracking-[0.1em] border border-border hover:border-foreground transition-colors disabled:opacity-60 cursor-pointer"
+            style={{ borderRadius: 0 }}
           >
             Close
           </button>

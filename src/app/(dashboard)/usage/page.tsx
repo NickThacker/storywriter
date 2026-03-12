@@ -3,8 +3,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { getBillingStatus } from '@/actions/billing'
-import { getUserTotalUsage, getProjectTokenUsage } from '@/actions/token-usage'
-import { UsageBar } from '@/components/billing/usage-bar'
+import { getProjectTokenUsage } from '@/actions/token-usage'
 
 export const metadata: Metadata = {
   title: 'Usage — Meridian',
@@ -43,100 +42,110 @@ export default async function UsagePage() {
 
   const billingStatus = await getBillingStatus()
 
-  // BYOK users should never see this page — redirect to dashboard
-  if ('isByok' in billingStatus && billingStatus.isByok) {
-    redirect('/dashboard')
-  }
-
-  // If billing status error, show a minimal error state
   if ('error' in billingStatus) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="text-2xl font-bold tracking-tight">Token Usage</h1>
-        <p className="mt-4 text-muted-foreground">Unable to load billing information.</p>
+      <div className="mx-auto max-w-2xl space-y-10">
+        <h1
+          className="font-[family-name:var(--font-literata)] text-foreground"
+          style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontWeight: 400 }}
+        >
+          Usage
+        </h1>
+        <p className="text-sm text-muted-foreground">Unable to load billing information.</p>
       </div>
     )
   }
 
-  // Fetch usage data in parallel
-  const [totalUsageResult, projectUsageResult] = await Promise.all([
-    getUserTotalUsage(),
-    getProjectTokenUsage(),
-  ])
-
-  const totalUsage = 'data' in totalUsageResult ? totalUsageResult.data : null
+  const projectUsageResult = await getProjectTokenUsage()
   const projectUsage =
     'data' in projectUsageResult
       ? projectUsageResult.data.sort((a, b) => b.totalTokens - a.totalTokens)
       : []
 
-  const tokensUsed = billingStatus.tokenBudgetTotal - billingStatus.tokenBudgetRemaining
-  const isNearLimit = billingStatus.usagePercent >= 80 && billingStatus.usagePercent < 100
-
   return (
-    <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
+    <div className="mx-auto max-w-2xl space-y-10">
       {/* Page heading */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Token Usage</h1>
-        <p className="mt-1 text-muted-foreground">
-          Your token consumption for the current billing period.
+      <div className="border-b border-border pb-5">
+        <p
+          className="text-[0.65rem] uppercase tracking-[0.15em] mb-2"
+          style={{ color: 'var(--gold)' }}
+        >
+          Account
         </p>
+        <h1
+          className="font-[family-name:var(--font-literata)] text-foreground"
+          style={{ fontSize: 'clamp(1.6rem, 3vw, 2.25rem)', fontWeight: 400, lineHeight: 1.1 }}
+        >
+          Usage
+        </h1>
       </div>
 
-      {/* Near-limit warning banner */}
-      {isNearLimit && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-          <strong>Heads up:</strong> You&apos;re approaching your token budget limit. Consider{' '}
-          <Link href="/settings" className="underline hover:no-underline">
-            upgrading or purchasing a credit pack
-          </Link>
-          .
-        </div>
-      )}
-
-      {/* Budget progress section */}
-      <section className="space-y-4">
-        <div className="rounded-lg border p-5 space-y-4">
-          <UsageBar
-            used={tokensUsed}
-            total={billingStatus.tokenBudgetTotal}
-            creditPack={billingStatus.creditPackTokens}
-          />
-        </div>
-      </section>
-
-      {/* Current period summary */}
+      {/* Plan & projects summary */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Period Summary</h2>
-        <div className="rounded-lg border divide-y">
-          <div className="flex items-center justify-between px-4 py-3 text-sm">
-            <span className="text-muted-foreground">Current Period</span>
-            <span className="font-medium">
-              {formatDate(totalUsage?.periodStart ?? null)} – {formatDate(totalUsage?.periodEnd ?? null)}
+        <p
+          className="text-[0.65rem] uppercase tracking-[0.1em]"
+          style={{ color: 'var(--gold)' }}
+        >
+          Current Plan
+        </p>
+        <div className="border border-border p-5 space-y-3" style={{ borderRadius: 0 }}>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-foreground">
+              {billingStatus.tier === 'none'
+                ? 'No subscription'
+                : `${billingStatus.tier.charAt(0).toUpperCase() + billingStatus.tier.slice(1)} Plan`}
+            </span>
+            {billingStatus.billingPeriodEnd && (
+              <span className="text-[0.7rem] text-muted-foreground">
+                Renews {formatDate(billingStatus.billingPeriodEnd)}
+              </span>
+            )}
+          </div>
+
+          {/* Project slots */}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Active projects</span>
+            <span className="text-foreground">
+              {billingStatus.activeProjects}
+              {billingStatus.maxProjects !== null && ` / ${billingStatus.maxProjects}`}
+              {billingStatus.maxProjects === null && ' (unlimited)'}
             </span>
           </div>
-          <div className="flex items-center justify-between px-4 py-3 text-sm">
-            <span className="text-muted-foreground">Total Tokens Used</span>
-            <span className="font-medium">{formatTokens(totalUsage?.totalTokens ?? tokensUsed)}</span>
-          </div>
-          <div className="flex items-center justify-between px-4 py-3 text-sm">
-            <span className="text-muted-foreground">Tokens Remaining</span>
-            <span className="font-medium">{formatTokens(billingStatus.tokenBudgetRemaining)}</span>
-          </div>
-          {billingStatus.creditPackTokens > 0 && (
-            <div className="flex items-center justify-between px-4 py-3 text-sm">
-              <span className="text-muted-foreground">Credit Pack Balance</span>
-              <span className="font-medium">{formatTokens(billingStatus.creditPackTokens)}</span>
+
+          {billingStatus.projectCredits > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Project credits</span>
+              <span className="text-foreground">{billingStatus.projectCredits}</span>
+            </div>
+          )}
+
+          {/* Visual bar for project usage */}
+          {billingStatus.maxProjects !== null && billingStatus.maxProjects > 0 && (
+            <div className="pt-2">
+              <div className="h-1.5 bg-border/50 overflow-hidden">
+                <div
+                  className="h-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (billingStatus.activeProjects / billingStatus.maxProjects) * 100)}%`,
+                    background: 'var(--gold)',
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* Per-project breakdown */}
+      {/* Per-project token breakdown (analytics) */}
       {projectUsage.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Usage by Project</h2>
-          <div className="rounded-lg border divide-y">
+          <p
+            className="text-[0.65rem] uppercase tracking-[0.1em]"
+            style={{ color: 'var(--gold)' }}
+          >
+            Token Usage by Project
+          </p>
+          <div className="border border-border divide-y divide-border" style={{ borderRadius: 0 }}>
             {projectUsage.map((project) => (
               <div
                 key={project.projectId}
@@ -145,19 +154,25 @@ export default async function UsagePage() {
                 <span className="truncate max-w-xs text-muted-foreground">
                   {project.projectTitle}
                 </span>
-                <span className="font-medium shrink-0 ml-4">
+                <span className="font-medium shrink-0 ml-4 text-foreground">
                   {formatTokens(project.totalTokens)}
                 </span>
               </div>
             ))}
           </div>
+          <p className="text-[0.65rem] text-muted-foreground">
+            Token usage is tracked for analytics. Generation is unlimited within your active projects.
+          </p>
         </section>
       )}
 
       {/* Link to manage subscription */}
       <p className="text-sm text-muted-foreground">
-        Manage your subscription and credit packs in{' '}
-        <Link href="/settings" className="text-primary hover:underline">
+        Manage your subscription in{' '}
+        <Link
+          href="/settings"
+          className="text-[color:var(--gold)] hover:underline"
+        >
           Settings
         </Link>
         .

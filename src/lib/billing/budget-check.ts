@@ -1,12 +1,20 @@
-// Pre-generation budget check and post-generation token accounting utilities.
-// Uses service-role client for inserts (bypasses RLS), user-scoped client for reads.
+// Project access check — replaces the old token budget check.
+// Checks whether a user can create a new project based on their tier + project credits.
+// Generation within an existing project is always allowed (unlimited within project).
 
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
-import type { BudgetCheckResult } from '@/types/billing'
+import type { AccessCheckResult } from '@/types/billing'
+import type { SubscriptionTier } from '@/types/database'
+
+const PROJECT_LIMITS: Record<SubscriptionTier, number | null> = {
+  none: 0,
+  author: 3,
+  studio: null, // unlimited
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Service-role admin client (bypasses RLS for token_usage inserts)
+// Admin client (service-role) for cross-user queries
 // ──────────────────────────────────────────────────────────────────────────────
 
 function createAdminClient() {
@@ -17,127 +25,132 @@ function createAdminClient() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// checkTokenBudget — called before every generation request
+// checkProjectAccess — can the user create another project?
 // ──────────────────────────────────────────────────────────────────────────────
 
-interface UserSettingsRow {
-  openrouter_api_key: string | null
-  subscription_tier: string | null
-  token_budget_remaining: number | null
-  token_budget_total: number | null
-  credit_pack_tokens: number | null
-}
-
-export async function checkTokenBudget(userId: string): Promise<BudgetCheckResult> {
+export async function checkProjectAccess(userId: string): Promise<AccessCheckResult> {
   const supabase = await createClient()
 
+  // Fetch user settings + count active projects in parallel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error } = await (supabase as any)
+  const [settingsResult, projectsResult] = await Promise.all([
+    (supabase as any)
+      .from('user_settings')
+      .select('subscription_tier, project_credits')
+      .eq('user_id', userId)
+      .single(),
+    (supabase as any)
+      .from('projects')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId),
+  ])
+
+  const settings = settingsResult.data as {
+    subscription_tier: SubscriptionTier
+    project_credits: number
+  } | null
+
+  const tier: SubscriptionTier = settings?.subscription_tier ?? 'none'
+  const projectCredits = settings?.project_credits ?? 0
+  const activeProjects = projectsResult.count ?? 0
+  const maxProjects = PROJECT_LIMITS[tier]
+
+  // Studio: unlimited
+  if (maxProjects === null) {
+    return { allowed: true, tier, projectCredits, activeProjects, maxProjects }
+  }
+
+  // Author: check active project count against limit
+  if (tier !== 'none' && activeProjects < maxProjects) {
+    return { allowed: true, tier, projectCredits, activeProjects, maxProjects }
+  }
+
+  // Has project credits (from one-time purchases)?
+  if (projectCredits > 0) {
+    return { allowed: true, tier, projectCredits, activeProjects, maxProjects }
+  }
+
+  // No access
+  const reason = tier === 'none' ? 'no_subscription' : 'project_limit_reached'
+  return { allowed: false, reason, tier, projectCredits, activeProjects, maxProjects }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// consumeProjectCredit — deduct one project credit after creating a credit-based project
+// ──────────────────────────────────────────────────────────────────────────────
+
+export async function consumeProjectCredit(userId: string): Promise<void> {
+  const supabase = createAdminClient()
+
+  // Fetch current credits
+  const { data: settings } = await supabase
     .from('user_settings')
-    .select('openrouter_api_key, subscription_tier, token_budget_remaining, token_budget_total, credit_pack_tokens')
+    .select('project_credits')
     .eq('user_id', userId)
     .single()
 
-  if (error || !settings) {
-    // If we can't read settings, default to BYOK-bypass to avoid blocking generation
-    // (settings row might not exist for legacy users)
-    console.error('[budget-check] Failed to read user_settings:', error?.message)
-    return { allowed: true, isByok: true }
+  const current = (settings as { project_credits: number } | null)?.project_credits ?? 0
+  if (current <= 0) return
+
+  await supabase
+    .from('user_settings')
+    .update({ project_credits: current - 1 })
+    .eq('user_id', userId)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// checkGenerationAccess — can the user generate within an existing project?
+// For subscriptions: subscription must be active.
+// For credit projects: credit must not be expired.
+// ──────────────────────────────────────────────────────────────────────────────
+
+export async function checkGenerationAccess(
+  userId: string,
+  projectId: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const supabase = await createClient()
+
+  // Fetch project billing info + user tier in parallel
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [projectResult, settingsResult] = await Promise.all([
+    (supabase as any)
+      .from('projects')
+      .select('billing_type, credit_expires_at')
+      .eq('id', projectId)
+      .eq('user_id', userId)
+      .single(),
+    (supabase as any)
+      .from('user_settings')
+      .select('subscription_tier')
+      .eq('user_id', userId)
+      .single(),
+  ])
+
+  if (!projectResult.data) {
+    return { allowed: false, reason: 'project_not_found' }
   }
 
-  const row = settings as UserSettingsRow
+  const project = projectResult.data as { billing_type: string; credit_expires_at: string | null }
+  const tier = (settingsResult.data as { subscription_tier: string } | null)?.subscription_tier ?? 'none'
 
-  // BYOK users bypass billing entirely
-  if (row.openrouter_api_key) {
-    return { allowed: true, isByok: true }
-  }
-
-  // No subscription and no API key
-  if (!row.subscription_tier || row.subscription_tier === 'none') {
-    return { allowed: false, isByok: false, reason: 'no_subscription' }
-  }
-
-  const budgetRemaining = row.token_budget_remaining ?? 0
-  const budgetTotal = row.token_budget_total ?? 0
-  const creditPackTokens = row.credit_pack_tokens ?? 0
-
-  // Effective remaining = subscription budget + credit pack tokens
-  const effectiveRemaining = budgetRemaining + creditPackTokens
-
-  if (effectiveRemaining <= 0) {
-    return { allowed: false, isByok: false, reason: 'budget_exhausted' }
-  }
-
-  // Calculate usage percentage against subscription budget (ignore credit packs in %)
-  const usagePercent =
-    budgetTotal > 0 ? (budgetTotal - budgetRemaining) / budgetTotal : 0
-
-  if (usagePercent >= 0.8) {
-    return {
-      allowed: true,
-      isByok: false,
-      warningThreshold: 'near_limit',
-      budgetRemaining,
-      budgetTotal,
+  if (project.billing_type === 'credit') {
+    // Credit-based project: check expiry
+    if (project.credit_expires_at && new Date(project.credit_expires_at) < new Date()) {
+      return { allowed: false, reason: 'project_expired' }
     }
+    return { allowed: true }
   }
 
-  return { allowed: true, isByok: false, warningThreshold: null }
+  // Subscription-based project: tier must be active
+  if (tier === 'none') {
+    return { allowed: false, reason: 'no_subscription' }
+  }
+
+  return { allowed: true }
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// deductTokens — called after generation (fire-and-forget from interceptor)
-// ──────────────────────────────────────────────────────────────────────────────
-
-export async function deductTokens(userId: string, totalTokens: number): Promise<void> {
-  const supabase = await createClient()
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error } = await (supabase as any)
-    .from('user_settings')
-    .select('token_budget_remaining, credit_pack_tokens')
-    .eq('user_id', userId)
-    .single()
-
-  if (error || !settings) {
-    console.error('[budget-check] deductTokens: failed to read user_settings:', error?.message)
-    return
-  }
-
-  const row = settings as { token_budget_remaining: number | null; credit_pack_tokens: number | null }
-  const budgetRemaining = row.token_budget_remaining ?? 0
-  const creditPackTokens = row.credit_pack_tokens ?? 0
-
-  // Deduct from subscription budget first, then overflow from credit pack
-  let newBudgetRemaining: number
-  let newCreditPackTokens: number
-
-  if (budgetRemaining >= totalTokens) {
-    newBudgetRemaining = Math.max(0, budgetRemaining - totalTokens)
-    newCreditPackTokens = creditPackTokens
-  } else {
-    // Subscription budget is exhausted; deduct remainder from credit pack
-    const overflow = totalTokens - budgetRemaining
-    newBudgetRemaining = 0
-    newCreditPackTokens = Math.max(0, creditPackTokens - overflow)
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateError } = await (supabase as any)
-    .from('user_settings')
-    .update({
-      token_budget_remaining: newBudgetRemaining,
-      credit_pack_tokens: newCreditPackTokens,
-    })
-    .eq('user_id', userId)
-
-  if (updateError) {
-    console.error('[budget-check] deductTokens: failed to update user_settings:', updateError.message)
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// recordTokenUsage — insert row to token_usage table (uses service role)
+// recordTokenUsage — kept for analytics (fire-and-forget)
 // ──────────────────────────────────────────────────────────────────────────────
 
 interface RecordTokenUsageParams {
@@ -165,7 +178,6 @@ export async function recordTokenUsage(params: RecordTokenUsageParams): Promise<
     })
 
   if (error) {
-    console.error('[budget-check] recordTokenUsage: failed to insert:', error.message)
-    // Do not throw — this is called fire-and-forget
+    console.error('[billing] recordTokenUsage: failed to insert:', error.message)
   }
 }

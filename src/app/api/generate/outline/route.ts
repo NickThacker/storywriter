@@ -4,10 +4,10 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { buildOutlinePrompt, buildRegeneratePrompt } from '@/lib/outline/prompt'
 import type { IntakeData } from '@/lib/validations/intake'
-import { checkTokenBudget } from '@/lib/billing/budget-check'
+import { checkGenerationAccess } from '@/lib/billing/budget-check'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
-import { getOpenRouterApiKey } from '@/lib/api-key'
+import { getApiKey } from '@/lib/api-key'
 
 interface GenerateOutlineBody {
   projectId: string
@@ -51,19 +51,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // 3. Retrieve API key server-side — NEVER expose to browser
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key')
-    .eq('user_id', user.id)
-    .single()
-
-  const apiKey =
-    settingsError || !settings
-      ? null
-      : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
-
-  const resolvedKey = getOpenRouterApiKey(apiKey)
+  const resolvedKey = await getApiKey()
   if (!resolvedKey) {
     return new Response(
       JSON.stringify({ error: 'No API key available. Contact support.' }),
@@ -74,16 +62,19 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 3a. Budget check — block hosted-tier users who have exhausted their tokens
-  const budgetCheck = await checkTokenBudget(user.id)
-  if (!budgetCheck.allowed) {
+  // 3a. Generation access check — verify subscription/credit status
+  const accessCheck = await checkGenerationAccess(user.id, projectId)
+  if (!accessCheck.allowed) {
+    const messages: Record<string, string> = {
+      no_subscription: 'No active subscription. Subscribe to start generating.',
+      project_expired: 'Project credit has expired. Purchase a new credit to continue.',
+      project_limit_reached: 'Project limit reached. Upgrade your plan or purchase a credit.',
+      project_not_found: 'Project not found.',
+    }
     return new Response(
       JSON.stringify({
-        error:
-          budgetCheck.reason === 'budget_exhausted'
-            ? 'Token budget exhausted. Upgrade your plan or purchase a credit pack.'
-            : 'No active subscription. Subscribe to start generating.',
-        code: budgetCheck.reason,
+        error: messages[accessCheck.reason!] ?? 'Generation not allowed.',
+        code: accessCheck.reason,
       }),
       { status: 402, headers: { 'Content-Type': 'application/json' } }
     )

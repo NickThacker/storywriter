@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
-import { getOpenRouterApiKey } from '@/lib/api-key'
+import { getApiKey } from '@/lib/api-key'
 
 interface PrefillResult {
   genre: string | null
@@ -55,20 +55,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     )
   }
 
-  // 3. Check if user has an API key configured
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key')
-    .eq('user_id', user.id)
-    .single()
-
-  const apiKey =
-    settingsError || !settings
-      ? null
-      : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
-
-  const resolvedKey = getOpenRouterApiKey(apiKey)
+  // 3. Get API key
+  const resolvedKey = await getApiKey()
 
   // 4a. No API key available — return mock prefill for local development
   if (!resolvedKey) {

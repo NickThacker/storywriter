@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { synthesizeAllArcs } from '@/lib/arc/arc-synthesizer'
-import { getOpenRouterApiKey } from '@/lib/api-key'
+import { getApiKey } from '@/lib/api-key'
 import type { CharacterArc } from '@/types/project-memory'
 
 interface RouteParams {
@@ -41,19 +41,7 @@ export async function POST(request: Request, { params }: RouteParams): Promise<R
   }
 
   // 3. Get API key
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key')
-    .eq('user_id', user.id)
-    .single()
-
-  const apiKey =
-    settingsError || !settings
-      ? null
-      : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
-
-  const resolvedKey = getOpenRouterApiKey(apiKey)
+  const resolvedKey = await getApiKey()
   if (!resolvedKey) {
     return new Response(
       JSON.stringify({ error: 'No API key available. Contact support.' }),

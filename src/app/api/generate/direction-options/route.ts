@@ -5,10 +5,10 @@ import { DIRECTION_OPTIONS_SCHEMA, buildDirectionPrompt } from '@/lib/checkpoint
 import { saveDirectionOptions } from '@/actions/chapters'
 import type { DirectionOption } from '@/types/project-memory'
 import type { OutlineChapter } from '@/types/database'
-import { checkTokenBudget, deductTokens, recordTokenUsage } from '@/lib/billing/budget-check'
+import { checkGenerationAccess, recordTokenUsage } from '@/lib/billing/budget-check'
 import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
-import { getOpenRouterApiKey } from '@/lib/api-key'
+import { getApiKey } from '@/lib/api-key'
 
 interface DirectionOptionsBody {
   projectId: string
@@ -115,20 +115,8 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 6. Get API key from user_settings
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: settings, error: settingsError } = await (supabase as any)
-    .from('user_settings')
-    .select('openrouter_api_key')
-    .eq('user_id', user.id)
-    .single()
-
-  const apiKey =
-    settingsError || !settings
-      ? null
-      : ((settings as { openrouter_api_key: string | null }).openrouter_api_key ?? null)
-
-  const resolvedKey = getOpenRouterApiKey(apiKey)
+  // 6. Get API key
+  const resolvedKey = await getApiKey()
   if (!resolvedKey) {
     return new Response(
       JSON.stringify({ error: 'No API key available. Contact support.' }),
@@ -136,16 +124,19 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 6a. Budget check — block hosted-tier users who have exhausted their tokens
-  const budgetCheck = await checkTokenBudget(user.id)
-  if (!budgetCheck.allowed) {
+  // 6a. Generation access check — verify subscription/credit status
+  const accessCheck = await checkGenerationAccess(user.id, projectId)
+  if (!accessCheck.allowed) {
+    const messages: Record<string, string> = {
+      no_subscription: 'No active subscription. Subscribe to start generating.',
+      project_expired: 'Project credit has expired. Purchase a new credit to continue.',
+      project_limit_reached: 'Project limit reached. Upgrade your plan or purchase a credit.',
+      project_not_found: 'Project not found.',
+    }
     return new Response(
       JSON.stringify({
-        error:
-          budgetCheck.reason === 'budget_exhausted'
-            ? 'Token budget exhausted. Upgrade your plan or purchase a credit pack.'
-            : 'No active subscription. Subscribe to start generating.',
-        code: budgetCheck.reason,
+        error: messages[accessCheck.reason!] ?? 'Generation not allowed.',
+        code: accessCheck.reason,
       }),
       { status: 402, headers: { 'Content-Type': 'application/json' } }
     )
@@ -264,8 +255,8 @@ export async function POST(request: Request): Promise<Response> {
     )
   }
 
-  // 11a. Record and deduct tokens for hosted-tier users (fire-and-forget)
-  if (!budgetCheck.isByok && orJson.usage?.total_tokens) {
+  // 11a. Record token usage for analytics (fire-and-forget)
+  if (orJson.usage?.total_tokens) {
     const usage = orJson.usage
     recordTokenUsage({
       userId: user.id,
@@ -275,10 +266,6 @@ export async function POST(request: Request): Promise<Response> {
       completionTokens: usage.completion_tokens,
       totalTokens: usage.total_tokens,
     }).catch((err) => console.error('[direction-options] Token recording error:', err))
-
-    deductTokens(user.id, usage.total_tokens).catch((err) =>
-      console.error('[direction-options] Token deduction error:', err)
-    )
   }
 
   // 12. Save options to chapter_checkpoints via saveDirectionOptions server action
