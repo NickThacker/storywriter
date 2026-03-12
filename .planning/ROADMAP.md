@@ -1,10 +1,14 @@
 # Roadmap: StoryWriter
 
-## Overview
+## Milestones
 
-StoryWriter goes from zero to a fully operational AI-powered novel writing platform in five phases. The build order is dictated by hard architectural dependencies: auth and the database schema (including story bible tables) must precede all generation features; the outline and story bible must exist before chapter generation can inject context; the checkpoint loop depends on a working chapter generation pipeline; and export and billing ship last as the final gate before public launch. Each phase delivers a coherent, independently verifiable capability.
+- ✅ **v1.0 Core Platform** - Phases 1-8 (shipped 2026-03-09)
+- 🚧 **v1.1 Auth & Billing** - Phases 9-13 (in progress)
 
 ## Phases
+
+<details>
+<summary>✅ v1.0 Core Platform (Phases 1-8) — SHIPPED 2026-03-09</summary>
 
 **Phase Numbering:**
 - Integer phases (1, 2, 3): Planned milestone work
@@ -20,8 +24,6 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Author Onboarding & Voice Analysis** - Writing sample upload, AI style analysis, PDF voice report, author persona system for generation context (completed 2026-03-12)
 - [x] **Phase 7: Character Creator** - Pre-outline character definition with AI name suggestions, detail expansion, and strict enforcement through outline and chapter generation (completed 2026-03-09)
 - [x] **Phase 8: Milestone Fixes** - Middleware allow-list fixes, BYOK removal + platform key, Phase 6 verification, traceability update (completed 2026-03-09)
-
-## Phase Details
 
 ### Phase 1: Foundation
 **Goal**: Users can create accounts, manage novel projects, and configure their AI access — with the security perimeter and database schema in place to support everything that follows
@@ -123,23 +125,6 @@ Plans:
 - [x] 05-06-PLAN.md — Usage page, billing UI, budget warnings, settings integration (Wave 4)
 - [x] 05-07-PLAN.md — End-to-end verification checkpoint (Wave 5)
 
-## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
-
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Foundation | 5/6 | In Progress|  |
-| 01.1 Remove n8n | 1/1 | Complete    | 2026-03-01 |
-| 2. Guided Intake and Outline | 9/9 | Complete   | 2026-03-03 |
-| 3. Chapter Generation | 5/5 | Complete   | 2026-03-03 |
-| 4. Creative Checkpoints | 5/5 | Complete    | 2026-03-03 |
-| 5. Export and Billing | 7/7 | Complete    | 2026-03-04 |
-| 6. Author Onboarding & Voice Analysis | 6/6 | Complete   | 2026-03-12 |
-| 7. Character Creator | 3/3 | Complete    | 2026-03-09 |
-| 8. Milestone Fixes | 2/2 | Complete   | 2026-03-09 |
-
 ### Phase 6: Author Onboarding and Voice Analysis
 
 **Goal:** Onboarding sequence (accessible before dashboard, revisitable) where users provide style/voice preferences and upload writing samples. AI analyzes their writing style to produce: 1) a downloadable PDF style report, and 2) an "author voice" persona loaded into generation context. Users can provide general AI guidance and revisit their profile from Settings.
@@ -193,3 +178,96 @@ Plans:
   4. Settings page no longer shows API Key tab or BYOK setup banner
   5. Phase 6 has a VERIFICATION.md confirming all VOIC-01..07 requirements
   6. REQUIREMENTS.md traceability table shows all VOIC requirements as "Complete"
+
+</details>
+
+---
+
+### 🚧 v1.1 Auth & Billing (In Progress)
+
+**Milestone Goal:** Fix the password reset flow so recovery links land on a proper "set new password" page, and rework Stripe billing from token-based to the three-tier pricing model (Project / Author / Studio).
+
+- [ ] **Phase 9: Password Reset Fix** - Recovery link lands on `/auth/reset-password` with working set-new-password form
+- [ ] **Phase 10: Billing Infrastructure** - Stripe products/prices/coupon created via CLI, DB migration, tier definitions updated
+- [ ] **Phase 11: Billing Enforcement** - Project-count gates replace token-budget gates; completed projects stay readable
+- [ ] **Phase 12: Checkout and Webhooks** - Self-serve Stripe Checkout for all tiers, webhook handler for purchases and subscriptions, repeat discount
+- [ ] **Phase 13: Billing UI and Cleanup** - Settings billing section shows plan/limits/options; customer portal access; token enforcement removed
+
+## Phase Details
+
+### Phase 9: Password Reset Fix
+**Goal**: Users who follow a Supabase recovery email link land on a dedicated page that lets them set a new password, rather than being redirected silently to the dashboard
+**Depends on**: Phase 8 (auth infrastructure exists)
+**Requirements**: PRST-01, PRST-02
+**Success Criteria** (what must be TRUE):
+  1. Clicking the recovery link from the Supabase password reset email opens `/auth/reset-password` with an active session established
+  2. If no valid recovery session is present when visiting `/auth/reset-password`, the page redirects to `/login` with an error message
+  3. User can enter and confirm a new password on the reset page and submit successfully
+  4. After a successful password reset, the user is redirected to the dashboard and is logged in
+**Plans**: TBD
+
+### Phase 10: Billing Infrastructure
+**Goal**: The three-tier pricing model exists in Stripe and the database — products, prices, and coupon created via CLI; schema updated; tier definitions reflect new model
+**Depends on**: Phase 9
+**Requirements**: BILL-05, BILL-06, BILL-07, BILL-08
+**Success Criteria** (what must be TRUE):
+  1. Three Stripe products with correct prices exist in Stripe (Project $39 one-time, Author $49/mo + $490/yr, Studio $99/mo) — verifiable via Stripe dashboard or CLI
+  2. A $25 repeat-project coupon exists in Stripe — verifiable via CLI
+  3. DB migration has run: subscription tier enum includes `project`/`author`/`studio`; project purchase tracking table exists
+  4. `tiers.ts` returns correct tier definitions with price IDs and project limits (Project: 1, Author: 3, Studio: unlimited)
+**Plans**: TBD
+
+### Phase 11: Billing Enforcement
+**Goal**: The application enforces access by project count and active subscription rather than token budgets — generation is gated correctly and completed projects remain readable forever
+**Depends on**: Phase 10
+**Requirements**: BILL-09, BILL-10, BILL-11
+**Success Criteria** (what must be TRUE):
+  1. Generation routes reject requests from users who have no active subscription and no individual project purchase for that project
+  2. Project creation is blocked when the user has reached their tier's active project limit (1 for Project, 3 for Author, unlimited for Studio)
+  3. A completed project can be fully read (all chapters, all export formats) even if the user's subscription has lapsed
+  4. Generation on a completed or expired project is blocked with a clear error message pointing to upgrade options
+**Plans**: TBD
+
+### Phase 12: Checkout and Webhooks
+**Goal**: Users can purchase any tier via Stripe Checkout from the settings page; returning project buyers get the $25 discount automatically; webhook handler correctly updates the database for all purchase and subscription events
+**Depends on**: Phase 10
+**Requirements**: BILL-12, BILL-13, BILL-14, BILL-15
+**Success Criteria** (what must be TRUE):
+  1. User can initiate a Project tier one-time purchase from settings and complete payment via Stripe Checkout
+  2. User can subscribe to Author (monthly or annual) or Studio tier from settings and complete checkout
+  3. A user purchasing a second Project tier receives the $25 discount at checkout without entering any promo code
+  4. Webhook handler updates the database correctly for one-time project purchases (project record created) and subscription events (tier updated)
+**Plans**: TBD
+
+### Phase 13: Billing UI and Cleanup
+**Goal**: The settings billing section accurately reflects the user's plan, active project count against their limit, and available upgrade/purchase actions; token budget enforcement and warnings are removed
+**Depends on**: Phase 12
+**Requirements**: BILL-16, BILL-17, BILL-18
+**Success Criteria** (what must be TRUE):
+  1. Settings billing tab shows current plan name, active project count vs tier limit, and upgrade/purchase call-to-action buttons
+  2. User can open the Stripe Customer Portal from settings to manage or cancel their subscription
+  3. No token budget warnings or token usage meters appear anywhere in the application
+  4. Token usage is still recorded in the database (analytics preserved) but is not surfaced in any user-facing UI
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 01.1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Foundation | v1.0 | 5/6 | In Progress | - |
+| 01.1 Remove n8n | v1.0 | 1/1 | Complete | 2026-03-01 |
+| 2. Guided Intake and Outline | v1.0 | 9/9 | Complete | 2026-03-03 |
+| 3. Chapter Generation | v1.0 | 5/5 | Complete | 2026-03-03 |
+| 4. Creative Checkpoints | v1.0 | 5/5 | Complete | 2026-03-03 |
+| 5. Export and Billing | v1.0 | 7/7 | Complete | 2026-03-04 |
+| 6. Author Onboarding & Voice Analysis | v1.0 | 6/6 | Complete | 2026-03-12 |
+| 7. Character Creator | v1.0 | 3/3 | Complete | 2026-03-09 |
+| 8. Milestone Fixes | v1.0 | 2/2 | Complete | 2026-03-09 |
+| 9. Password Reset Fix | v1.1 | 0/TBD | Not started | - |
+| 10. Billing Infrastructure | v1.1 | 0/TBD | Not started | - |
+| 11. Billing Enforcement | v1.1 | 0/TBD | Not started | - |
+| 12. Checkout and Webhooks | v1.1 | 0/TBD | Not started | - |
+| 13. Billing UI and Cleanup | v1.1 | 0/TBD | Not started | - |

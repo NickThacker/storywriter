@@ -181,17 +181,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPT-01..03 | Phase 5 | Complete |
 | BILL-01..04 | Phase 5, 8 | Complete |
 | VOIC-01..07 | Phase 6, 8 | Complete |
-| PRST-01..02 | Phase TBD | Pending |
-| BILL-05..08 | Phase TBD | Pending |
-| BILL-09..11 | Phase TBD | Pending |
-| BILL-12..15 | Phase TBD | Pending |
-| BILL-16..18 | Phase TBD | Pending |
+| PRST-01..02 | Phase 9 | Pending |
+| BILL-05..08 | Phase 10 | Pending |
+| BILL-09..11 | Phase 11 | Pending |
+| BILL-12..15 | Phase 12 | Pending |
+| BILL-16..18 | Phase 13 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 53 total — all Complete
 - v1.1 requirements: 16 total — all Pending
-- Unmapped: 16 (awaiting roadmap)
+- Unmapped: 0 (all requirements mapped)
 
 ---
 *Requirements defined: 2026-02-28*
-*Last updated: 2026-03-12 after v1.1 requirements definition*
+*Last updated: 2026-03-12 after v1.1 roadmap creation*
