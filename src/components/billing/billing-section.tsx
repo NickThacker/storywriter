@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { TIERS, YEARLY_PRICES, YEARLY_AMOUNTS } from '@/lib/stripe/tiers'
 import { createCheckoutSession, createProjectCreditSession, createPortalSession } from '@/actions/billing'
 import type { BillingStatus } from '@/types/billing'
@@ -29,9 +30,14 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
     setLoadingPriceId(priceId)
     try {
       const result = await createCheckoutSession(priceId)
-      if ('url' in result && result.url) {
+      if ('error' in result) {
+        toast.error(result.error)
+      } else if (result.url) {
         window.location.href = result.url
       }
+    } catch (err) {
+      toast.error('Something went wrong. Please try again.')
+      console.error('Checkout error:', err)
     } finally {
       setLoadingPriceId(null)
     }
@@ -41,9 +47,14 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
     setLoadingPriceId(priceId)
     try {
       const result = await createProjectCreditSession(priceId)
-      if ('url' in result && result.url) {
+      if ('error' in result) {
+        toast.error(result.error)
+      } else if (result.url) {
         window.location.href = result.url
       }
+    } catch (err) {
+      toast.error('Something went wrong. Please try again.')
+      console.error('Checkout error:', err)
     } finally {
       setLoadingPriceId(null)
     }
@@ -53,9 +64,14 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
     setLoadingPriceId('portal')
     try {
       const result = await createPortalSession()
-      if ('url' in result && result.url) {
+      if ('error' in result) {
+        toast.error(result.error)
+      } else if (result.url) {
         window.location.href = result.url
       }
+    } catch (err) {
+      toast.error('Something went wrong. Please try again.')
+      console.error('Portal error:', err)
     } finally {
       setLoadingPriceId(null)
     }
