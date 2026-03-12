@@ -17,7 +17,13 @@ export async function GET(request: NextRequest) {
     if (error) {
       return NextResponse.redirect(`${origin}/login?error=expired_link`)
     }
-    const isRecovery = type === 'recovery' || next === '/auth/reset-password'
+    // Detect recovery: explicit params, or session authenticated via recovery OTP
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const amrMethods: string[] = ((data.session as any)?.amr ?? []).map((a: any) => a.method)
+    const isRecovery =
+      type === 'recovery' ||
+      next === '/auth/reset-password' ||
+      (amrMethods.includes('otp') && !amrMethods.includes('password'))
     const defaultNext = isRecovery ? '/auth/reset-password' : '/dashboard'
     return NextResponse.redirect(`${origin}${next ?? defaultNext}`)
   }
