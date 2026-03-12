@@ -20,7 +20,7 @@ export const TIERS: TierConfig[] = [
       'Access for 12 months',
       'No subscription required',
     ],
-    stripePriceId: process.env.STRIPE_PRICE_PROJECT || 'price_project_placeholder',
+    stripePriceId: 'price_1TAESbGywhC8qTIasPkbXbCR',
     tagline: 'Try the full pipeline. No commitment.',
     cta: 'Start Your Project',
   },
@@ -37,7 +37,7 @@ export const TIERS: TierConfig[] = [
       'Chapter continuity and arc tracking',
       'Private — no community, no shared data',
     ],
-    stripePriceId: process.env.STRIPE_PRICE_AUTHOR_MONTHLY || 'price_author_monthly_placeholder',
+    stripePriceId: 'price_1TAET1GywhC8qTIaYbr1eU2N',
     tagline: 'Early member pricing. Locked for life.',
     cta: 'Start Writing',
     popular: true,
@@ -55,7 +55,7 @@ export const TIERS: TierConfig[] = [
       'Series continuity tools',
       'Early access to new pipeline features',
     ],
-    stripePriceId: process.env.STRIPE_PRICE_STUDIO_MONTHLY || 'price_studio_monthly_placeholder',
+    stripePriceId: 'price_1TAEVnGywhC8qTIaZCCw9fZU',
     tagline: 'For working professionals.',
     cta: 'Get Started',
   },
@@ -63,8 +63,8 @@ export const TIERS: TierConfig[] = [
 
 // Yearly price IDs (used for annual toggle)
 export const YEARLY_PRICES: Record<string, string> = {
-  author: process.env.STRIPE_PRICE_AUTHOR_YEARLY || 'price_author_yearly_placeholder',
-  studio: process.env.STRIPE_PRICE_STUDIO_YEARLY || 'price_studio_yearly_placeholder',
+  author: 'price_1TAET1GywhC8qTIabHGw8qSp',
+  studio: 'price_1TAEbQGywhC8qTIaFAKkxCLh',
 }
 
 export const YEARLY_AMOUNTS: Record<string, number> = {
