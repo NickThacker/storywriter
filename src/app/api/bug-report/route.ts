@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 const LINEAR_EMAIL = 'meridian-bug-4fc08f4e04ae@intake.linear.app'
+
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured')
+  }
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -23,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: 'Meridian Bugs <bugs@meridianwrite.com>',
       to: LINEAR_EMAIL,
       replyTo: user.email ?? undefined,
