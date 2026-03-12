@@ -109,8 +109,8 @@ function SignUpForm() {
       )}
 
       {state && 'success' in state && state.success && (
-        <div className="rounded-md bg-green-50 border border-green-200 p-3">
-          <p className="text-sm text-green-800">{state.success}</p>
+        <div className="rounded-md bg-secondary border border-border p-3">
+          <p className="text-sm text-foreground">{state.success}</p>
         </div>
       )}
 

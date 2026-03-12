@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { CheckCircle } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 type ActionState = { error?: string; success?: boolean } | null
 
@@ -34,11 +34,15 @@ function SuccessState() {
       <p className="text-2xl font-bold text-foreground">Meridian</p>
       <Card className="w-full max-w-sm">
         <CardContent className="pt-6 flex flex-col items-center gap-4 text-center">
-          <CheckCircle className="h-10 w-10 text-green-500" />
-          <p className="text-lg font-bold">Password updated!</p>
-          <p className="text-sm text-muted-foreground">
-            Redirecting to dashboard in {seconds}...
-          </p>
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary">
+            <Check className="h-5 w-5 text-foreground" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-lg font-semibold">Password updated</p>
+            <p className="text-sm text-muted-foreground">
+              Redirecting to dashboard in {seconds}...
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => router.push('/dashboard')}
