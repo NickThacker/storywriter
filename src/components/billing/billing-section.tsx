@@ -64,7 +64,6 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
   }
 
   if (hasNoSubscription) {
-    // No subscription — show initial signup tier cards
     return (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
@@ -85,19 +84,21 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
     )
   }
 
-  // Active subscription — show plan details + usage + manage options
   const currentTierConfig = TIERS.find((t) => t.id === billingStatus.tier)
 
   return (
-    <div className="space-y-6">
-      {/* Current plan + status */}
-      <div className="rounded-lg border p-4 flex items-start justify-between gap-4">
+    <div className="space-y-8">
+      {/* Current plan */}
+      <div
+        className="border border-border p-5 flex items-start justify-between gap-4"
+        style={{ borderRadius: 0 }}
+      >
         <div className="space-y-1">
-          <p className="text-sm font-medium">
+          <p className="text-sm text-foreground">
             {currentTierConfig ? currentTierConfig.name : billingStatus.tier} Plan
           </p>
           {billingStatus.billingPeriodEnd && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[0.7rem] text-muted-foreground">
               Next billing date: {formatDate(billingStatus.billingPeriodEnd)}
             </p>
           )}
@@ -106,15 +107,21 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
           type="button"
           disabled={isLoading}
           onClick={handleManageSubscription}
-          className="shrink-0 rounded-md px-4 py-2 text-sm border hover:bg-accent transition-colors disabled:opacity-60"
+          className="shrink-0 px-4 py-2 text-[0.68rem] uppercase tracking-[0.1em] border border-border hover:border-foreground transition-colors disabled:opacity-60 cursor-pointer"
+          style={{ borderRadius: 0 }}
         >
-          {loadingPriceId === 'portal' ? 'Redirecting...' : 'Manage Subscription'}
+          {loadingPriceId === 'portal' ? 'Redirecting...' : 'Manage'}
         </button>
       </div>
 
-      {/* Usage bar */}
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold">Token Usage This Period</h3>
+      {/* Usage */}
+      <div className="space-y-3">
+        <p
+          className="text-[0.65rem] uppercase tracking-[0.1em]"
+          style={{ color: 'var(--gold)' }}
+        >
+          Token Usage
+        </p>
         <UsageBar
           used={billingStatus.tokenBudgetTotal - billingStatus.tokenBudgetRemaining}
           total={billingStatus.tokenBudgetTotal}
@@ -122,15 +129,20 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
         />
         <Link
           href="/usage"
-          className="text-xs text-primary hover:underline"
+          className="text-[0.65rem] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground transition-colors"
         >
-          View detailed usage breakdown
+          View detailed breakdown
         </Link>
       </div>
 
       {/* Credit packs */}
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold">Buy Credit Pack</h3>
+        <p
+          className="text-[0.65rem] uppercase tracking-[0.1em]"
+          style={{ color: 'var(--gold)' }}
+        >
+          Credit Packs
+        </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {CREDIT_PACKS.map((pack) => (
             <button
@@ -138,12 +150,13 @@ export function BillingSection({ billingStatus }: BillingSectionProps) {
               type="button"
               disabled={isLoading}
               onClick={() => handleSelectCreditPack(pack.stripePriceId)}
-              className="rounded-lg border p-3 text-left hover:border-primary hover:bg-accent/50 transition-colors disabled:opacity-60 disabled:pointer-events-none"
+              className="border border-border p-3 text-left hover:border-[color:var(--gold)]/40 transition-colors disabled:opacity-60 disabled:pointer-events-none cursor-pointer"
+              style={{ borderRadius: 0 }}
             >
-              <p className="font-medium text-sm">{pack.name}</p>
-              <p className="text-muted-foreground text-xs mt-0.5">${pack.price}</p>
+              <p className="text-sm text-foreground">{pack.name}</p>
+              <p className="text-muted-foreground text-[0.7rem] mt-0.5">${pack.price}</p>
               {loadingPriceId === pack.stripePriceId && (
-                <p className="text-xs text-primary mt-1">Redirecting...</p>
+                <p className="text-[0.65rem] mt-1" style={{ color: 'var(--gold)' }}>Redirecting...</p>
               )}
             </button>
           ))}

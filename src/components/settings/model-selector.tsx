@@ -2,9 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useDebouncedCallback } from 'use-debounce'
-import { CheckCircle, Loader2 } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Check, Loader2 } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -25,7 +23,6 @@ interface ModelSelectorProps {
 
 type SaveStatus = 'idle' | 'saving' | 'saved'
 
-// Group models by provider for the dropdown
 const PROVIDERS = [...new Set(AVAILABLE_MODELS.map((m) => m.provider))]
 
 function getModelName(modelId: string): string {
@@ -37,7 +34,6 @@ function isRecommended(taskType: TaskType, modelId: string): boolean {
 }
 
 export function ModelSelector({ initialPreferences }: ModelSelectorProps) {
-  // Initialize state from props, defaulting to RECOMMENDED_MODELS
   const [preferences, setPreferences] = useState<Record<TaskType, string>>(() => {
     const prefMap = new Map(initialPreferences.map((p) => [p.taskType, p.modelId]))
     const taskTypes = TASK_TYPES.map((t) => t.value)
@@ -64,7 +60,6 @@ export function ModelSelector({ initialPreferences }: ModelSelectorProps) {
 
       setSaveStatus((prev) => ({ ...prev, [taskType]: 'saved' }))
 
-      // Reset "saved" indicator after 2 seconds
       setTimeout(() => {
         setSaveStatus((prev) => ({ ...prev, [taskType]: 'idle' }))
       }, 2000)
@@ -78,83 +73,72 @@ export function ModelSelector({ initialPreferences }: ModelSelectorProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Model Preferences</CardTitle>
-        <CardDescription>
-          Choose which AI model powers each writing task. Changes auto-save as you select.
-          Any model available on OpenRouter can be used — enter the model ID in the format{' '}
-          <code className="text-xs">provider/model-name</code>.
-        </CardDescription>
-      </CardHeader>
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        Choose which AI model powers each writing task. Changes auto-save.
+      </p>
 
-      <CardContent className="space-y-6">
+      <div className="space-y-0 divide-y divide-border">
         {TASK_TYPES.map(({ value: taskType, label, description }) => {
           const selectedModelId = preferences[taskType]
           const status = saveStatus[taskType]
           const recommended = isRecommended(taskType, selectedModelId)
 
           return (
-            <div key={taskType} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium leading-none">{label}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+            <div key={taskType} className="py-5 first:pt-0 last:pb-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-foreground">{label}</p>
+                    {recommended && (
+                      <span
+                        className="text-[0.6rem] uppercase tracking-[0.08em] px-1.5 py-0.5 border border-border"
+                        style={{ borderRadius: 0 }}
+                      >
+                        Recommended
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-[0.7rem] text-muted-foreground">{description}</p>
                 </div>
 
-                {/* Save status indicator */}
-                <div className="ml-4 flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="flex shrink-0 items-center gap-3">
                   {status === 'saving' && (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Saving...
-                    </>
+                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                   )}
                   {status === 'saved' && (
-                    <>
-                      <CheckCircle className="h-3 w-3 text-green-600" />
-                      <span className="text-green-600">Saved</span>
-                    </>
+                    <Check className="h-3 w-3" style={{ color: 'var(--gold)' }} />
                   )}
+
+                  <Select
+                    value={selectedModelId}
+                    onValueChange={(value) => handleModelChange(taskType, value)}
+                  >
+                    <SelectTrigger
+                      className="w-[240px] text-xs"
+                      style={{ borderRadius: 0 }}
+                    >
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent style={{ borderRadius: 0 }}>
+                      {PROVIDERS.map((provider) => (
+                        <SelectGroup key={provider}>
+                          <SelectLabel className="text-[0.6rem] uppercase tracking-[0.08em]">{provider}</SelectLabel>
+                          {AVAILABLE_MODELS.filter((m) => m.provider === provider).map((model) => (
+                            <SelectItem key={model.id} value={model.id} className="text-xs">
+                              {model.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Select
-                  value={selectedModelId}
-                  onValueChange={(value) => handleModelChange(taskType, value)}
-                >
-                  <SelectTrigger className="w-[260px]">
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROVIDERS.map((provider) => (
-                      <SelectGroup key={provider}>
-                        <SelectLabel>{provider}</SelectLabel>
-                        {AVAILABLE_MODELS.filter((m) => m.provider === provider).map((model) => (
-                          <SelectItem key={model.id} value={model.id}>
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {recommended && (
-                  <Badge variant="secondary" className="text-xs">
-                    Recommended
-                  </Badge>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                Currently: <span className="font-medium">{getModelName(selectedModelId)}</span>
-              </p>
             </div>
           )
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
