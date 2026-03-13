@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useChapterStream } from '@/hooks/use-chapter-stream'
-import { saveChapterProse, updateProjectWordCount, approveChapter } from '@/actions/chapters'
+import { saveChapterProse, updateProjectWordCount, approveChapter, getChapterCheckpoints } from '@/actions/chapters'
 import { ChapterList } from '@/components/chapters/chapter-list'
 import { ChapterStreamingView, type OracleStatus } from '@/components/chapters/chapter-streaming-view'
 import { ChapterEditor } from '@/components/chapters/chapter-editor'
@@ -177,17 +177,24 @@ export function ChapterPanel({
 
   // ── Chapter analysis ─────────────────────────────────────────────────────
 
-  // Background analysis after generation — updates memory silently.
+  // Background analysis after generation — updates memory then refreshes checkpoint stats.
   const fireAnalysis = useCallback(
     (chapterNumber: number, chapterText: string) => {
       setAnalysisRunningFor(chapterNumber)
       void (async () => {
         try {
-          await fetch('/api/generate/analyze-chapter', {
+          const res = await fetch('/api/generate/analyze-chapter', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ projectId, chapterNumber, chapterText }),
           })
+          if (res.ok) {
+            // Re-fetch checkpoints to pick up updated state_diff + summary
+            const refreshed = await getChapterCheckpoints(projectId)
+            if (!('error' in refreshed)) {
+              setCheckpointMap(new Map(refreshed.data.map((c) => [c.chapter_number, c])))
+            }
+          }
         } catch (err) {
           console.error('[chapter-panel] analyze-chapter error:', err)
         } finally {
