@@ -88,6 +88,30 @@ function SignUpForm() {
     null
   )
 
+  const isSuccess = state && 'success' in state && state.success
+
+  if (isSuccess) {
+    return (
+      <div className="space-y-4 text-center py-4">
+        <div className="mx-auto w-10 h-10 border border-[color:var(--gold)]/40 flex items-center justify-center">
+          <svg className="w-5 h-5 text-[color:var(--gold)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+          </svg>
+        </div>
+        <h3
+          className="font-[family-name:var(--font-literata)] text-foreground"
+          style={{ fontSize: '1.0625rem', fontWeight: 400 }}
+        >
+          Check your email
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          We sent a confirmation link to your inbox.<br />
+          Click it to activate your account.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <form action={formAction} className="space-y-5">
       <div className="space-y-1.5">
@@ -131,10 +155,6 @@ function SignUpForm() {
 
       {state && 'error' in state && state.error && (
         <p className="text-sm text-destructive">{state.error}</p>
-      )}
-
-      {state && 'success' in state && state.success && (
-        <p className="text-sm text-muted-foreground">{state.success}</p>
       )}
 
       <Button

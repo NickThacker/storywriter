@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Mic, X } from 'lucide-react'
 import { dismissOnboardingNudge } from '@/actions/voice'
 
 export function VoiceOnboardingNudge() {
@@ -15,24 +16,25 @@ export function VoiceOnboardingNudge() {
   }
 
   return (
-    <div className="mb-6 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-      <div>
-        <strong>Set up your author voice.</strong>{' '}
-        Help Meridian write in your style &mdash; upload a writing sample and we will analyze your voice.
+    <div className="mb-6 flex items-center gap-4 border border-[color:var(--gold)]/20 bg-[color:var(--gold)]/[0.03] px-5 py-3.5">
+      <Mic className="h-4 w-4 shrink-0 text-[color:var(--gold)]" />
+      <div className="flex-1 text-sm text-muted-foreground">
+        <span className="font-medium text-foreground">Set up your author voice.</span>{' '}
+        Upload a writing sample and Meridian will match your style.
       </div>
-      <div className="ml-4 flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         <Link
           href="/onboarding"
-          className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+          className="border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/10 px-3.5 py-1.5 text-[0.65rem] uppercase tracking-[0.1em] text-[color:var(--gold)] hover:bg-[color:var(--gold)]/20 transition-colors"
         >
           Set up voice
         </Link>
         <button
           onClick={handleDismiss}
-          className="text-blue-600 hover:text-blue-800 transition-colors"
+          className="p-0.5 text-muted-foreground/50 hover:text-foreground transition-colors"
           aria-label="Dismiss"
         >
-          &times;
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
