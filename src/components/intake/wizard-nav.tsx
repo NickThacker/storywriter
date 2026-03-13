@@ -95,7 +95,7 @@ export function WizardNav() {
         setIsSaving(false)
         return
       }
-      router.push(`/projects/${params.id}/outline`)
+      window.location.href = `/projects/${params.id}/outline`
       return
     }
     nextStep()

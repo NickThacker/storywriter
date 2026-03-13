@@ -25,30 +25,24 @@ const STEP_TONE = 5
 const GENRE_AI_CONTEXT: Record<string, string> = {
   fantasy: 'World-building logic, magic system consistency, mythic stakes and escalation patterns',
   romance: 'Romantic tension pacing, emotional beats, relationship arc tracking across chapters',
-  mystery: 'Clue placement logic, red herring balance, revelation timing and dramatic irony',
   thriller: 'Threat escalation, pacing pressure, countdown structures and stakes amplification',
   'sci-fi': 'Technological consistency, speculative extrapolation, concept-grounded world logic',
-  horror: 'Dread atmosphere, fear escalation, psychological vs. visceral tension calibration',
-  'literary-fiction': 'Character interiority, thematic resonance, prose rhythm and symbolic layering',
-  historical: 'Period accuracy, cultural voice, anachronism avoidance, historical stakes',
+  literary: 'Character interiority, thematic resonance, prose rhythm and symbolic layering',
 }
 
 const TONE_AI_CONTEXT: Record<string, string> = {
   dark: 'Unflinching prose register, moral ambiguity, consequence without consolation',
   hopeful: 'Light amid difficulty, earned optimism, redemptive arc shaping',
   witty: 'Sharp dialogue cadence, subverted expectations, comic timing in pacing',
-  dramatic: 'Heightened emotional stakes, operatic character choices, cathartic payoffs',
-  suspenseful: 'Information control, reader tension through withheld context, cliffhanger architecture',
-  contemplative: 'Interior space, slow revelation, meditative scene construction',
+  lyrical: 'Poetic prose cadence, atmospheric layering, emotionally resonant imagery',
 }
 
 const SETTING_AI_CONTEXT: Record<string, string> = {
-  contemporary: 'Modern cultural references, digital-age social dynamics, current vernacular',
+  'urban-modern': 'Modern cultural references, digital-age social dynamics, city as backdrop for collision',
   historical: 'Period-authentic detail, social constraints of the era, historical event grounding',
-  fantasy: 'Internally consistent world rules, invented geography and culture, myth logic',
-  'sci-fi': 'Speculative technology, future sociology, extrapolated political systems',
+  'secondary-world': 'Internally consistent world rules, invented geography and culture, myth logic',
   rural: 'Landscape as character, community-scale drama, isolation as psychological pressure',
-  urban: 'City as backdrop for anonymity and collision, density-driven plot intersections',
+  space: 'Speculative technology, orbital/planetary dynamics, extrapolated political systems',
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

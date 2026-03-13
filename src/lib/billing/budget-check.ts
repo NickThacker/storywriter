@@ -110,7 +110,7 @@ export async function checkGenerationAccess(
 ): Promise<{ allowed: boolean; reason?: string }> {
   const supabase = await createClient()
 
-  // Fetch project billing info + user tier in parallel
+  // Fetch project billing info + user settings in parallel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [projectResult, settingsResult] = await Promise.all([
     (supabase as any)
@@ -121,7 +121,7 @@ export async function checkGenerationAccess(
       .single(),
     (supabase as any)
       .from('user_settings')
-      .select('subscription_tier')
+      .select('subscription_tier, is_admin, openrouter_api_key')
       .eq('user_id', userId)
       .single(),
   ])
@@ -131,7 +131,22 @@ export async function checkGenerationAccess(
   }
 
   const project = projectResult.data as { billing_type: string; credit_expires_at: string | null }
-  const tier = (settingsResult.data as { subscription_tier: string } | null)?.subscription_tier ?? 'none'
+  const settings = settingsResult.data as {
+    subscription_tier: string
+    is_admin?: boolean
+    openrouter_api_key?: string | null
+  } | null
+  const tier = settings?.subscription_tier ?? 'none'
+
+  // Admin users bypass all billing checks
+  if (settings?.is_admin) {
+    return { allowed: true }
+  }
+
+  // BYOK users (own API key) bypass billing — they pay OpenRouter directly
+  if (settings?.openrouter_api_key) {
+    return { allowed: true }
+  }
 
   if (project.billing_type === 'credit') {
     // Credit-based project: check expiry

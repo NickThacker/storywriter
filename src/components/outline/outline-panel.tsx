@@ -74,6 +74,15 @@ export function OutlinePanel({
   const { streamedContent, parsedOutline, isStreaming, error, startStream } =
     useOutlineStream(projectId)
 
+  // Auto-start generation when arriving with intake data but no existing outline
+  const [autoStarted, setAutoStarted] = useState(false)
+  useEffect(() => {
+    if (!initialOutline && intakeData && !autoStarted) {
+      setAutoStarted(true)
+      void startStream(intakeData)
+    }
+  }, [initialOutline, intakeData, autoStarted, startStream])
+
   // When generation completes and parsedOutline is ready, save it
   const handleSaveOutline = useCallback(async () => {
     if (!parsedOutline || !intakeData) return
@@ -180,26 +189,6 @@ export function OutlinePanel({
 
   // ── Streaming / generation mode ──────────────────────────────────────────
   if (!outline && intakeData) {
-    if (!isStreaming && !streamedContent && !parsedOutline) {
-      // Show prompt to start generation
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[500px] gap-6 p-8">
-          <div className="text-center space-y-2 max-w-md">
-            <h2 className="text-xl font-semibold">Ready to Generate Your Outline</h2>
-            <p className="text-muted-foreground text-sm">
-              Your intake answers are saved. Click below to generate your story outline.
-            </p>
-          </div>
-          <button
-            onClick={() => void startStream(intakeData)}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Generate Outline
-          </button>
-        </div>
-      )
-    }
-
     return (
       <StreamingView
         streamedContent={streamedContent}
