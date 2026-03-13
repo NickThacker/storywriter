@@ -4,6 +4,20 @@ import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
 import { getApiKey } from '@/lib/api-key'
 
+function extractJSON(raw: string): unknown {
+  let s = raw.trim()
+  if (s.startsWith('```')) {
+    s = s.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+  }
+  try { return JSON.parse(s) } catch { /* continue */ }
+  const start = s.search(/[{[]/)
+  const end = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'))
+  if (start !== -1 && end > start) {
+    return JSON.parse(s.substring(start, end + 1))
+  }
+  throw new Error('No JSON found')
+}
+
 interface PrefillResult {
   genre: string | null
   themes: string[]
@@ -141,12 +155,9 @@ Return ONLY valid JSON. Do not include explanations or markdown.`
 
     let prefill: Partial<PrefillResult>
     try {
-      let cleaned = content.trim()
-      if (cleaned.startsWith('```')) {
-        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
-      }
-      prefill = JSON.parse(cleaned) as Partial<PrefillResult>
+      prefill = extractJSON(content) as Partial<PrefillResult>
     } catch {
+      console.error('[premise-prefill] Failed to parse AI response:', content.substring(0, 500))
       return NextResponse.json(
         { error: 'Invalid JSON from AI' },
         { status: 502 }

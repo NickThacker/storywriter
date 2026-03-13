@@ -4,6 +4,23 @@ import { logPrompt } from '@/lib/logging/prompt-logger'
 import { getModelForRole } from '@/lib/models/registry'
 import { getApiKey } from '@/lib/api-key'
 
+function extractJSON(raw: string): unknown {
+  let s = raw.trim()
+  // Strip markdown code fences
+  if (s.startsWith('```')) {
+    s = s.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
+  }
+  // Try direct parse first
+  try { return JSON.parse(s) } catch { /* continue */ }
+  // Find first { or [ and last } or ]
+  const start = s.search(/[{[]/)
+  const end = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'))
+  if (start !== -1 && end > start) {
+    return JSON.parse(s.substring(start, end + 1))
+  }
+  throw new Error('No JSON found')
+}
+
 interface CharacterAssistRequest {
   action: 'suggest-names' | 'flesh-out' | 'suggest-cast'
   genre?: string
@@ -216,12 +233,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     let parsed: unknown
     try {
-      let cleaned = content.trim()
-      if (cleaned.startsWith('```')) {
-        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '')
-      }
-      parsed = JSON.parse(cleaned)
+      parsed = extractJSON(content)
     } catch {
+      console.error('[character-assist] Failed to parse AI response:', content.substring(0, 500))
       return NextResponse.json({ error: 'Invalid JSON from AI' }, { status: 502 })
     }
 
