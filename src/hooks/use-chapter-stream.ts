@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { checkBudgetWarning } from '@/hooks/use-budget-warning'
 import type { ContinuityIssue } from '@/lib/memory/continuity-auditor'
 
 export interface ContinuityConflict {
@@ -106,9 +105,6 @@ export function useChapterStream(): UseChapterStreamReturn {
           setIsStreaming(false)
           return
         }
-
-        // Check X-Budget-Warning header and show toast if near limit (80%)
-        checkBudgetWarning(response)
 
         if (!response.body) {
           setError('No response body from server')

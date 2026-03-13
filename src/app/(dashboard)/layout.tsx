@@ -6,6 +6,7 @@ import { signOut } from '@/actions/auth'
 import { VoiceOnboardingNudge } from '@/components/dashboard/voice-onboarding-nudge'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { BugReportButton } from '@/components/bug-report-button'
+import { Spider } from '@/components/spider'
 import logo from '@/app/assets/logo.png'
 
 export default async function DashboardLayout({
@@ -66,7 +67,6 @@ export default async function DashboardLayout({
           <div className="flex items-center gap-5">
             {[
               { href: '/dashboard', label: 'Library' },
-              { href: '/usage', label: 'Usage' },
               { href: '/settings', label: 'Settings' },
               ...(isAdmin ? [{ href: '/admin/prompt-logs', label: 'Admin' }] : []),
             ].map(({ href, label }) => (
@@ -101,6 +101,7 @@ export default async function DashboardLayout({
         {children}
       </main>
       <BugReportButton userEmail={user.email ?? undefined} />
+      <Spider />
     </div>
   )
 }

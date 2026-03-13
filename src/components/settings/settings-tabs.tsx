@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { ModelSelector } from '@/components/settings/model-selector'
 import { BillingSection } from '@/components/billing/billing-section'
 import { VoiceProfileTab } from '@/components/settings/voice-profile-tab'
+import { SpiderToggle } from '@/components/settings/spider-toggle'
 import type { BillingStatus } from '@/types/billing'
 import type { AuthorPersonaRow } from '@/types/database'
 
@@ -25,6 +26,7 @@ export function SettingsTabs({ modelPreferences, billingStatus, persona, isAdmin
     ...(isAdmin ? [{ id: 'models', label: 'Models' }] : []),
     { id: 'billing', label: 'Billing' },
     { id: 'voice', label: 'Voice Profile' },
+    { id: 'misc', label: 'Misc' },
   ]
 
   const defaultTab = billingParam === 'success' || billingParam === 'cancelled'
@@ -62,6 +64,23 @@ export function SettingsTabs({ modelPreferences, billingStatus, persona, isAdmin
 
       {activeTab === 'voice' && (
         <VoiceProfileTab persona={persona} />
+      )}
+
+      {activeTab === 'misc' && (
+        <div className="space-y-6">
+          <div>
+            <h3
+              className="font-[family-name:var(--font-literata)] text-lg mb-1"
+              style={{ fontWeight: 400 }}
+            >
+              Fun stuff
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Completely unnecessary features that spark joy.
+            </p>
+            <SpiderToggle />
+          </div>
+        </div>
       )}
     </div>
   )
