@@ -8,32 +8,35 @@ import { VoiceProfileTab } from '@/components/settings/voice-profile-tab'
 import type { BillingStatus } from '@/types/billing'
 import type { AuthorPersonaRow } from '@/types/database'
 
-const TABS = [
-  { id: 'models', label: 'Models' },
-  { id: 'billing', label: 'Billing' },
-  { id: 'voice', label: 'Voice Profile' },
-] as const
-
-type TabId = (typeof TABS)[number]['id']
+type TabDef = { id: string; label: string }
 
 interface SettingsTabsProps {
   modelPreferences: { taskType: string; modelId: string }[]
   billingStatus: BillingStatus | null
   persona: AuthorPersonaRow | null
+  isAdmin?: boolean
 }
 
-export function SettingsTabs({ modelPreferences, billingStatus, persona }: SettingsTabsProps) {
+export function SettingsTabs({ modelPreferences, billingStatus, persona, isAdmin }: SettingsTabsProps) {
   const searchParams = useSearchParams()
-  // Auto-open billing tab when returning from Stripe checkout
   const billingParam = searchParams.get('billing')
-  const [activeTab, setActiveTab] = useState<TabId>(
-    billingParam === 'success' || billingParam === 'cancelled' ? 'billing' : 'models'
-  )
+
+  const tabs: TabDef[] = [
+    ...(isAdmin ? [{ id: 'models', label: 'Models' }] : []),
+    { id: 'billing', label: 'Billing' },
+    { id: 'voice', label: 'Voice Profile' },
+  ]
+
+  const defaultTab = billingParam === 'success' || billingParam === 'cancelled'
+    ? 'billing'
+    : tabs[0].id
+
+  const [activeTab, setActiveTab] = useState(defaultTab)
 
   return (
     <div className="space-y-8">
       <div className="flex gap-8 border-b border-border">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             type="button"

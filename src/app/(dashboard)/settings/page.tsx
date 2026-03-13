@@ -23,13 +23,21 @@ export default async function SettingsPage() {
     redirect('/login')
   }
 
-  const [modelPreferences, billingStatusResult, persona] = await Promise.all([
+  // Fetch admin flag + all settings data in parallel
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [modelPreferences, billingStatusResult, persona, settingsResult] = await Promise.all([
     getModelPreferences(),
     getBillingStatus(),
     getPersona(),
+    (supabase as any)
+      .from('user_settings')
+      .select('is_admin')
+      .eq('user_id', user.id)
+      .single(),
   ])
 
   const billingStatus = 'error' in billingStatusResult ? null : billingStatusResult
+  const isAdmin = Boolean((settingsResult.data as { is_admin?: boolean } | null)?.is_admin)
 
   return (
     <div className="mx-auto max-w-2xl space-y-10">
@@ -52,6 +60,7 @@ export default async function SettingsPage() {
         modelPreferences={modelPreferences}
         billingStatus={billingStatus}
         persona={persona}
+        isAdmin={isAdmin}
       />
     </div>
   )

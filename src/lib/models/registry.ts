@@ -10,13 +10,13 @@ export type ModelRole =
   | 'arc_synthesis'
 
 export const MODEL_DEFAULTS: Record<ModelRole, string> = {
-  prose: 'anthropic/claude-sonnet-4-5',
-  reviewer: 'anthropic/claude-sonnet-4',
-  planner: 'anthropic/claude-sonnet-4',
-  summarizer: 'anthropic/claude-sonnet-4',
-  validation: 'anthropic/claude-sonnet-4',
+  prose: 'anthropic/claude-sonnet-4.5',
+  reviewer: 'anthropic/claude-3.5-haiku',
+  planner: 'openai/gpt-4o',
+  summarizer: 'anthropic/claude-3.5-haiku',
+  validation: 'anthropic/claude-3.5-haiku',
   oracle: 'google/gemini-3-flash-preview',
-  arc_synthesis: 'anthropic/claude-sonnet-4-5',
+  arc_synthesis: 'anthropic/claude-sonnet-4',
 }
 
 /**

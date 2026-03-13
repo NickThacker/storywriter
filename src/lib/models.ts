@@ -1,13 +1,13 @@
 import type { TaskType } from '@/types/database'
 
 export const RECOMMENDED_MODELS: Record<TaskType, { id: string; name: string; description: string }> = {
-  outline: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Fast, structured output for outlines' },
-  prose: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Creative, nuanced prose generation' },
+  outline: { id: 'anthropic/claude-sonnet-4.5', name: 'Claude Sonnet 4.5', description: 'Creative, structured output for outlines' },
+  prose: { id: 'anthropic/claude-sonnet-4.5', name: 'Claude Sonnet 4.5', description: 'Creative, nuanced prose generation' },
   editing: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Balanced quality for editing suggestions' },
-  reviewer: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Direction options, impact analysis, voice analysis' },
-  planner: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Outline generation and fast planning tasks' },
-  summarizer: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Chapter compression and memory analysis' },
-  validation: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Continuity auditing before generation' },
+  reviewer: { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Fast direction options and impact analysis' },
+  planner: { id: 'openai/gpt-4o', name: 'GPT-4o', description: 'Fast premise prefill and planning tasks' },
+  summarizer: { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Fast chapter compression and memory analysis' },
+  validation: { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', description: 'Fast continuity checking before generation' },
   oracle: { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', description: 'Long-range manuscript context retrieval' },
   arc_synthesis: { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', description: 'Character arc synthesis across chapters' },
 }
@@ -16,7 +16,7 @@ export const DEFAULT_MODELS = RECOMMENDED_MODELS
 
 export const AVAILABLE_MODELS = [
   { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic' },
-  { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet 4.5', provider: 'Anthropic' },
+  { id: 'anthropic/claude-sonnet-4.5', name: 'Claude Sonnet 4.5', provider: 'Anthropic' },
   { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', provider: 'Anthropic' },
   { id: 'openai/gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
   { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
