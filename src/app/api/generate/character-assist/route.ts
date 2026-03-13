@@ -23,6 +23,7 @@ function extractJSON(raw: string): unknown {
 
 interface CharacterAssistRequest {
   action: 'suggest-names' | 'flesh-out' | 'suggest-cast'
+  premise?: string
   genre?: string
   setting?: string
   tone?: string
@@ -72,7 +73,8 @@ const MOCK_CAST = {
 
 function buildSuggestNamesPrompt(req: CharacterAssistRequest): string {
   const count = req.count ?? 5
-  const parts = [`Generate exactly ${count} character names that would fit naturally in a story.`]
+  const parts = [`Generate exactly ${count} character names that would fit naturally in this story.`]
+  if (req.premise) parts.push(`\nStory premise: ${req.premise}`)
   if (req.genre) parts.push(`Genre: ${req.genre}`)
   if (req.setting) parts.push(`Setting: ${req.setting}`)
   if (req.tone) parts.push(`Tone: ${req.tone}`)
@@ -80,7 +82,10 @@ function buildSuggestNamesPrompt(req: CharacterAssistRequest): string {
   if (req.existingCharacters?.length) {
     parts.push(`Avoid these names (already in use): ${req.existingCharacters.join(', ')}`)
   }
-  parts.push('\nReturn a JSON object with a single "names" array of strings. No explanations.')
+  parts.push(
+    '\nVary the cultural origins — draw from naming traditions that fit the setting. Avoid overused fiction names (Elena, Marcus, Kai, Luna, etc.). Each name should sound distinct from the others.',
+    '\nReturn a JSON object with a single "names" array of strings. No explanations.'
+  )
   return parts.join('\n')
 }
 
@@ -102,7 +107,8 @@ function buildFleshOutPrompt(req: CharacterAssistRequest): string {
 }
 
 function buildSuggestCastPrompt(req: CharacterAssistRequest): string {
-  const parts = ['Generate 3-5 compelling characters that would work together in a story.']
+  const parts = ['Generate 3-5 compelling characters that would work together in this story.']
+  if (req.premise) parts.push(`\nStory premise: ${req.premise}`)
   if (req.genre) parts.push(`Genre: ${req.genre}`)
   if (req.setting) parts.push(`Setting: ${req.setting}`)
   if (req.tone) parts.push(`Tone: ${req.tone}`)
@@ -111,6 +117,12 @@ function buildSuggestCastPrompt(req: CharacterAssistRequest): string {
     parts.push(`Avoid these names (already in use): ${req.existingCharacters.join(', ')}`)
   }
   parts.push(
+    '\nIMPORTANT naming guidelines:',
+    '- Draw names from cultures, ethnicities, and naming traditions that fit the story\'s setting and world.',
+    '- Vary the cultural origins of names — do not default to the same Western European pool every time.',
+    '- Consider the time period, geography, and social context when choosing names.',
+    '- Avoid overused fiction names (no Elena, Marcus, Zara, Kai, Luna, etc.).',
+    '- Each name should feel distinct from the others in sound and rhythm.',
     '\nReturn a JSON object with a "characters" array. Each character has: "name" (string), "appearance" (2-3 sentences), "personality" (2-3 sentences), "backstory" (2-3 sentences), "arc" (1-2 sentences). No explanations outside the JSON.'
   )
   return parts.join('\n')

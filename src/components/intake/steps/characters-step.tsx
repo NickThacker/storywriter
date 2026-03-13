@@ -28,6 +28,7 @@ export function CharactersStep() {
   const removeCharacter = useIntakeStore((s) => s.removeCharacter)
   const updateCharacter = useIntakeStore((s) => s.updateCharacter)
   const setCharacters = useIntakeStore((s) => s.setCharacters)
+  const premise = useIntakeStore((s) => s.premise)
   const genre = useIntakeStore((s) => s.genre)
   const setting = useIntakeStore((s) => s.setting)
   const tone = useIntakeStore((s) => s.tone)
@@ -167,6 +168,7 @@ export function CharactersStep() {
     try {
       const data = await callCharacterAssist({
         action: 'suggest-cast',
+        premise: premise || undefined,
         genre,
         setting,
         tone,
