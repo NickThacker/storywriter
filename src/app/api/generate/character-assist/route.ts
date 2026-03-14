@@ -221,7 +221,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         messages,
         response_format: { type: 'json_object' },
         temperature: 0.7,
-        max_tokens: 1024,
+        max_tokens: action === 'suggest-names' ? 512 : 4096,
       }),
       signal: controller.signal,
     })
