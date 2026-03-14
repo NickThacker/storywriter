@@ -18,9 +18,9 @@ export async function extractTextFromFile(
   }
 
   if (ext === 'pdf') {
-    const { PDFParse } = await import('pdf-parse')
-    const parser = new PDFParse({ data: buffer })
-    const result = await parser.getText()
+    // pdf-parse v1 — simple default export, no DOMMatrix/canvas deps
+    const pdfParse = (await import('pdf-parse')).default
+    const result = await pdfParse(buffer)
     return result.text
   }
 
