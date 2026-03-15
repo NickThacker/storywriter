@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { assembleChapterContext } from '@/lib/memory/context-assembly'
 import { buildChapterPrompt } from '@/lib/memory/chapter-prompt'
 import { queryOracle } from '@/lib/oracle/oracle-query'
+import { runContinuityAudit } from '@/lib/memory/continuity-auditor'
 import { checkGenerationAccess, recordTokenUsage } from '@/lib/billing/budget-check'
 import { createTokenInterceptStream } from '@/lib/billing/token-interceptor'
 import { logPrompt } from '@/lib/logging/prompt-logger'
@@ -139,6 +140,25 @@ export async function POST(request: Request): Promise<Response> {
     }
   } catch (err) {
     console.error('[chapter] Oracle failed (proceeding without):', err)
+  }
+
+  // 6c. Continuity audit — fail-open, bypassed when force=true
+  if (!force) {
+    try {
+      const audit = await runContinuityAudit(context, resolvedKey, user.id)
+      if (!audit.clearToProceed && audit.issues.length > 0) {
+        return new Response(
+          JSON.stringify({
+            code: 'continuity_conflict',
+            error: 'Continuity conflicts detected',
+            issues: audit.issues,
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
+    } catch (err) {
+      console.error('[chapter] Continuity audit failed (proceeding):', err)
+    }
   }
 
   // 7b. Build prompt — pass persona + oracle output + character arcs
