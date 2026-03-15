@@ -73,6 +73,7 @@ export function ChapterPanel({
   const saveMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [oracleStatus, setOracleStatus] = useState<OracleStatus>('idle')
   const [analysisRunningFor, setAnalysisRunningFor] = useState<number | null>(null)
+  const [auditRunningFor, setAuditRunningFor] = useState<number | null>(null)
   const [conflictChapters, setConflictChapters] = useState<Set<number>>(new Set())
   // Map of chapterNumber → conflicting fact strings for text highlighting
   const [conflictHighlights, setConflictHighlights] = useState<Map<number, string[]>>(new Map())
@@ -205,6 +206,42 @@ export function ChapterPanel({
     [projectId]
   )
 
+  // Background manuscript audit — Gemini reviews full manuscript against outline + memory
+  const fireAudit = useCallback(
+    (chapterNumber: number) => {
+      setAuditRunningFor(chapterNumber)
+      void (async () => {
+        try {
+          const res = await fetch('/api/generate/manuscript-audit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId, chapterNumber }),
+          })
+          if (res.ok) {
+            const audit = await res.json()
+            const corrections = (audit.threadCorrections?.length ?? 0) + (audit.foreshadowingCorrections?.length ?? 0)
+            if (corrections > 0) {
+              // Re-fetch checkpoints to pick up any memory-driven changes
+              const refreshed = await getChapterCheckpoints(projectId)
+              if (!('error' in refreshed)) {
+                setCheckpointMap(new Map(refreshed.data.map((c: ChapterCheckpointRow) => [c.chapter_number, c])))
+              }
+            }
+            const findings = audit.findings?.length ?? 0
+            if (findings > 0 || corrections > 0) {
+              console.log(`[chapter-panel] Audit: ${findings} findings, ${corrections} corrections applied`)
+            }
+          }
+        } catch (err) {
+          console.error('[chapter-panel] manuscript-audit error:', err)
+        } finally {
+          setAuditRunningFor(null)
+        }
+      })()
+    },
+    [projectId]
+  )
+
   // ── Generation flow ──────────────────────────────────────────────────────
 
   const handleGenerate = useCallback(
@@ -299,8 +336,9 @@ export function ChapterPanel({
             toast.error(`Word count update failed: ${wordCountResult.error}`)
           }
 
-          // Fire background analysis — updates project_memory silently
+          // Fire background analysis + manuscript audit in parallel
           fireAnalysis(chapterNumber, streamedText)
+          fireAudit(chapterNumber)
 
           // Trigger arc synthesis every 5 chapters (fire-and-forget)
           if (chapterNumber % 5 === 0) {
@@ -695,11 +733,11 @@ export function ChapterPanel({
                       </button>
                     ) : (
                       <>
-                        {/* Memory analysis indicator — shown while analysis runs or when review is ready */}
-                        {analysisRunningFor === selectedChapter?.number && (
+                        {/* Memory analysis / audit indicator */}
+                        {(analysisRunningFor === selectedChapter?.number || auditRunningFor === selectedChapter?.number) && (
                           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Loader2 className="h-3 w-3 animate-spin" />
-                            Analyzing memory...
+                            {auditRunningFor === selectedChapter?.number ? 'Oracle thinking...' : 'Analyzing memory...'}
                           </span>
                         )}
                         <button
@@ -784,6 +822,7 @@ export function ChapterPanel({
                 totalChapters={chapterCount}
                 plotThreadStats={plotThreadStats}
                 isAnalyzing={analysisRunningFor === selectedChapter.number}
+                isAuditing={auditRunningFor === selectedChapter.number}
               />
             )}
           </div>

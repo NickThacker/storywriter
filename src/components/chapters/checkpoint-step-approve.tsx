@@ -16,6 +16,7 @@ interface CheckpointStepApproveProps {
   onRewrite: () => void
   isLastChapter: boolean
   isAnalyzing?: boolean
+  isAuditing?: boolean
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -28,6 +29,7 @@ export function CheckpointStepApprove({
   onRewrite,
   isLastChapter,
   isAnalyzing,
+  isAuditing,
 }: CheckpointStepApproveProps) {
   // Extract stats from checkpoint data
   const wordCount = checkpoint.chapter_text
@@ -90,6 +92,26 @@ export function CheckpointStepApprove({
           )
         })()}
       </div>
+
+      {/* Oracle audit status */}
+      {(isAnalyzing || isAuditing) && (
+        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 space-y-2">
+          <div className="flex items-center gap-2">
+            {isAnalyzing && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Analyzing chapter memory...
+              </span>
+            )}
+          </div>
+          {isAuditing && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Oracle reviewing manuscript...
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Continuity notes detail */}
       {checkpoint.continuity_notes && checkpoint.continuity_notes.length > 0 && (

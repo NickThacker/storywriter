@@ -26,6 +26,7 @@ interface CheckpointPanelProps {
   totalChapters: number
   plotThreadStats: { resolved: number; open: number }
   isAnalyzing?: boolean
+  isAuditing?: boolean
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -46,6 +47,7 @@ export function CheckpointPanel({
   totalChapters,
   plotThreadStats,
   isAnalyzing,
+  isAuditing,
 }: CheckpointPanelProps) {
   // Step state: 'approve' (step 1) or 'direction' (step 2)
   const [step, setStep] = useState<'approve' | 'direction'>('approve')
@@ -108,6 +110,7 @@ export function CheckpointPanel({
             onRewrite={handleRewrite}
             isLastChapter={isLastChapter}
             isAnalyzing={isAnalyzing}
+            isAuditing={isAuditing}
           />
         ) : (
           // Step 2: Direction selection
