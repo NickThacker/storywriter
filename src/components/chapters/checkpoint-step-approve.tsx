@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { CheckCircle, RotateCcw } from 'lucide-react'
+import { CheckCircle, Loader2, RotateCcw } from 'lucide-react'
 import type { OutlineChapter } from '@/types/database'
 import type { ChapterCheckpointRow, StateDiff } from '@/types/project-memory'
 
@@ -15,6 +15,7 @@ interface CheckpointStepApproveProps {
   onApprove: () => void
   onRewrite: () => void
   isLastChapter: boolean
+  isAnalyzing?: boolean
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -26,6 +27,7 @@ export function CheckpointStepApprove({
   onApprove,
   onRewrite,
   isLastChapter,
+  isAnalyzing,
 }: CheckpointStepApproveProps) {
   // Extract stats from checkpoint data
   const wordCount = checkpoint.chapter_text
@@ -48,30 +50,45 @@ export function CheckpointStepApprove({
   return (
     <div className="p-5 space-y-5">
       {/* Summary */}
-      {checkpoint.summary && (
+      {isAnalyzing && !checkpoint.summary ? (
+        <div>
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
+            Summary
+          </h4>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Analyzing chapter...
+          </div>
+        </div>
+      ) : checkpoint.summary ? (
         <div>
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
             Summary
           </h4>
           <p className="text-sm text-foreground/90 leading-relaxed">{checkpoint.summary}</p>
         </div>
-      )}
+      ) : null}
 
       {/* Stats grid */}
       <div>
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
           Chapter Stats
         </h4>
-        <div className="grid grid-cols-2 gap-2.5">
-          <StatCard label="Words" value={wordCount.toLocaleString()} />
-          <StatCard label="Characters Featured" value={String(characterChanges)} />
-          <StatCard label="Threads Advanced" value={String(threadsAdvanced)} />
-          <StatCard label="Threads Resolved" value={String(threadsResolved)} />
-          <StatCard label="New Threads" value={String(threadsNew)} />
-          <StatCard label="Foreshadowing Planted" value={String(newForeshadowing)} />
-          <StatCard label="New Continuity Facts" value={String(newContinuity)} />
-          <StatCard label="Continuity Notes" value={String(continuityNotes)} />
-        </div>
+        {(() => {
+          const loading = isAnalyzing && !stateDiff
+          return (
+            <div className="grid grid-cols-2 gap-2.5">
+              <StatCard label="Words" value={wordCount.toLocaleString()} />
+              <StatCard label="Characters Featured" value={String(characterChanges)} loading={loading} />
+              <StatCard label="Threads Advanced" value={String(threadsAdvanced)} loading={loading} />
+              <StatCard label="Threads Resolved" value={String(threadsResolved)} loading={loading} />
+              <StatCard label="New Threads" value={String(threadsNew)} loading={loading} />
+              <StatCard label="Foreshadowing Planted" value={String(newForeshadowing)} loading={loading} />
+              <StatCard label="New Continuity Facts" value={String(newContinuity)} loading={loading} />
+              <StatCard label="Continuity Notes" value={String(continuityNotes)} loading={loading} />
+            </div>
+          )
+        })()}
       </div>
 
       {/* Continuity notes detail */}
@@ -117,11 +134,15 @@ export function CheckpointStepApprove({
 // StatCard — small stat display sub-component
 // ──────────────────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, loading }: { label: string; value: string; loading?: boolean }) {
   return (
     <div className="rounded-md bg-muted/50 px-3 py-2">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold tabular-nums">{value}</p>
+      {loading ? (
+        <Loader2 className="mt-0.5 h-3.5 w-3.5 animate-spin text-muted-foreground" />
+      ) : (
+        <p className="text-sm font-semibold tabular-nums">{value}</p>
+      )}
     </div>
   )
 }

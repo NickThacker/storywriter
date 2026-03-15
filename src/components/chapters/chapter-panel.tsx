@@ -789,6 +789,7 @@ export function ChapterPanel({
                 totalWordCount={localWordCount}
                 totalChapters={chapterCount}
                 plotThreadStats={plotThreadStats}
+                isAnalyzing={analysisRunningFor === selectedChapter.number}
               />
             )}
           </div>
