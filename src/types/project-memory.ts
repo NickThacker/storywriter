@@ -133,8 +133,8 @@ export interface ChapterCheckpointRow {
   id: string
   project_id: string
   chapter_number: number
-  summary: string
-  state_diff: StateDiff
+  summary: string | null
+  state_diff: StateDiff | null
   continuity_notes: string[]
   chapter_text: string
   created_at: string

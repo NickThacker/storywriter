@@ -267,22 +267,16 @@ export function ChapterPanel({
             const next = new Map(prev)
             const existing = next.get(chapterNumber)
             if (existing) {
-              next.set(chapterNumber, { ...existing, chapter_text: streamedText })
+              // Clear state_diff + summary so checkpoint panel shows spinners while analysis runs
+              next.set(chapterNumber, { ...existing, chapter_text: streamedText, state_diff: null, summary: null })
             } else {
-              // Create minimal checkpoint row for display
+              // Create minimal checkpoint row for display — state_diff null until analysis completes
               next.set(chapterNumber, {
                 id: '',
                 project_id: projectId,
                 chapter_number: chapterNumber,
-                summary: '',
-                state_diff: {
-                  newThreads: [],
-                  advancedThreads: [],
-                  resolvedThreads: [],
-                  characterChanges: {},
-                  newContinuityFacts: [],
-                  newForeshadowing: [],
-                },
+                summary: null,
+                state_diff: null,
                 continuity_notes: [],
                 chapter_text: streamedText,
                 created_at: new Date().toISOString(),
