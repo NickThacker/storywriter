@@ -205,14 +205,7 @@ export async function POST(request: Request): Promise<Response> {
           { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'direction_options',
-            strict: true,
-            schema: DIRECTION_OPTIONS_SCHEMA,
-          },
-        },
+        response_format: { type: 'json_object' },
       }),
     })
   } catch (err) {

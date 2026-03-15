@@ -224,14 +224,7 @@ export async function POST(request: Request): Promise<Response> {
           { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'impact_analysis',
-            strict: true,
-            schema: IMPACT_ANALYSIS_SCHEMA,
-          },
-        },
+        response_format: { type: 'json_object' },
       }),
     })
   } catch (err) {

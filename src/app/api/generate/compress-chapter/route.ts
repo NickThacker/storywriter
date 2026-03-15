@@ -146,14 +146,7 @@ export async function POST(request: Request): Promise<Response> {
           { role: 'system', content: systemMessage },
           { role: 'user', content: userMessage },
         ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'chapter_compression',
-            strict: true,
-            schema: COMPRESSION_SCHEMA,
-          },
-        },
+        response_format: { type: 'json_object' },
       }),
     })
   } catch (err) {

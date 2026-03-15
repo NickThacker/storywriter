@@ -27,12 +27,10 @@ export const AVAILABLE_MODELS = [
 
 export const TASK_TYPES: { value: TaskType; label: string; description: string }[] = [
   { value: 'prose', label: 'Prose Writing', description: 'Generating chapter content and narrative' },
+  { value: 'planner', label: 'Planner', description: 'Outline generation, premise prefill, character assist' },
   { value: 'reviewer', label: 'Reviewer', description: 'Direction options, impact analysis, voice analysis' },
-  { value: 'planner', label: 'Planner', description: 'Premise prefill and fast planning tasks' },
   { value: 'summarizer', label: 'Summarizer', description: 'Chapter compression and memory analysis' },
   { value: 'validation', label: 'Continuity Auditor', description: 'Pre-generation continuity checking' },
   { value: 'oracle', label: 'Manuscript Oracle', description: 'Long-range manuscript context retrieval' },
   { value: 'arc_synthesis', label: 'Arc Synthesis', description: 'Character arc synthesis across chapters' },
-  { value: 'outline', label: 'Outline Generation', description: 'Creating novel outlines and story structure' },
-  { value: 'editing', label: 'Editing & Revision', description: 'Rewriting, style adjustments, and feedback' },
 ]
