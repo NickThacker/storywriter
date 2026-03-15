@@ -37,8 +37,8 @@ export async function getModelForRole(userId: string, role: ModelRole): Promise<
     if (data && typeof (data as { model_id?: string }).model_id === 'string') {
       return (data as { model_id: string }).model_id
     }
-  } catch {
-    // Fall through to default
+  } catch (err) {
+    console.error(`[registry] getModelForRole(${role}) DB lookup failed:`, err)
   }
 
   return MODEL_DEFAULTS[role]
